@@ -26,6 +26,7 @@ def load_server_secrets() -> None:
             "OPENAI_MODEL",
             "OPENAI_VISION_MODEL",
             "LLM_PROVIDER",
+            "HKBU_SESSION_SECRET",
         ):
             if key in st.secrets:
                 os.environ[key] = str(st.secrets[key])
