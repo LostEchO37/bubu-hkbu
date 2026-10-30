@@ -1,0 +1,115 @@
+HKBU Department of Computer Science
+Technical Support Knowledge Base for RAG Chatbot
+Source: Computing Facilities (UG & MSc Students) - https://www.comp.hkbu.edu.hk/v1/?pid=93
+
+================================================================================
+1. CS ACCOUNT ACTIVATION
+================================================================================
+Computer Science Department accounts:
+You have one set of accounts for using Departmental computing systems - Windows and Linux systems (CSDLABAD.LOCAL domain), Mac, UNIX, and email systems.
+
+For each new student, you will receive an email about how to get the account information. Please follow the instructions to complete your account activation.
+
+IMPORTANT: You should activate your CS account BEFORE you can gain access to all computer facilities and services of the department.
+
+Sample account information:
+- Student Name: David Wong
+- Student ID number: 23012345
+- Username: f3012345
+- Password: (a random number provided initially)
+
+David can use this account to log on to Windows & Linux systems under the CSDLABAD.LOCAL domain within CS computer labs (COMP labs), to log on to UNIX hosts (e.g. elpis, or faith), to check his email, and to submit assignments.
+
+David should change his account password after the first login to the systems.
+
+SSOid (BUniPort / ITO):
+Single Sign On user id (SSOid) is another account provided by ITO for BUniPort and central IT services. The SSOid for a student is pre-defined to be the student number. Students must register/activate SSOid before gaining access to central IT resources. See ITO quick guide: https://ito.hkbu.edu.hk/services/quick-guide-for-new-students.html
+Contact ITO: 3411-7899 or hotline@hkbu.edu.hk
+
+================================================================================
+2. HOW TO CHANGE CS ACCOUNT PASSWORD
+================================================================================
+To change the password for Windows, CSLinux, Unix, email and Mac Systems:
+1. Go to https://www.comp.hkbu.edu.hk/setpass
+2. Key in your Login Name, Old Password, New Password, Re-type Password, and Captcha
+3. Click the Proceed button
+4. Then read the on-screen NOTICES to complete your password-change process.
+
+================================================================================
+3. LAB OPENING HOURS (INCLUDING FSC801)
+================================================================================
+Opening Hours for CS Computer Laboratories (including FSC801):
+- Monday - Saturday: 8:30 a.m. - 10:30 p.m.
+- Sunday & Holidays: 8:30 a.m. - 10:30 p.m.
+
+Therefore, lab FSC801 closes at 10:30 p.m.
+
+Lab locations:
+- FSC801: Fong Shu Chuen Building
+- FSC901: Fong Shu Chuen Building
+- RRS638: Sir Run Run Shaw Building
+- RRS735: Sir Run Run Shaw Building
+
+The labs may be reserved for teaching or tutorials. Check the Lab Booking System for schedule.
+If you cannot enter any COMP labs with your student ID card, please go to RRS632/FSC901B for help.
+
+From Policies and Regulations:
+Departmental laboratories open from 8:30 a.m. to 10:30 p.m. weekdays, weekends and public holidays. Students are not allowed to stay in any laboratories outside normal opening hours without permission from the Department.
+
+================================================================================
+4. OVERNIGHT STAY IN CS LABS
+================================================================================
+Students are NOT allowed to stay overnight in CS Labs without prior approval.
+
+Procedure for Overnight Stay Application in CS Computer Labs:
+1. Download two forms via Intranet -> Forms Download Center -> Forms for students -> Application for Overnight Stay in CS Computer Labs:
+   a) Application for Overnight Stay in Computer Laboratory of Computer Science Department
+   b) Application for Extension of Stay on Campus (three copies required by Estates Office)
+2. Complete Form a and Form b; Form a should be signed by the individual student.
+3. Hand in Form a and Form b to the course teacher for approval.
+4. If endorsed, submit them to General Office (RRS702) for further approval.
+5. Get Form b back from General Office (RRS702). Take it to the Security Office at RRS building Level 2, at least 24 hours in advance, to obtain Estate Office approval.
+6. Submit the endorsed Form b to Technical Support Team offices (RRS632 or FSC901B) for updating lab door access permission.
+
+Even if an assignment deadline is approaching, overnight stay is only allowed after completing this approval procedure.
+
+================================================================================
+5. PRINT QUOTA CHECKING
+================================================================================
+How to check my print quota?
+
+Method 1:
+Visit http://www.comp.hkbu.edu.hk/pquota/ with your COMP Unix account (same as your email account).
+
+Method 2:
+1. Login a Unix host (e.g. faith.comp.hkbu.edu.hk) with your COMP Unix account (same as your email account).
+2. At the Login prompt type: pqouta -v
+   Example output: 000 Quota for UID 19607 (d9012345) is 60 (soft=60, perm=0)
+
+Print quota policy (CS students, provided on 1st September each year):
+- Year 1: Yearly 400 pages
+- Year 2: Yearly 500 pages
+- Year 3: Yearly 600 pages
+- MSc: Yearly 600 pages
+
+At the end of each academic year, the print quota balance will be carried forward. Remaining print quota expires on 31 August of graduation year.
+Students may extend print quota at $30 per 100 sheets at General Office (RRS702).
+
+================================================================================
+6. EMAIL
+================================================================================
+Web Mail: https://imail.comp.hkbu.edu.hk
+Email address format: your_username@comp.hkbu.edu.hk
+
+================================================================================
+7. TECHNICAL SUPPORT CONTACT
+================================================================================
+Department of Computer Science – Systems Administration and Support: 3411 7086
+Email: technical-support@comp.hkbu.edu.hk
+Technical Support Team offices: RRS632 or FSC901B
+
+================================================================================
+8. SCOPE OF THIS CHATBOT
+================================================================================
+This chatbot only answers questions related to HKBU Computer Science departmental technical support, computing facilities, CS accounts, labs, printing, and related procedures.
+It does not entertain unrelated chitchat.

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>阿Bu 悬浮球 · 设置</title>
+    <style>
+      body {
+        font-family: "Noto Sans SC", "PingFang SC", system-ui, sans-serif;
+        max-width: 420px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        color: #1f4554;
+      }
+      label {
+        display: block;
+        font-weight: 700;
+        margin-bottom: 0.4rem;
+      }
+      input {
+        width: 100%;
+        padding: 0.65rem 0.75rem;
+        border-radius: 10px;
+        border: 1px solid #c5dde8;
+        font-size: 0.95rem;
+      }
+      button {
+        margin-top: 1rem;
+        padding: 0.65rem 1.1rem;
+        border: 0;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #1a6f88, #2f9eb8);
+        color: #fff;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .hint {
+        color: #4a6878;
+        font-size: 0.88rem;
+        line-height: 1.5;
+      }
+      #status {
+        margin-top: 0.75rem;
+        font-size: 0.9rem;
+        color: #1f738c;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>阿Bu 悬浮球</h1>
+    <p class="hint">装好后请到扩展「详细信息」→ 网站访问权限 →「在所有网站上」，任意 http/https 页右下角才会出现悬浮球（不只阿Bu 站）。</p>
+    <label for="appUrl">阿Bu 网页地址</label>
+    <input id="appUrl" placeholder="http://localhost:8501" />
+    <p class="hint">本机默认 <code>http://localhost:8501</code>。部署后改成你的公网地址。</p>
+    <button id="save" type="button">保存</button>
+    <div id="status"></div>
+    <script src="options.js"></script>
+  </body>
+</html>

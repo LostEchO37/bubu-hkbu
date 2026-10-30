@@ -1,0 +1,12 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+.streamlit/secrets.toml
+data/users.db
+data/.session_secret
+extension/signing_private_key.pem
+extension/client_id.local.js
+dist/
+*.zip
