@@ -293,31 +293,76 @@ header[data-testid="stHeader"] > div {{
   -webkit-text-fill-color: #f7fcff !important;
 }}
 
-/* Expander headers */
+/* Expander headers — cover nested/open/closed + Streamlit light chrome */
+.stApp [data-testid="stExpander"],
+.stApp [data-testid="stExpander"] > details,
 .stApp [data-testid="stExpander"] details,
 .stApp .streamlit-expanderContent,
-.stApp .streamlit-expanderHeader {{
+.stApp .streamlit-expanderHeader,
+.stApp [data-testid="stExpander"] summary,
+.stApp [data-testid="stExpander"] summary > div,
+.stApp [data-testid="stExpander"] summary > div > div {{
   background: var(--exp-bg) !important;
   background-color: var(--exp-bg) !important;
+  background-image: none !important;
   border-color: var(--cream-border) !important;
   color: var(--exp-fg) !important;
+}}
+.stApp [data-testid="stExpander"] {{
+  border: 1px solid var(--cream-border) !important;
   border-radius: 14px !important;
+  overflow: hidden !important;
 }}
 .stApp [data-testid="stExpander"] summary,
 .stApp [data-testid="stExpander"] summary *,
+.stApp [data-testid="stExpander"] summary p,
+.stApp [data-testid="stExpander"] summary span,
+.stApp [data-testid="stExpander"] summary [data-testid="stMarkdownContainer"],
+.stApp [data-testid="stExpander"] summary [data-testid="stMarkdownContainer"] *,
 .stApp .streamlit-expanderHeader,
-.stApp .streamlit-expanderHeader * {{
+.stApp .streamlit-expanderHeader *,
+.stApp .streamlit-expanderHeader p,
+.stApp .streamlit-expanderHeader span {{
   color: var(--exp-fg) !important;
   -webkit-text-fill-color: var(--exp-fg) !important;
   fill: var(--exp-fg) !important;
+  background: transparent !important;
+  background-color: transparent !important;
+}}
+.stApp [data-testid="stExpander"] summary {{
+  background: var(--exp-bg) !important;
+  background-color: var(--exp-bg) !important;
+  list-style: none !important;
+}}
+.stApp [data-testid="stExpander"] summary svg,
+.stApp [data-testid="stExpander"] summary [data-testid="stExpanderToggleIcon"],
+.stApp [data-testid="stExpander"] summary [data-testid="stExpanderIcon"] {{
+  color: var(--exp-fg) !important;
+  fill: var(--exp-fg) !important;
+  stroke: var(--exp-fg) !important;
+}}
+.stApp [data-testid="stExpander"] [data-testid="stExpanderDetails"],
+.stApp .streamlit-expanderContent {{
+  background: var(--exp-bg) !important;
+  background-color: var(--exp-bg) !important;
+  color: var(--text) !important;
+  border-top: 1px solid var(--cream-border) !important;
 }}
 
 /* File uploader */
 .stApp [data-testid="stFileUploader"] section,
-.stApp [data-testid="stFileUploaderDropzone"] {{
+.stApp [data-testid="stFileUploaderDropzone"],
+.stApp [data-testid="stFileUploaderDropzone"] * {{
   background: var(--btn-bg) !important;
+  background-color: var(--btn-bg) !important;
   border-color: var(--field-border) !important;
   color: var(--btn-fg) !important;
+}}
+.stApp [data-testid="stFileUploaderDropzone"] small,
+.stApp [data-testid="stFileUploader"] [data-testid="stMarkdownContainer"],
+.stApp [data-testid="stFileUploader"] [data-testid="stMarkdownContainer"] * {{
+  color: var(--text-soft) !important;
+  -webkit-text-fill-color: var(--text-soft) !important;
 }}
 .stApp [data-testid="stFileUploader"] button {{
   background: linear-gradient(135deg, #1f738c, #2f9eb8) !important;
@@ -411,20 +456,50 @@ h1, h2, h3, label,
   color: var(--text);
 }}
 
+[data-testid="stTextInput"] > div,
+[data-testid="stTextInput"] [data-baseweb="base-input"],
+[data-testid="stTextArea"] > div,
+[data-testid="stTextArea"] [data-baseweb="base-input"],
+[data-testid="stNumberInput"] > div,
+[data-testid="stNumberInput"] [data-baseweb="base-input"],
+[data-testid="stDateInput"] > div,
+[data-testid="stDateInput"] [data-baseweb="base-input"],
+[data-testid="stSelectbox"] > div,
+[data-testid="stSelectbox"] [data-baseweb="select"] > div {{
+  background: var(--field-bg) !important;
+  background-color: var(--field-bg) !important;
+  border-color: var(--field-border) !important;
+  color: var(--field-text) !important;
+  box-shadow: none !important;
+}}
 [data-testid="stTextInput"] input,
 [data-testid="stTextArea"] textarea,
-[data-testid="stNumberInput"] input {{
-  background: var(--field-bg) !important;
+[data-testid="stNumberInput"] input,
+[data-testid="stDateInput"] input {{
+  background: transparent !important;
+  background-color: transparent !important;
   border: 1px solid var(--field-border) !important;
   border-radius: 14px !important;
   color: var(--field-text) !important;
   -webkit-text-fill-color: var(--field-text) !important;
-  box-shadow: 0 6px 18px rgba(31, 115, 140, 0.08) !important;
+  box-shadow: none !important;
 }}
 [data-testid="stTextInput"] input:focus,
-[data-testid="stTextArea"] textarea:focus {{
+[data-testid="stTextArea"] textarea:focus,
+[data-testid="stDateInput"] input:focus {{
   border-color: rgba(47, 158, 184, 0.55) !important;
   box-shadow: 0 8px 22px rgba(31, 115, 140, 0.14) !important;
+}}
+[data-testid="stTextInput"] label,
+[data-testid="stTextArea"] label,
+[data-testid="stDateInput"] label,
+[data-testid="stSelectbox"] label,
+[data-testid="stFileUploader"] label,
+.stApp label,
+.stApp [data-testid="stWidgetLabel"],
+.stApp [data-testid="stWidgetLabel"] * {{
+  color: var(--text) !important;
+  -webkit-text-fill-color: var(--text) !important;
 }}
 [data-baseweb="tab"] {{
   font-weight: 650 !important;

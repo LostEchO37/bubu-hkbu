@@ -8,6 +8,20 @@ from core.i18n import Lang
 ENTRIES: list[dict[str, dict[Lang, str] | str]] = [
     {
         "date": "2026-11-04",
+        "tag": "v0.20",
+        "title": {
+            "zh-CN": "折叠标题对比度",
+            "zh-TW": "折疊標題對比度",
+            "en": "Expander title contrast",
+        },
+        "body": {
+            "zh-CN": "· 深色模式下折叠栏标题不再白底看不见\n· 输入框外层去掉浅色描边",
+            "zh-TW": "· 深色模式下折疊欄標題不再白底看不見\n· 輸入框外層去掉淺色描邊",
+            "en": "· Expander titles stay readable on dark surfaces\n· Input wrappers no longer flash light borders",
+        },
+    },
+    {
+        "date": "2026-11-04",
         "tag": "v0.19",
         "title": {
             "zh-CN": "深色底部输入区",
