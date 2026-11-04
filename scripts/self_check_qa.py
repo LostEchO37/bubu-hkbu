@@ -40,7 +40,8 @@ def main() -> None:
     from core.changelog import changelog_markdown
 
     md = changelog_markdown("zh-CN")
-    assert "v0.1" in md and "v0.21" in md
+    assert "v0.1" in md and "v0.22" in md
+    assert (ROOT / "assets" / "bu_favicon.png").is_file()
     assert "密钥" not in md and "secret" not in md.lower()
     assert "OPENAI" not in md and "LostEchO" not in md
     assert t("changelog_privacy", "en")

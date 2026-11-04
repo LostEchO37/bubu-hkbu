@@ -8,6 +8,20 @@ from core.i18n import Lang
 ENTRIES: list[dict[str, dict[Lang, str] | str]] = [
     {
         "date": "2026-11-04",
+        "tag": "v0.22",
+        "title": {
+            "zh-CN": "自定义页签图标",
+            "zh-TW": "自訂頁簽圖示",
+            "en": "Custom tab icon",
+        },
+        "body": {
+            "zh-CN": "· 浏览器标签页换成阿Bu 气泡图标，不再用 Streamlit 默认红标",
+            "zh-TW": "· 瀏覽器分頁換成阿Bu 氣泡圖示，不再用 Streamlit 預設紅標",
+            "en": "· Browser tab uses BuBu bubble icon instead of Streamlit red mark",
+        },
+    },
+    {
+        "date": "2026-11-04",
         "tag": "v0.21",
         "title": {
             "zh-CN": "上传按钮去黑底",
