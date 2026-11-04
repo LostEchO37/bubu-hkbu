@@ -511,9 +511,9 @@ MESSAGES: dict[str, dict[Lang, str]] = {
     "logged_as": {"zh-CN": "已登录：{name}", "zh-TW": "已登入：{name}", "en": "Signed in as {name}"},
     "settings_title": {"zh-CN": "设置", "zh-TW": "設定", "en": "Settings"},
     "lang_sidebar_tip": {
-        "zh-CN": "Change language here · 在此切换语言",
-        "zh-TW": "Change language here · 在此切換語言",
-        "en": "Change language here · open Settings below",
+        "zh-CN": "Change language here · 选好语言后点「应用设置」",
+        "zh-TW": "Change language here · 選好語言後點「套用設定」",
+        "en": "Change language here · then tap Apply settings",
     },
     "settings_font": {"zh-CN": "字体大小", "zh-TW": "字體大小", "en": "Font size"},
     "font_small": {"zh-CN": "小", "zh-TW": "小", "en": "Small"},

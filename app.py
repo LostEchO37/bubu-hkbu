@@ -64,7 +64,7 @@ from core.today import pulse_html
 from core.ui import inject_bu_theme, inject_ui_phase, render_login_header
 
 # Bump when chat UI flow changes — forces one-time hub reset for logged-in sessions.
-_UI_REVISION = 23
+_UI_REVISION = 24
 
 st.set_page_config(
     page_title="阿Bu · HKBU Student Assistant",
@@ -330,41 +330,33 @@ def init_state(lang: Lang) -> None:
     st.session_state._lang_init = lang
 
 
-def _repair_settings_widgets(settings: AppSettings, lang: Lang) -> None:
-    """Keep sidebar widget keys valid — stale None theme was flipping Apply → dark."""
-    # Migrate old integer theme key → string theme key.
-    if "settings_theme_idx" in st.session_state:
-        old = st.session_state.pop("settings_theme_idx", None)
-        if "settings_theme" not in st.session_state:
-            st.session_state.settings_theme = "dark" if old == 1 else "light"
-    if st.session_state.get("settings_theme") not in ("light", "dark"):
-        st.session_state.settings_theme = (
-            settings.theme if settings.theme in ("light", "dark") else "light"
-        )
+def _init_settings_widget_keys(settings: AppSettings, lang: Lang) -> None:
+    """Set widget keys only before widgets exist. Never write these keys after instantiate."""
+    # Drop legacy integer keys from older builds.
+    for legacy in (
+        "settings_theme_idx",
+        "settings_lang_idx",
+        "settings_font_idx",
+        "settings_pers_idx",
+    ):
+        st.session_state.pop(legacy, None)
 
     codes = [code for _, code in LANG_OPTIONS]
-    if "settings_lang_idx" in st.session_state:
-        old_i = st.session_state.pop("settings_lang_idx", None)
-        if "settings_lang" not in st.session_state and isinstance(old_i, int) and 0 <= old_i < len(codes):
-            st.session_state.settings_lang = codes[old_i]
     if st.session_state.get("settings_lang") not in codes:
         st.session_state.settings_lang = lang
 
     fonts = ["small", "medium", "large"]
-    if "settings_font_idx" in st.session_state:
-        old_f = st.session_state.pop("settings_font_idx", None)
-        if "settings_font" not in st.session_state and isinstance(old_f, int) and 0 <= old_f < 3:
-            st.session_state.settings_font = fonts[old_f]
     if st.session_state.get("settings_font") not in fonts:
         st.session_state.settings_font = (
             settings.font_size if settings.font_size in fonts else "medium"
         )
 
+    if st.session_state.get("settings_theme") not in ("light", "dark"):
+        st.session_state.settings_theme = (
+            settings.theme if settings.theme in ("light", "dark") else "light"
+        )
+
     tones = ["playful", "balanced", "calm"]
-    if "settings_pers_idx" in st.session_state:
-        old_p = st.session_state.pop("settings_pers_idx", None)
-        if "settings_pers" not in st.session_state and isinstance(old_p, int) and 0 <= old_p < 3:
-            st.session_state.settings_pers = tones[old_p]
     if st.session_state.get("settings_pers") not in tones:
         st.session_state.settings_pers = (
             settings.personality if settings.personality in tones else "playful"
@@ -373,7 +365,7 @@ def _repair_settings_widgets(settings: AppSettings, lang: Lang) -> None:
 
 def sidebar_settings(lang: Lang) -> Lang:
     settings = get_app_settings()
-    _repair_settings_widgets(settings, lang)
+    _init_settings_widget_keys(settings, lang)
     on_login = not bool(st.session_state.get("user_id"))
     if on_login:
         st.sidebar.caption(t("lang_sidebar_tip", lang))
@@ -385,17 +377,13 @@ def sidebar_settings(lang: Lang) -> Lang:
     ):
         lang_labels = {code: label for label, code in LANG_OPTIONS}
         codes: list[Lang] = [code for _, code in LANG_OPTIONS]  # type: ignore[misc]
+        # Draft values only — nothing applies until the button below.
         chosen_lang = st.selectbox(
             t("lang_label", lang),
             codes,
             format_func=lambda c: lang_labels.get(c, c),
             key="settings_lang",
         )
-        # Apply language immediately so foreigners don't need to find "Apply".
-        if chosen_lang != lang:
-            set_ui_lang(chosen_lang, persist=bool(st.session_state.get("user_id")))
-            st.rerun()
-
         font_choice = st.selectbox(
             t("settings_font", lang),
             ["small", "medium", "large"],
@@ -438,7 +426,8 @@ def sidebar_settings(lang: Lang) -> Lang:
                 personality=safe_pers,  # type: ignore[arg-type]
                 ui_lang=new_lang,
             )
-            st.session_state.settings_theme = safe_theme
+            # Do NOT assign settings_* widget keys here — Streamlit forbids mutating
+            # a key after its widget was instantiated in the same run.
             st.session_state._lang_user_set = True
             st.session_state.ui_lang = new_lang
             ensure_lang_query_param(new_lang)
