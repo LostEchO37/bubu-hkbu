@@ -65,7 +65,7 @@ from core.today import pulse_html
 from core.ui import inject_bu_theme, inject_ui_phase, render_login_header
 
 # Bump when chat UI flow changes — forces one-time hub reset for logged-in sessions.
-_UI_REVISION = 31
+_UI_REVISION = 32
 
 st.set_page_config(
     page_title="阿Bu · HKBU Student Assistant",
@@ -502,12 +502,15 @@ def render_plugin_download(lang: Lang, *, key: str) -> None:
 
 
 def render_changelog_corner(lang: Lang) -> None:
-    """Top-right changelog — product notes only, no private ops details."""
-    _left, right = st.columns([4.2, 1.15])
+    """Top-right changelog — product notes only; avoid Streamlit Fork overlay."""
+    st.markdown('<div class="bu-changelog-wrap">', unsafe_allow_html=True)
+    _left, right = st.columns([3.2, 1.65])
     with right:
-        with st.popover("📋 " + t("changelog_title", lang), use_container_width=True):
+        # Expander gives clear open/close feedback; popover was covered by Fork/GitHub.
+        with st.expander("📋 " + t("changelog_title", lang), expanded=False):
             st.caption(t("changelog_privacy", lang))
             st.markdown(changelog_markdown(lang))
+    st.markdown("</div>", unsafe_allow_html=True)
 
 
 def login_screen(lang: Lang) -> None:

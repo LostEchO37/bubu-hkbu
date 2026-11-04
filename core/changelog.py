@@ -8,6 +8,20 @@ from core.i18n import Lang
 ENTRIES: list[dict[str, dict[Lang, str] | str]] = [
     {
         "date": "2026-11-04",
+        "tag": "v0.16",
+        "title": {
+            "zh-CN": "更新日志可点击",
+            "zh-TW": "更新日誌可點擊",
+            "en": "Changelog clickable",
+        },
+        "body": {
+            "zh-CN": "· 隐藏右上角 Fork/GitHub 遮挡\n· 更新日志改为可展开面板，点击有反馈",
+            "zh-TW": "· 隱藏右上角 Fork/GitHub 遮擋\n· 更新日誌改為可展開面板，點擊有回饋",
+            "en": "· Hide overlapping Fork/GitHub chrome\n· Changelog uses an expander with clear open/close feedback",
+        },
+    },
+    {
+        "date": "2026-11-04",
         "tag": "v0.15",
         "title": {
             "zh-CN": "更新日志移到右上角",
@@ -15,9 +29,9 @@ ENTRIES: list[dict[str, dict[Lang, str] | str]] = [
             "en": "Changelog moved top-right",
         },
         "body": {
-            "zh-CN": "· 更新日志改为页面右上角弹出\n· 按每次公开发布补充说明（仅产品改动，不含隐私信息）",
-            "zh-TW": "· 更新日誌改為頁面右上角彈出\n· 按每次公開發布補充說明（僅產品改動，不含隱私資訊）",
-            "en": "· Changelog opens from the top-right popover\n· Per-release notes expanded (product-only, privacy-safe)",
+            "zh-CN": "· 更新日志改为页面右上角\n· 按每次公开发布补充说明（仅产品改动，不含隐私信息）",
+            "zh-TW": "· 更新日誌改為頁面右上角\n· 按每次公開發布補充說明（僅產品改動，不含隱私資訊）",
+            "en": "· Changelog moved to the top-right\n· Per-release notes expanded (product-only, privacy-safe)",
         },
     },
     {

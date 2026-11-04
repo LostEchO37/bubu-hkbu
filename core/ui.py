@@ -153,12 +153,31 @@ def inject_bu_theme(settings: AppSettings) -> None:
   line-height: 1.45;
 }}
 
+/* Keep header chrome from covering our top-right changelog (Fork/GitHub overlay). */
 header[data-testid="stHeader"] {{
-  background: transparent;
-  pointer-events: none;
+  background: transparent !important;
+  pointer-events: none !important;
 }}
-header[data-testid="stHeader"] > div {{
-  pointer-events: auto;
+header[data-testid="stHeader"] * {{
+  pointer-events: none !important;
+}}
+div[data-testid="stToolbar"],
+div[data-testid="stToolbarActions"],
+.stAppDeployButton,
+header[data-testid="stHeader"] a {{
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}}
+.bu-changelog-wrap {{
+  position: relative;
+  z-index: 60;
+  margin: 0 0 0.65rem;
+}}
+.bu-changelog-wrap [data-testid="stExpander"] {{
+  border: 1px solid var(--cream-border) !important;
+  border-radius: 14px !important;
+  background: var(--exp-bg) !important;
 }}
 
 [data-testid="stTabs"] [data-baseweb="tab-list"] {{
