@@ -45,8 +45,8 @@ def check_theme_css() -> None:
 
     with patch.object(ui, "st", st):
         inject_bu_theme(AppSettings(theme="dark"))
-        assert st.html.called
-        css = st.html.call_args[0][0]
+        assert st.markdown.called
+        css = "".join(str(c.args[0]) for c in st.markdown.call_args_list if c.args)
         assert "--sky-bg: #15242c" in css or "--sky-bg:#15242c" in css.replace(" ", "")
         assert "[data-testid=\"stExpander\"]" in css
         assert "stBottomBlockContainer" in css
@@ -56,9 +56,9 @@ def check_theme_css() -> None:
         assert "button *" in css and "background: transparent" in css
         assert "linear-gradient(135deg, #1f738c, #2f9eb8)" in css
 
-        st.html.reset_mock()
+        st.markdown.reset_mock()
         inject_bu_theme(AppSettings(theme="light"))
-        css_l = st.html.call_args[0][0]
+        css_l = "".join(str(c.args[0]) for c in st.markdown.call_args_list if c.args)
         assert "--sky-bg: #cfeaf3" in css_l or "#cfeaf3" in css_l
 
 
@@ -202,7 +202,7 @@ def check_chat_and_hub_invariants() -> None:
 
     md = changelog_markdown("en")
     assert "v0.30" in md
-    assert ENTRIES[0]["tag"] == "v1.0.0"
+    assert ENTRIES[0]["tag"] == "v1.0.1"
     assert (ROOT / "assets" / "bu_favicon.png").is_file()
     blob = " ".join(
         str(v) for e in ENTRIES for v in (e.get("body") or {}).values()

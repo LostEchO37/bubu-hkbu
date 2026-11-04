@@ -63,7 +63,6 @@ from core.changelog import changelog_markdown
 from core.identity import PROJECT_CREDIT, bot_nick
 from core.today import pulse_html
 from core.ui import (
-    dock_workspace_below_chat_input,
     inject_bu_theme,
     inject_chunk_recovery,
     inject_ui_phase,
@@ -71,7 +70,7 @@ from core.ui import (
 )
 
 # Bump when chat UI flow changes — forces one-time hub reset for logged-in sessions.
-_UI_REVISION = 50
+_UI_REVISION = 52
 
 _FAVICON = Path(__file__).resolve().parent / "assets" / "bu_favicon.png"
 st.set_page_config(
@@ -552,7 +551,7 @@ def render_changelog_corner(lang: Lang) -> None:
 def login_screen(lang: Lang) -> None:
     render_login_header(t("login_title", lang), t("login_hint", lang))
     render_storage_notice(lang)
-    with st.expander(t("plugin_section", lang), expanded=False):
+    if st.toggle("🧩 " + t("plugin_section", lang), key="plugin_panel_login", value=False):
         render_plugin_download(lang, key="plugin_dl_login")
     tab_in, tab_up = st.tabs([t("tab_login", lang), t("tab_register", lang)])
 
@@ -653,7 +652,7 @@ def sidebar_chrome(lang: Lang) -> None:
             st.session_state.ui_lang = keep_lang
             st.session_state._lang_user_set = True
             st.rerun()
-    with st.sidebar.expander(t("plugin_section", lang), expanded=False):
+    if st.sidebar.toggle("🧩 " + t("plugin_section", lang), key="plugin_panel_sidebar", value=False):
         render_plugin_download(lang, key="plugin_dl_sidebar")
 
 
@@ -1113,7 +1112,7 @@ def main_chat(lang: Lang) -> None:
             cta=t("hub_cta", lang),
             credit=t("hub_credit", lang),
         )
-        with st.expander(t("plugin_section", lang), expanded=False):
+        if st.toggle("🧩 " + t("plugin_section", lang), key="plugin_panel_hub", value=False):
             render_plugin_download(lang, key="plugin_dl_hub")
     elif pristine and agent_burst:
         inject_ui_phase("burst")
@@ -1223,14 +1222,18 @@ def main() -> None:
     sidebar_chrome(lang)
     render_changelog_corner(lang)
 
-    # Chat first. Workspace is marked then docked *under* the sticky chat input
-    # (Streamlit always paints post-chat_input widgets above that bar otherwise).
+    # Chat first with minimal widgets. Workspace tools (uploaders/inputs) mount
+    # ONLY when opened — mounting them every run starved chat_input JS chunks.
     main_chat(lang)
-    st.markdown('<div data-bu-workspace-dock="1"></div>', unsafe_allow_html=True)
-    with st.expander("🗂️ " + t("workspace_title", lang), expanded=False):
+    if "workspace_panel_open" not in st.session_state:
+        st.session_state.workspace_panel_open = False
+    ws_open = st.toggle(
+        "🗂️ " + t("workspace_toggle", lang),
+        key="workspace_panel_open",
+    )
+    if ws_open:
         render_workspace_panel(lang)
     st.caption(t("chunk_reload_tip", lang))
-    dock_workspace_below_chat_input()
 
 
 if __name__ == "__main__":

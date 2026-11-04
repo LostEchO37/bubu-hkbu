@@ -8,6 +8,20 @@ from core.i18n import Lang
 ENTRIES: list[dict[str, dict[Lang, str] | str]] = [
     {
         "date": "2026-11-04",
+        "tag": "v1.0.1",
+        "title": {
+            "zh-CN": "根治转圈 / 输入框报错",
+            "zh-TW": "根治轉圈 / 輸入框報錯",
+            "en": "Fix spinner + input chunk errors",
+        },
+        "body": {
+            "zh-CN": "· 资料区改为开关懒加载，不再一进页就挂一堆上传/输入控件抢走提问框 JS\n· 去掉会挪动底栏 DOM 的脚本（会把提问框弄挂）\n· 控件 chunk 加载失败时自动清缓存并软刷新",
+            "zh-TW": "· 資料區改為開關懶加載，不再一進頁就掛一堆上傳/輸入控件搶走提問框 JS\n· 去掉會挪動底欄 DOM 的腳本（會把提問框弄掛）\n· 控件 chunk 載入失敗時自動清快取並軟重新整理",
+            "en": "· Lazy-load workspace so uploaders no longer starve chat_input JS chunks\n· Remove bottom-bar DOM moves that broke the input\n· Auto cache-bust reload when widget chunks fail",
+        },
+    },
+    {
+        "date": "2026-11-04",
         "tag": "v1.0.0",
         "title": {
             "zh-CN": "正式版 1.0 · 跨设备更快",

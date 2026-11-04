@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import io
 import zipfile
+from functools import lru_cache
 from pathlib import Path
 
 EXTENSION_DIR = Path(__file__).resolve().parent.parent / "extension"
@@ -17,7 +18,9 @@ _SKIP_NAMES = {
 }
 
 
+@lru_cache(maxsize=1)
 def extension_zip_bytes() -> bytes:
+    """Build once per process — zip work on every rerun was stalling Cloud CPU."""
     if not EXTENSION_DIR.is_dir():
         raise FileNotFoundError(f"Missing extension dir: {EXTENSION_DIR}")
     buf = io.BytesIO()

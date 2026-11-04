@@ -61,22 +61,23 @@ def main() -> None:
     assert "_pending_pick" in app_src
     assert 'st.query_params["pick"] = str(pick)' not in app_src
     assert "inject_chunk_recovery" in app_src
-    assert 'st.expander("🗂️ " + t("workspace_title"' in app_src
-    assert "workspace_panel_open" not in app_src
+    assert "workspace_panel_open" in app_src
+    assert "dock_workspace_below_chat_input" not in app_src
+    assert "data-bu-workspace-dock" not in app_src
     assert "main_chat(lang)" in app_src
-    assert 'data-bu-workspace-dock' in app_src
-    assert "dock_workspace_below_chat_input" in app_src
-    # Workspace must come after chat in main()
-    assert app_src.index("main_chat(lang)") < app_src.index('st.expander("🗂️ " + t("workspace_title"')
+    # Lazy workspace must come after chat (and only mount when toggled open)
+    assert app_src.index("main_chat(lang)") < app_src.index("workspace_panel_open")
+    assert "if ws_open:" in app_src or "if open_ws:" in app_src or "if ws_open" in app_src
     ui_src = (ROOT / "core" / "ui.py").read_text(encoding="utf-8")
     assert "_bubu_chunk_guard_injected" in ui_src
-    assert "dock_workspace_below_chat_input" in ui_src
+    assert "dock_workspace_below_chat_input" not in ui_src
+    assert "Failed to fetch dynamically imported module" in ui_src
     assert "--field-border: #8fb6c6" in ui_src
-    assert "hideCloudFavoriteStar" in ui_src
     assert "fonts.googleapis.com" not in ui_src
     assert "feTurbulence" not in ui_src
     assert "components.html" not in ui_src
     assert "rgba(255,255,255,0.85)" not in ui_src
+    assert "lru_cache" in (ROOT / "core" / "extension_pack.py").read_text(encoding="utf-8")
     ha_src = (ROOT / "core" / "home_agent.py").read_text(encoding="utf-8")
     assert "fonts.googleapis.com" not in ha_src
     assert t("cold_start_tip", "zh-CN")

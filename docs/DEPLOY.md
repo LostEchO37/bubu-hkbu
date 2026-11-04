@@ -27,10 +27,12 @@ Common causes on phones / campus Wi‑Fi:
 
 1. **Cloud sleep** — after ~12h without traffic the app hibernates. Visitors see a wake page; click **Yes, get this app back up** and wait **30–60s**, then hard-refresh.
 2. **Sharing not Public** — other accounts get “not found / no access”.
-3. **Stale JS chunks after redeploy** — hard-refresh (Ctrl/⌘+Shift+R) once.
-4. The app avoids Google Fonts and heavy infinite animations so weak networks / phones paint faster.
+3. **Stale JS chunks after redeploy / sleep** — hard-refresh (Ctrl/⌘+Shift+R) once. The app also auto soft-reloads once when it detects `Failed to fetch dynamically imported module` (typical chat_input / uploader failure).
+4. **Too many widgets on first paint** — fixed in v1.0.1: workspace uploaders/inputs stay unmounted until the user opens 「我的资料」.
 
 Optional: GitHub Action `.github/workflows/keep-awake.yml` pings the live URL on a schedule (best-effort; Cloud may still sleep).
+
+If chat_input still errors after deploy: Cloud **Manage app → Reboot**, then open the app in a private window once.
 
 ## “You do not have access to this app or it does not exist”
 

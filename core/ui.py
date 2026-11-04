@@ -41,32 +41,38 @@ def inject_ui_phase(phase: str) -> None:
 
 
 def inject_chunk_recovery() -> None:
-    """One-shot soft reload when Streamlit JS chunks fail after Cloud redeploy.
+    """Auto cache-bust reload when Streamlit widget JS chunks fail to load.
 
-    Runs at most once per browser session flag in session_state so we do not
-    mount a components iframe on every Streamlit rerun (that was a lag source).
+    chat_input / uploaders often surface ``Failed to fetch dynamically imported
+    module`` after Cloud sleep or redeploy. One soft recovery per tab load;
+    also watches the DOM for the error text widgets paint into the page.
     """
     if st.session_state.get("_bubu_chunk_guard_injected"):
         return
     st.session_state._bubu_chunk_guard_injected = True
-    # Prefer st.html + JS flag when available; avoid components iframe spam.
     script = """
 <script>
 (function () {
   if (window.__bubuChunkGuard) return;
   window.__bubuChunkGuard = true;
+  var recovering = false;
   function isChunkFail(err) {
     var s = String((err && err.message) || err || "");
-    return (
-      s.indexOf("Failed to fetch dynamically imported module") >= 0 ||
-      s.indexOf("Importing a module script failed") >= 0 ||
-      s.indexOf("error loading dynamically imported module") >= 0
-    );
+    return /Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module/i.test(s);
   }
   function recover() {
+    if (recovering) return;
     try {
       if (sessionStorage.getItem("bubu_chunk_reload") === "1") return;
+      recovering = true;
       sessionStorage.setItem("bubu_chunk_reload", "1");
+      try {
+        if (window.caches && caches.keys) {
+          caches.keys().then(function (keys) {
+            keys.forEach(function (k) { caches.delete(k); });
+          }).catch(function () {});
+        }
+      } catch (e) {}
       var u = new URL(location.href);
       u.searchParams.set("_bubu_r", String(Date.now()));
       location.replace(u.toString());
@@ -78,11 +84,20 @@ def inject_chunk_recovery() -> None:
     if (isChunkFail(ev.reason)) recover();
   });
   window.addEventListener("error", function (ev) {
-    if (isChunkFail(ev && ev.error)) recover();
+    if (isChunkFail(ev && (ev.error || ev.message))) recover();
   }, true);
+  var checks = 0;
+  var timer = setInterval(function () {
+    checks += 1;
+    try {
+      var body = document.body ? (document.body.innerText || "") : "";
+      if (body.indexOf("Failed to fetch dynamically imported module") >= 0) recover();
+    } catch (e) {}
+    if (checks > 45) clearInterval(timer);
+  }, 1200);
   setTimeout(function () {
     try { sessionStorage.removeItem("bubu_chunk_reload"); } catch (e) {}
-  }, 20000);
+  }, 45000);
 })();
 </script>
 """
@@ -149,9 +164,9 @@ def inject_bu_theme(settings: AppSettings) -> None:
     btn_fg = "#e8f6fb" if is_dark else "#1f4554"
     exp_bg = "#243540" if is_dark else "#f7fbfd"
     exp_fg = "#e8f6fb" if is_dark else "#1f4554"
-    # st.html with style-only goes to the event container (not shown as page text).
-    # Never put raw HTML tags inside CSS comments — sanitizers break the style block.
-    safe_st_html(
+    # Prefer markdown for CSS (lighter than st.html). No per-rerun JS here —
+    # timers/DOM moves were fighting chat_input chunk loads on weak networks.
+    st.markdown(
         f"""
 <style>
 /* System fonts only — Google Fonts often hang on campus / CN networks */
@@ -658,126 +673,8 @@ header[data-testid="stHeader"] a[title*="Favorite" i] {{
   }}
 }}
 </style>
-<script>
-(function hideCloudFavoriteStar() {{
-  if (window.__bubuHideFavoriteDone) return;
-  function hide() {{
-    var nodes = document.querySelectorAll("header button, header a, [data-testid='stToolbar'] button, [data-testid='stToolbar'] a");
-    for (var i = 0; i < nodes.length; i++) {{
-      var el = nodes[i];
-      var label = (
-        (el.getAttribute("aria-label") || "") + " " +
-        (el.getAttribute("title") || "") + " " +
-        (el.textContent || "")
-      ).toLowerCase();
-      if (
-        label.indexOf("favorite") >= 0 ||
-        label.indexOf("favourite") >= 0 ||
-        label.indexOf("收藏") >= 0
-      ) {{
-        el.style.setProperty("display", "none", "important");
-        window.__bubuHideFavoriteDone = true;
-      }}
-    }}
-  }}
-  hide();
-  if (window.__bubuHideFavoriteObs) return;
-  window.__bubuHideFavoriteObs = true;
-  var tries = 0;
-  var t = setInterval(function () {{
-    hide();
-    tries += 1;
-    if (window.__bubuHideFavoriteDone || tries > 20) clearInterval(t);
-  }}, 400);
-}})();
-</script>
         """,
-        width="content",
-    )
-
-
-def dock_workspace_below_chat_input() -> None:
-    """Move the workspace expander under the sticky chat input.
-
-    Streamlit always parks ``st.chat_input`` in the bottom chrome; widgets
-    rendered after it in Python still paint *above* that bar. This relocates
-    the marked workspace block into the bottom container, after the input.
-    """
-    safe_st_html(
-        """
-<style>
-.bu-workspace-host {
-  width: 100%;
-  max-width: 56rem;
-  margin: 0.15rem auto 0.35rem;
-  padding: 0 0.35rem 0.15rem;
-  box-sizing: border-box;
-}
-.bu-workspace-host [data-testid="stExpander"] {
-  border: 1px solid var(--cream-border) !important;
-  border-radius: 14px !important;
-  background: color-mix(in srgb, var(--card-bg, #fff) 88%, transparent) !important;
-  backdrop-filter: blur(10px);
-}
-.bu-workspace-host [data-testid="stCaptionContainer"],
-.bu-workspace-host .stCaption {
-  margin-top: 0.25rem !important;
-  text-align: center;
-}
-[data-testid="stBottomBlockContainer"] {
-  padding-bottom: 0.35rem !important;
-}
-</style>
-<script>
-(function () {
-  function findBottom() {
-    return (
-      document.querySelector('[data-testid="stBottomBlockContainer"]') ||
-      document.querySelector('[data-testid="stBottom"]')
-    );
-  }
-  function blockOf(el) {
-    return (
-      el.closest('[data-testid="element-container"]') ||
-      el.closest('[data-testid="stVerticalBlockBorderWrapper"]') ||
-      el.parentElement
-    );
-  }
-  function dock() {
-    var marker = document.querySelector("[data-bu-workspace-dock]");
-    if (!marker) return;
-    var bottom = findBottom();
-    if (!bottom) return;
-    // No chat input yet (hub) — leave workspace in normal main flow.
-    if (!bottom.querySelector('[data-testid="stChatInput"]')) return;
-    if (marker.closest("[data-bu-workspace-host]")) return;
-    var start = blockOf(marker);
-    if (!start || !start.parentElement) return;
-    var host = bottom.querySelector("[data-bu-workspace-host]");
-    if (!host) {
-      host = document.createElement("div");
-      host.setAttribute("data-bu-workspace-host", "1");
-      host.className = "bu-workspace-host";
-      bottom.appendChild(host);
-    }
-    var nodes = [];
-    for (var n = start; n; n = n.nextElementSibling) nodes.push(n);
-    for (var i = 0; i < nodes.length; i++) host.appendChild(nodes[i]);
-  }
-  dock();
-  if (window.__bubuWorkspaceDockObs) return;
-  window.__bubuWorkspaceDockObs = true;
-  // Poll lightly instead of a body-wide MutationObserver (cheaper on phones).
-  var n = 0;
-  var t = setInterval(function () {
-    dock();
-    n += 1;
-    if (n > 25) clearInterval(t);
-  }, 250);
-})();
-</script>
-        """,
-        width="content",
+        unsafe_allow_html=True,
     )
 
 
@@ -812,7 +709,6 @@ def render_fun_home(greeting: str, tagline: str, tip: str, *, animate_in: bool =
 from core.home_agent import render_agent_bubble  # noqa: E402
 
 __all__ = [
-    "dock_workspace_below_chat_input",
     "inject_bu_theme",
     "inject_chunk_recovery",
     "inject_ui_phase",

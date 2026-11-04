@@ -42,7 +42,8 @@ def inject_ui_phase(phase: UiPhase) -> None:
 
 def _ensure_shell_css(phase: UiPhase | None = None) -> None:
     phase_attr = phase or "chat"
-    _html(
+    # Markdown CSS only — avoid a second st.html payload fighting chat_input chunks.
+    st.markdown(
         f"""
 <style>
 section[data-testid="stMain"]:has(.ui-phase-marker[data-phase="hub"]) .block-container,
@@ -52,18 +53,7 @@ section[data-testid="stMain"]:has(.ui-phase-marker[data-phase="burst"]) .block-c
   padding-top: 1.8vh !important;
 }}
 section[data-testid="stMain"]:has(.ui-phase-marker[data-phase="hub"]) [data-testid="stBottomBlockContainer"] {{
-  opacity: 0 !important;
-  pointer-events: none !important;
-  max-height: 0 !important;
-  overflow: hidden !important;
-}}
-section[data-testid="stMain"]:has(.ui-phase-marker[data-phase="burst"]) [data-testid="stBottomBlockContainer"],
-section[data-testid="stMain"]:has(.ui-phase-marker[data-phase="chat"]) [data-testid="stBottomBlockContainer"] {{
-  animation: bu-input-rise 0.55s cubic-bezier(.22,.9,.28,1) 0.28s both;
-}}
-@keyframes bu-input-rise {{
-  from {{ opacity: 0; transform: translateY(14px); }}
-  to {{ opacity: 1; transform: translateY(0); }}
+  display: none !important;
 }}
 .chat-thread {{
   max-width: 720px;
@@ -74,7 +64,6 @@ section[data-testid="stMain"]:has(.ui-phase-marker[data-phase="chat"]) [data-tes
   margin: 0.85rem 0;
   line-height: 1.65;
   color: var(--text, #243d4a);
-  animation: bu-msg-in 0.4s cubic-bezier(.22,.9,.28,1) both;
 }}
 .chat-line.user {{ text-align: right; }}
 .chat-line.user .chat-pill {{
@@ -89,7 +78,6 @@ section[data-testid="stMain"]:has(.ui-phase-marker[data-phase="chat"]) [data-tes
   border: 1px solid var(--cream-border, rgba(255,255,255,0.7));
   color: var(--text, #243d4a);
 }}
-/* Lead face sits left of the first line — not a floating empty bubble above */
 .chat-lead {{
   display: flex;
   align-items: center;
@@ -116,7 +104,6 @@ div[data-testid="stHorizontalBlock"]:has(.chat-lead) {{
   align-items: flex-start !important;
   margin: 0.75rem 0 0.9rem !important;
   max-width: 720px;
-  animation: bu-msg-in 0.4s cubic-bezier(.22,.9,.28,1) both;
 }}
 div[data-testid="stHorizontalBlock"]:has(.chat-lead)
   > div:last-child [data-testid="stMarkdownContainer"],
@@ -130,21 +117,10 @@ div[data-testid="stHorizontalBlock"]:has(.chat-lead)
   line-height: 1.65;
   color: var(--text, #243d4a);
 }}
-@keyframes bu-msg-in {{
-  from {{ opacity: 0; transform: translateY(8px); }}
-  to {{ opacity: 1; transform: translateY(0); }}
-}}
-@media (prefers-reduced-motion: reduce) {{
-  .chat-line,
-  div[data-testid="stHorizontalBlock"]:has(.chat-lead),
-  section[data-testid="stMain"]:has(.ui-phase-marker) [data-testid="stBottomBlockContainer"] {{
-    animation: none !important;
-  }}
-}}
 /* phase={phase_attr} */
 </style>
         """,
-        width="content",
+        unsafe_allow_html=True,
     )
 
 
