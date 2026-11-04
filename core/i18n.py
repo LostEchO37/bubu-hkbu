@@ -483,6 +483,16 @@ MESSAGES: dict[str, dict[Lang, str]] = {
         "zh-TW": "提示：Streamlit Cloud 重啟 / 休眠後，帳號與課表可能被清空（示範環境，非永久雲端）。重要資料請自行備份。",
         "en": "Note: On Streamlit Cloud, reboot/sleep may wipe accounts and timetables (demo storage, not permanent cloud). Back up anything important.",
     },
+    "chunk_reload_tip": {
+        "zh-CN": "若输入框报错或空白：点右上角 ⋮ → Rerun，或硬刷新（Ctrl/⌘+Shift+R）。多半是部署后旧缓存。",
+        "zh-TW": "若輸入框報錯或空白：點右上角 ⋮ → Rerun，或硬重新整理（Ctrl/⌘+Shift+R）。多半是部署後舊快取。",
+        "en": "If inputs error/blank: menu ⋮ → Rerun, or hard-refresh (Ctrl/⌘+Shift+R). Usually a stale cache after deploy.",
+    },
+    "workspace_toggle": {
+        "zh-CN": "我的资料（课表 / 任务 / 邮件）",
+        "zh-TW": "我的資料（課表 / 任務 / 郵件）",
+        "en": "My workspace (timetable / tasks / mail)",
+    },
     "tab_login": {"zh-CN": "登录", "zh-TW": "登入", "en": "Log in"},
     "tab_register": {"zh-CN": "注册", "zh-TW": "註冊", "en": "Sign up"},
     "username": {"zh-CN": "用户名（学号 / 邮箱）", "zh-TW": "用戶名（學號 / 電郵）", "en": "Username (ID / email)"},

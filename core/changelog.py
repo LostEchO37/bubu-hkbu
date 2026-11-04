@@ -8,6 +8,20 @@ from core.i18n import Lang
 ENTRIES: list[dict[str, dict[Lang, str] | str]] = [
     {
         "date": "2026-11-04",
+        "tag": "v0.24",
+        "title": {
+            "zh-CN": "输入框与流畅度",
+            "zh-TW": "輸入框與流暢度",
+            "en": "Inputs + smoother load",
+        },
+        "body": {
+            "zh-CN": "· 部署后 JS 模块失效会自动软刷新一次\n· 资料区改为按需打开，减轻输入组件抢加载\n· 悬浮球延迟注入、复用已开标签，减少卡顿",
+            "zh-TW": "· 部署後 JS 模組失效會自動軟重新整理一次\n· 資料區改為按需打開，減輕輸入元件搶載入\n· 懸浮球延遲注入、重用已開分頁，減少卡頓",
+            "en": "· Auto soft-reload once when Streamlit JS chunks fail after deploy\n· Workspace mounts on demand to cut TextInput contention\n· FAB injects later and reuses a warm tab",
+        },
+    },
+    {
+        "date": "2026-11-04",
         "tag": "v0.23",
         "title": {
             "zh-CN": "悬浮球 Cloud + 语言",

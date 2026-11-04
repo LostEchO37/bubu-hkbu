@@ -40,16 +40,23 @@ def main() -> None:
     from core.changelog import changelog_markdown
 
     md = changelog_markdown("zh-CN")
-    assert "v0.1" in md and "v0.23" in md
+    assert "v0.1" in md and "v0.24" in md
     assert (ROOT / "assets" / "bu_favicon.png").is_file()
+    assert t("chunk_reload_tip", "zh-CN")
+    assert t("workspace_toggle", "en")
     ext_bg = (ROOT / "extension" / "background.js").read_text(encoding="utf-8")
     ext_ct = (ROOT / "extension" / "content.js").read_text(encoding="utf-8")
     assert "bubu-hkbu.streamlit.app" in ext_bg
     assert 'DEFAULT_APP_URL = "https://bubu-hkbu.streamlit.app"' in ext_bg
     assert "bubu_lang" in ext_bg and "lang" in ext_bg
     assert "bubu-set-lang" in ext_bg
+    assert "scheduleInject" in ext_bg and "isStreamlitHost" in ext_bg
     assert "zh-TW" in ext_ct and "lang-chip" in ext_ct
     assert "bubu-hkbu.streamlit.app" in ext_ct
+    assert "12000" in ext_ct
+    assert "inject_chunk_recovery" in (ROOT / "app.py").read_text(encoding="utf-8")
+    assert "workspace_panel_open" in (ROOT / "app.py").read_text(encoding="utf-8")
+    assert "streamlit==1.41.1" in (ROOT / "requirements.txt").read_text(encoding="utf-8")
     assert "密钥" not in md and "secret" not in md.lower()
     assert "OPENAI" not in md and "LostEchO" not in md
     assert t("changelog_privacy", "en")

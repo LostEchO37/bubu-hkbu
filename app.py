@@ -62,10 +62,10 @@ from core.home_agent import (
 from core.changelog import changelog_markdown
 from core.identity import PROJECT_CREDIT, bot_nick
 from core.today import pulse_html
-from core.ui import inject_bu_theme, inject_ui_phase, render_login_header
+from core.ui import inject_bu_theme, inject_chunk_recovery, inject_ui_phase, render_login_header
 
 # Bump when chat UI flow changes — forces one-time hub reset for logged-in sessions.
-_UI_REVISION = 39
+_UI_REVISION = 40
 
 _FAVICON = Path(__file__).resolve().parent / "assets" / "bu_favicon.png"
 st.set_page_config(
@@ -1183,9 +1183,11 @@ def main() -> None:
 
     if not st.session_state.get("user_id"):
         ensure_lang_query_param(lang)
+        inject_chunk_recovery()
         inject_bu_theme(get_app_settings())
         lang = sidebar_settings(lang)
         render_changelog_corner(lang)
+        st.caption(t("chunk_reload_tip", lang))
         login_screen(lang)
         return
 
@@ -1203,15 +1205,24 @@ def main() -> None:
 
     ensure_auth_query_param()
     ensure_lang_query_param(lang)
+    inject_chunk_recovery()
     inject_bu_theme(get_app_settings())
     lang = sidebar_settings(lang)
     sidebar_chrome(lang)
     render_changelog_corner(lang)
 
-    # Full-width chat; workspace is one independent dropdown (avoids column reflow glitches).
+    # Chat first; workspace mounts only when opened (avoids loading every TextInput chunk up front).
     main_chat(lang)
-    with st.expander("🗂️ " + t("workspace_title", lang), expanded=False):
+    if "workspace_panel_open" not in st.session_state:
+        st.session_state.workspace_panel_open = False
+    ws_open = st.toggle(
+        "🗂️ " + t("workspace_toggle", lang),
+        key="workspace_panel_open",
+    )
+    if ws_open:
         render_workspace_panel(lang)
+    else:
+        st.caption(t("chunk_reload_tip", lang))
 
 
 if __name__ == "__main__":

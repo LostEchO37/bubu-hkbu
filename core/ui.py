@@ -20,6 +20,50 @@ def inject_ui_phase(phase: str) -> None:
     )
 
 
+def inject_chunk_recovery() -> None:
+    """One-shot soft reload when Streamlit JS chunks fail after Cloud redeploy."""
+    # Avoid HTML tags inside the script string comments — Streamlit sanitizers are brittle.
+    st.html(
+        """
+<script>
+(function () {
+  if (window.__bubuChunkGuard) return;
+  window.__bubuChunkGuard = true;
+  function isChunkFail(err) {
+    var s = String((err && err.message) || err || "");
+    return (
+      s.indexOf("Failed to fetch dynamically imported module") >= 0 ||
+      s.indexOf("Importing a module script failed") >= 0 ||
+      s.indexOf("error loading dynamically imported module") >= 0
+    );
+  }
+  function recover() {
+    try {
+      if (sessionStorage.getItem("bubu_chunk_reload") === "1") return;
+      sessionStorage.setItem("bubu_chunk_reload", "1");
+      var u = new URL(location.href);
+      u.searchParams.set("_bubu_r", String(Date.now()));
+      location.replace(u.toString());
+    } catch (e) {
+      location.reload();
+    }
+  }
+  window.addEventListener("unhandledrejection", function (ev) {
+    if (isChunkFail(ev.reason)) recover();
+  });
+  window.addEventListener("error", function (ev) {
+    if (isChunkFail(ev && ev.error)) recover();
+  }, true);
+  setTimeout(function () {
+    try { sessionStorage.removeItem("bubu_chunk_reload"); } catch (e) {}
+  }, 15000);
+})();
+</script>
+        """,
+        width="content",
+    )
+
+
 def inject_bu_theme(settings: AppSettings) -> None:
     fs = FONT_PX.get(settings.font_size, "16px")
     hero = HERO_SCALE.get(settings.font_size, "1.65rem")
@@ -609,6 +653,7 @@ from core.home_agent import render_agent_bubble  # noqa: E402
 
 __all__ = [
     "inject_bu_theme",
+    "inject_chunk_recovery",
     "inject_ui_phase",
     "render_agent_bubble",
     "render_fun_home",

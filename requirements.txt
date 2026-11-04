@@ -1,4 +1,5 @@
-streamlit>=1.39.0
+# Pin Streamlit so Cloud does not silently upgrade mid-session (breaks JS chunk hashes).
+streamlit==1.41.1
 openai>=1.40.0
 pypdf>=4.0.0
 python-dotenv>=1.0.0

@@ -14,7 +14,9 @@
    - `LLM_PROVIDER`, `HKBU_SESSION_SECRET` (long random string)
 4. Sharing → **Public**.
 5. Optional: rename App URL to `bubu-hkbu` for a shorter link.
-6. After deploy, hard-refresh once if widgets show “Failed to fetch dynamically imported module”.
+6. After deploy, hard-refresh once (Ctrl/⌘+Shift+R) if widgets show “Failed to fetch dynamically imported module”. The app also auto soft-reloads once on that error.
+7. Pin `streamlit==…` in `requirements.txt` so Cloud does not silently upgrade and bust JS chunk hashes mid-session.
+8. Reboot the app from Cloud “Manage app” if chunk errors persist after refresh.
 
 ## Storage caveat
 

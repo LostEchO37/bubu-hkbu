@@ -332,7 +332,8 @@
   if (document.documentElement) boot();
   else document.addEventListener("DOMContentLoaded", boot, { once: true });
 
-  setInterval(syncAuthFromUrl, 2500);
+  // Slow auth sync — avoid competing with Streamlit chunk downloads on Cloud.
+  setInterval(syncAuthFromUrl, 12000);
   chrome.runtime.onMessage.addListener((msg) => {
     if (msg?.type === "bubu-remount") {
       window.__bubuFabInstalled = false;

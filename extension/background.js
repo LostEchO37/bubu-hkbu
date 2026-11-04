@@ -39,8 +39,31 @@ function canInject(url) {
   }
 }
 
-async function injectFab(tabId) {
+function isStreamlitHost(url) {
   try {
+    const h = new URL(url).hostname;
+    return h === "streamlit.app" || h.endsWith(".streamlit.app");
+  } catch {
+    return false;
+  }
+}
+
+/** Avoid fighting Streamlit's own JS chunk downloads on Cloud pages. */
+async function injectFab(tabId, tabUrl) {
+  try {
+    if (tabUrl && isStreamlitHost(tabUrl)) {
+      // Delay until the app has had time to pull TextInput/ChatInput chunks.
+      await new Promise((r) => setTimeout(r, 2500));
+    }
+    const [{ result: already }] = await chrome.scripting.executeScript({
+      target: { tabId },
+      func: () =>
+        !!(
+          window.__bubuFabInstalled ||
+          document.getElementById("bubu-fab-host")
+        ),
+    });
+    if (already) return;
     await chrome.scripting.executeScript({
       target: { tabId },
       files: ["content.js"],
@@ -97,7 +120,27 @@ async function openFab(action) {
   });
 
   if (hit?.id != null) {
-    await chrome.tabs.update(hit.id, { url: target, active: true });
+    // Navigate inside the existing warm tab (faster than opening a cold one).
+    try {
+      await chrome.scripting.executeScript({
+        target: { tabId: hit.id },
+        func: (next) => {
+          try {
+            if (location.href === next) {
+              location.reload();
+              return;
+            }
+            location.assign(next);
+          } catch {
+            location.href = next;
+          }
+        },
+        args: [target],
+      });
+    } catch {
+      await chrome.tabs.update(hit.id, { url: target, active: true });
+    }
+    await chrome.tabs.update(hit.id, { active: true });
     if (hit.windowId != null) await chrome.windows.update(hit.windowId, { focused: true });
     return;
   }
@@ -133,7 +176,19 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
           sendResponse({ ok: false, error: "此页面无法注入（系统页）" });
           return;
         }
-        await injectFab(tab.id);
+        // Force remount path for the popup button.
+        try {
+          await chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            func: () => {
+              window.__bubuFabInstalled = false;
+              document.getElementById("bubu-fab-host")?.remove();
+            },
+          });
+        } catch {
+          /* ignore */
+        }
+        await injectFab(tab.id, tab.url);
         try {
           await chrome.tabs.sendMessage(tab.id, { type: "bubu-remount" });
         } catch {
@@ -147,53 +202,40 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   return false;
 });
 
+// Debounced inject — Streamlit SPAs fire many complete events; don't stampede.
+const _injectSoon = new Map();
+function scheduleInject(tabId, tabUrl) {
+  if (!canInject(tabUrl)) return;
+  const prev = _injectSoon.get(tabId);
+  if (prev) clearTimeout(prev);
+  const delay = isStreamlitHost(tabUrl) ? 2800 : 400;
+  _injectSoon.set(
+    tabId,
+    setTimeout(() => {
+      _injectSoon.delete(tabId);
+      injectFab(tabId, tabUrl);
+    }, delay)
+  );
+}
+
 chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
   if (info.status !== "complete") return;
-  if (!canInject(tab.url)) return;
-  injectFab(tabId);
+  scheduleInject(tabId, tab.url);
 });
 
 chrome.tabs.onActivated.addListener(async ({ tabId }) => {
   try {
     const tab = await chrome.tabs.get(tabId);
-    if (canInject(tab.url)) injectFab(tabId);
+    scheduleInject(tabId, tab.url);
   } catch {
     /* ignore */
   }
 });
 
-async function registerScripts() {
-  try {
-    await chrome.scripting.unregisterContentScripts({ ids: ["bubu-fab"] }).catch(() => {});
-    await chrome.scripting.registerContentScripts([
-      {
-        id: "bubu-fab",
-        matches: ["http://*/*", "https://*/*"],
-        js: ["content.js"],
-        runAt: "document_idle",
-        persistAcrossSessions: true,
-        allFrames: false,
-      },
-    ]);
-  } catch {
-    /* older chrome / permission */
-  }
-}
-
 chrome.runtime.onInstalled.addListener(async () => {
-  await getAppUrl(); // migrate localhost → Cloud
+  await getAppUrl();
   const { bubu_lang } = await chrome.storage.sync.get({ bubu_lang: DEFAULT_LANG });
   if (!LANGS.includes(bubu_lang)) {
     await chrome.storage.sync.set({ bubu_lang: DEFAULT_LANG });
   }
-  await registerScripts();
-  const tabs = await chrome.tabs.query({});
-  for (const tab of tabs) {
-    if (tab.id != null && canInject(tab.url)) injectFab(tab.id);
-  }
-});
-
-chrome.runtime.onStartup.addListener(() => {
-  getAppUrl();
-  registerScripts();
 });
