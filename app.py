@@ -501,7 +501,7 @@ def render_plugin_download(lang: Lang, *, key: str) -> None:
         st.warning("extension/ missing")
 
 
-@st.dialog("📋 Changelog")
+@st.dialog("📋 更新日志 / Changelog")
 def _changelog_dialog(lang: Lang) -> None:
     st.caption(t("changelog_privacy", lang))
     st.markdown(changelog_markdown(lang))
