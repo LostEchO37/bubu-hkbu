@@ -2,7 +2,6 @@
   if (window.__bubuFabInstalled) return;
   window.__bubuFabInstalled = true;
 
-  // Never mount on Streamlit Cloud — avoids fighting app JS chunks / Manage bar.
   try {
     const h = location.hostname || "";
     if (h === "streamlit.app" || h.endsWith(".streamlit.app")) {
@@ -12,7 +11,8 @@
     /* continue */
   }
 
-  const DEFAULT_APP_URL = "https://bubu-hkbu-mdic9zba2hqxaqskyfihkn.streamlit.app";
+  // Prefer short public URL; legacy hash URL often 404s after Cloud rename.
+  const DEFAULT_APP_URL = "https://bubu-hkbu.streamlit.app";
   const LANGS = ["zh-CN", "zh-TW", "en"];
   const I18N = {
     "zh-CN": {
@@ -48,9 +48,8 @@
   };
   const LANG_BADGE = { "zh-CN": "简", "zh-TW": "繁", en: "EN" };
 
-  // Keep the whole fan in the LEFT-UP quadrant (angle ≥ 100°) so nothing clips
-  // past the right viewport edge when the orb sits bottom-right.
-  const R = 132;
+  // Fan only left-up (100°–180°). R must be large enough that 52px sats don't overlap.
+  const R = 200;
   const deg = (d) => (d * Math.PI) / 180;
   const at = (angleDeg) => ({
     x: Math.round(R * Math.cos(deg(angleDeg))),
@@ -66,6 +65,9 @@
     { action: "lang", n: "文", ...at(100) },
   ];
 
+  // Canvas BOTTOM-RIGHT == orb center; size fits R + sat radius + padding.
+  const CW = 280;
+
   const CSS = `
 :host, * { box-sizing: border-box; }
 .wrap {
@@ -75,7 +77,7 @@
 }
 .scrim {
   position: fixed; inset: 0; z-index: 2147483645;
-  background: rgba(12, 36, 48, 0.22);
+  background: rgba(12, 36, 48, 0.2);
   opacity: 0; pointer-events: none;
   transition: opacity 0.15s ease;
 }
@@ -99,7 +101,6 @@
   background: radial-gradient(circle at 30% 28%, #fff 0%, #e7f6fb 45%, #6ebfd8 100%);
   box-shadow: 0 10px 24px rgba(31,115,140,0.3), 0 0 0 2px rgba(255,255,255,0.7);
   transition: transform 0.18s ease, background 0.18s ease, color 0.18s ease;
-  will-change: transform;
 }
 .orb:hover { transform: scale(1.05); }
 .wrap.open .orb {
@@ -114,45 +115,42 @@
   position: absolute;
   right: 26px;
   bottom: 26px;
-  width: 300px;
-  height: 300px;
-  margin-right: 0;
+  width: ${CW}px;
+  height: ${CW}px;
   pointer-events: none;
   z-index: 1;
   overflow: visible;
-  transform: translate(0, 0);
 }
 .svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .branch {
   stroke: rgba(47,158,184,0.4); stroke-width: 1.5; stroke-linecap: round; fill: none;
   opacity: 0;
 }
-.wrap.open .branch { opacity: 1; transition: opacity 0.15s ease var(--d,0s); }
+.wrap.open .branch { opacity: 1; transition: opacity 0.12s ease var(--d,0s); }
 .sat {
-  position: absolute; left: 50%; top: 50%;
-  width: 54px; height: 54px; padding: 3px; border-radius: 999px;
+  position: absolute;
+  width: 52px; height: 52px; padding: 3px; border-radius: 999px;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
   border: 0;
   background: #fff;
   box-shadow: 0 8px 18px rgba(36,110,130,0.18), 0 0 0 1.5px rgba(255,255,255,0.95);
   color: #164858; cursor: pointer;
   opacity: 0; pointer-events: none;
-  transform: translate(-50%,-50%) scale(0.35);
-  transition: transform 0.22s cubic-bezier(.22,.9,.28,1) var(--d,0s),
-    opacity 0.16s ease var(--d,0s);
+  transform: translate(-50%, -50%) scale(0.4);
+  transition: transform 0.2s cubic-bezier(.22,.9,.28,1) var(--d,0s),
+    opacity 0.14s ease var(--d,0s);
   font: inherit;
-  will-change: transform, opacity;
 }
 .wrap.open .sat {
   opacity: 1; pointer-events: auto;
-  transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(1);
+  transform: translate(-50%, -50%) scale(1);
 }
 .sat:hover {
   box-shadow: 0 10px 22px rgba(36,110,130,0.28), 0 0 0 2px #7ec8e3;
 }
 .sat.lang-sat { background: #dff3f9; color: #145a70; }
 .num { font-size: 9px; font-weight: 800; color: #2f9eb8; line-height: 1; }
-.lab { font-size: 11px; font-weight: 750; line-height: 1.05; text-align: center; max-width: 48px; }
+.lab { font-size: 11px; font-weight: 750; line-height: 1.05; text-align: center; max-width: 46px; }
 @media (prefers-reduced-motion: reduce) {
   .orb, .sat, .branch, .scrim { transition: none !important; }
 }
@@ -190,7 +188,6 @@
   }
 
   function go(action) {
-    // Close menu immediately so the page feels responsive before navigation.
     chrome.runtime.sendMessage({ type: "bubu-fab", action }, () => {
       void chrome.runtime.lastError;
     });
@@ -241,17 +238,18 @@
     orb.innerHTML =
       '<span class="face">(^o^)</span><span class="x" aria-hidden="true">×</span>';
 
-    // Canvas origin = orb center; positions are relative so left-up sats stay on-screen.
     const canvas = document.createElement("div");
     canvas.className = "canvas";
 
     const svgNS = "http://www.w3.org/2000/svg";
     const svg = document.createElementNS(svgNS, "svg");
     svg.setAttribute("class", "svg");
-    svg.setAttribute("viewBox", "0 0 300 300");
+    svg.setAttribute("viewBox", `0 0 ${CW} ${CW}`);
     svg.setAttribute("aria-hidden", "true");
 
-    const origin = 150; // canvas center == orb center via CSS anchoring
+    // Bottom-right of canvas == orb center.
+    const ox = CW;
+    const oy = CW;
     const satButtons = [];
 
     function applyLabels() {
@@ -266,23 +264,23 @@
 
     ACTION_LAYOUT.forEach((item, i) => {
       const delay = `${0.02 + i * 0.03}s`;
+      const x = ox + item.x;
+      const y = oy + item.y;
+
       const line = document.createElementNS(svgNS, "line");
       line.setAttribute("class", "branch");
-      line.setAttribute("x1", String(origin));
-      line.setAttribute("y1", String(origin));
-      line.setAttribute("x2", String(origin + item.x));
-      line.setAttribute("y2", String(origin + item.y));
+      line.setAttribute("x1", String(ox));
+      line.setAttribute("y1", String(oy));
+      line.setAttribute("x2", String(x));
+      line.setAttribute("y2", String(y));
       line.style.setProperty("--d", delay);
       svg.appendChild(line);
 
       const sat = document.createElement("button");
       sat.type = "button";
       sat.className = item.action === "lang" ? "sat lang-sat" : "sat";
-      // Anchor sats at canvas center (orb), then offset by item.x/y (always ≤0 in x).
-      sat.style.left = `${origin}px`;
-      sat.style.top = `${origin}px`;
-      sat.style.setProperty("--x", `${item.x}px`);
-      sat.style.setProperty("--y", `${item.y}px`);
+      sat.style.left = `${x}px`;
+      sat.style.top = `${y}px`;
       sat.style.setProperty("--d", delay);
       sat.addEventListener("click", (e) => {
         e.stopPropagation();

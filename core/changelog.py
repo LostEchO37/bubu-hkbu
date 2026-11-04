@@ -8,6 +8,20 @@ from core.i18n import Lang
 ENTRIES: list[dict[str, dict[Lang, str] | str]] = [
     {
         "date": "2026-11-04",
+        "tag": "v0.29",
+        "title": {
+            "zh-CN": "菜单错位 + 短链",
+            "zh-TW": "選單錯位 + 短鏈",
+            "en": "Menu layout + short URL",
+        },
+        "body": {
+            "zh-CN": "· 修好悬浮球泡泡飞到屏幕中间叠成一串的问题\n· 默认改回短链；旧长链自动迁移（长链改名后会 not found）",
+            "zh-TW": "· 修好懸浮球泡泡飛到螢幕中間疊成一串的問題\n· 預設改回短鏈；舊長鏈自動遷移（長鏈改名後會 not found）",
+            "en": "· Fixed FAB bubbles stacking mid-screen\n· Default back to short Cloud URL; migrate retired hash URLs",
+        },
+    },
+    {
+        "date": "2026-11-04",
         "tag": "v0.28",
         "title": {
             "zh-CN": "修复进页一直转圈",

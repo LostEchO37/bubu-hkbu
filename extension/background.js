@@ -1,20 +1,18 @@
-// Canonical Cloud URL from README — short bubu-hkbu.streamlit.app can auth-loop when cold.
-const DEFAULT_APP_URL = "https://bubu-hkbu-mdic9zba2hqxaqskyfihkn.streamlit.app";
+// Short public URL after Cloud rename. Old hash URLs 404 with "no access / does not exist".
+const DEFAULT_APP_URL = "https://bubu-hkbu.streamlit.app";
 const DEFAULT_LANG = "zh-CN";
 const LANGS = ["zh-CN", "zh-TW", "en"];
 
 function normalizeAppUrl(raw) {
   let s = String(raw || "").trim().replace(/\/$/, "");
   if (!s || /localhost|127\.0\.0\.1/i.test(s)) return DEFAULT_APP_URL;
-  // Migrate unfinished short subdomain / bare host that stalls on Cloud auth handshake.
   try {
     const u = new URL(s);
-    if (
-      u.hostname === "bubu-hkbu.streamlit.app" ||
-      u.hostname === "streamlit.app"
-    ) {
+    // Retired hash subdomain after rename — force the current short name.
+    if (/^bubu-hkbu-[a-z0-9]+\.streamlit\.app$/i.test(u.hostname)) {
       return DEFAULT_APP_URL;
     }
+    if (u.hostname === "streamlit.app") return DEFAULT_APP_URL;
   } catch {
     return DEFAULT_APP_URL;
   }

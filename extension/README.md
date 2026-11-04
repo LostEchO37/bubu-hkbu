@@ -10,8 +10,8 @@ Chrome / Edge 扩展：在任意网页右下角显示悬浮球，点开后分支
 4. 详细信息 → 网站访问权限 →「在所有网站上」
 5. 改代码后点「重新加载」，再刷新目标网页；或点扩展弹窗「在当前页强制显示悬浮球」
 6. 登录态：先在阿Bu 页登录（URL 含 `auth=`），扩展会缓存 token，点悬浮球跳转时带上，避免重登
-7. （可选）扩展选项 / 弹窗 → 语言；阿Bu 地址默认长链
-   `https://bubu-hkbu-mdic9zba2hqxaqskyfihkn.streamlit.app`（短链冷启动易卡在加载圈）
+7. （可选）扩展选项 → 语言与阿Bu 地址；默认 `https://bubu-hkbu.streamlit.app`
+   （若 not found / 没权限：Cloud Sharing 设为 Public，并用 My apps 卡片上的网址）
 
 ## 语言
 

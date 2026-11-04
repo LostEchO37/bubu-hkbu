@@ -40,21 +40,23 @@ def main() -> None:
     from core.changelog import changelog_markdown
 
     md = changelog_markdown("zh-CN")
-    assert "v0.1" in md and "v0.28" in md
+    assert "v0.1" in md and "v0.29" in md
     assert (ROOT / "assets" / "bu_favicon.png").is_file()
     assert t("chunk_reload_tip", "zh-CN")
     assert t("workspace_toggle", "en")
     ext_bg = (ROOT / "extension" / "background.js").read_text(encoding="utf-8")
     ext_ct = (ROOT / "extension" / "content.js").read_text(encoding="utf-8")
-    assert "mdic9zba2hqxaqskyfihkn.streamlit.app" in ext_bg
+    assert 'DEFAULT_APP_URL = "https://bubu-hkbu.streamlit.app"' in ext_bg
+    assert "bubu-hkbu-[a-z0-9]+" in ext_bg
     assert "waitTabComplete" in ext_bg
     assert "bubu_lang" in ext_bg and "bubu-set-lang" in ext_bg
     assert "isStreamlitHost" in ext_bg
     assert "if (tabUrl && isStreamlitHost(tabUrl)) return;" in ext_bg
     assert "zh-TW" in ext_ct and "lang-sat" in ext_ct
     assert "lang-chip" not in ext_ct
-    assert "streamlit.app" in ext_ct
-    assert "at(100)" in ext_ct and "backdrop-filter" not in ext_ct
+    assert "const R = 200" in ext_ct
+    assert "const CW = 280" in ext_ct
+    assert "backdrop-filter" not in ext_ct
     assert "_pending_pick" in (ROOT / "app.py").read_text(encoding="utf-8")
     assert 'st.query_params["pick"] = str(pick)' not in (ROOT / "app.py").read_text(
         encoding="utf-8"

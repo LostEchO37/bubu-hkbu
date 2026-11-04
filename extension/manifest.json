@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "阿Bu · 悬浮球",
-  "version": "1.6.0",
-  "description": "悬浮球深链到稳定 Cloud 长链；冷启动先预热再带参数，避免一直转圈。",
+  "version": "1.6.1",
+  "description": "悬浮球菜单绕左上展开；默认短链 bubu-hkbu；旧长链自动迁移。",
   "action": {
     "default_title": "阿Bu 悬浮球",
     "default_popup": "popup.html",

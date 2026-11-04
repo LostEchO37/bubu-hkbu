@@ -6,5 +6,5 @@
 4. 点「加载已解压的扩展程序」
 5. 选解压后的 bubu-fab-extension 文件夹
 6. 扩展「详细信息」→ 网站访问权限 →「在所有网站上」
-7. 默认打开稳定长链 https://bubu-hkbu-mdic9zba2hqxaqskyfihkn.streamlit.app （可在选项改）
+7. 默认 https://bubu-hkbu.streamlit.app ；若提示没权限，到 Cloud 设 Sharing=Public 并把 My apps 网址填进选项
 8. 弹窗或悬浮球可切换简体 / 繁體 / English（跳转会带语言）
