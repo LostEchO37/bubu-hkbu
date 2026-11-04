@@ -8,6 +8,20 @@ from core.i18n import Lang
 ENTRIES: list[dict[str, dict[Lang, str] | str]] = [
     {
         "date": "2026-11-04",
+        "tag": "v0.21",
+        "title": {
+            "zh-CN": "上传按钮去黑底",
+            "zh-TW": "上傳按鈕去黑底",
+            "en": "Upload button clean",
+        },
+        "body": {
+            "zh-CN": "· Upload 按钮去掉多余黑色矩形底\n· 补全用户路径自查脚本",
+            "zh-TW": "· Upload 按鈕去掉多餘黑色矩形底\n· 補全用戶路徑自查腳本",
+            "en": "· Removed nested black box on Upload\n· Added full user-journey self-check",
+        },
+    },
+    {
+        "date": "2026-11-04",
         "tag": "v0.20",
         "title": {
             "zh-CN": "折叠标题对比度",

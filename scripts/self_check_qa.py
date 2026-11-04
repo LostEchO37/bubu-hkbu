@@ -40,7 +40,7 @@ def main() -> None:
     from core.changelog import changelog_markdown
 
     md = changelog_markdown("zh-CN")
-    assert "v0.1" in md and "v0.20" in md
+    assert "v0.1" in md and "v0.21" in md
     assert "密钥" not in md and "secret" not in md.lower()
     assert "OPENAI" not in md and "LostEchO" not in md
     assert t("changelog_privacy", "en")
@@ -100,8 +100,10 @@ def main() -> None:
     assert "bu-pulse" in pulse_html(p, "zh-CN", now=now)
 
     from scripts.smoke_ui_flow import main as smoke
+    from scripts.full_user_journey import main as journey
 
     smoke()
+    journey()
     print("self_check_qa: ok")
 
 

@@ -349,29 +349,48 @@ header[data-testid="stHeader"] > div {{
   border-top: 1px solid var(--cream-border) !important;
 }}
 
-/* File uploader */
+/* File uploader — dropzone only; never paint nested button chrome black */
 .stApp [data-testid="stFileUploader"] section,
-.stApp [data-testid="stFileUploaderDropzone"],
-.stApp [data-testid="stFileUploaderDropzone"] * {{
-  background: var(--btn-bg) !important;
-  background-color: var(--btn-bg) !important;
-  border-color: var(--field-border) !important;
-  color: var(--btn-fg) !important;
+.stApp [data-testid="stFileUploaderDropzone"] {{
+  background: var(--cream) !important;
+  background-color: var(--cream) !important;
+  border-color: var(--cream-border) !important;
+  color: var(--text) !important;
 }}
 .stApp [data-testid="stFileUploaderDropzone"] small,
 .stApp [data-testid="stFileUploader"] [data-testid="stMarkdownContainer"],
 .stApp [data-testid="stFileUploader"] [data-testid="stMarkdownContainer"] * {{
   color: var(--text-soft) !important;
   -webkit-text-fill-color: var(--text-soft) !important;
+  background: transparent !important;
+  background-color: transparent !important;
 }}
-.stApp [data-testid="stFileUploader"] button {{
+.stApp [data-testid="stFileUploader"] button,
+.stApp [data-testid="stFileUploaderDropzone"] button {{
   background: linear-gradient(135deg, #1f738c, #2f9eb8) !important;
+  background-color: #2f9eb8 !important;
+  background-image: linear-gradient(135deg, #1f738c, #2f9eb8) !important;
   color: #f7fcff !important;
   border: none !important;
+  box-shadow: none !important;
 }}
-.stApp [data-testid="stFileUploader"] button * {{
+.stApp [data-testid="stFileUploader"] button *,
+.stApp [data-testid="stFileUploaderDropzone"] button *,
+.stApp [data-testid="stFileUploader"] button span,
+.stApp [data-testid="stFileUploader"] button div,
+.stApp [data-testid="stFileUploader"] button p {{
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
   color: #f7fcff !important;
   -webkit-text-fill-color: #f7fcff !important;
+  box-shadow: none !important;
+  border: none !important;
+}}
+.stApp [data-testid="stFileUploader"] button svg {{
+  fill: #f7fcff !important;
+  color: #f7fcff !important;
+  background: transparent !important;
 }}
 
 [data-testid="stChatMessage"] {{
