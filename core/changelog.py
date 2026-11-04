@@ -8,6 +8,20 @@ from core.i18n import Lang
 ENTRIES: list[dict[str, dict[Lang, str] | str]] = [
     {
         "date": "2026-11-04",
+        "tag": "v0.25",
+        "title": {
+            "zh-CN": "修复启动 TypeError",
+            "zh-TW": "修復啟動 TypeError",
+            "en": "Fix startup TypeError",
+        },
+        "body": {
+            "zh-CN": "· 兼容不同 Streamlit 版本的 st.html 参数，消除启动红字\n· 模块恢复脚本改用更稳妥的注入方式",
+            "zh-TW": "· 相容不同 Streamlit 版本的 st.html 參數，消除啟動紅字\n· 模組恢復腳本改用更穩妥的注入方式",
+            "en": "· Compatible st.html across Streamlit versions (no startup red error)\n· Chunk-recovery script uses a safer inject path",
+        },
+    },
+    {
+        "date": "2026-11-04",
         "tag": "v0.24",
         "title": {
             "zh-CN": "输入框与流畅度",

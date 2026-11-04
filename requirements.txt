@@ -1,5 +1,6 @@
-# Pin Streamlit so Cloud does not silently upgrade mid-session (breaks JS chunk hashes).
-streamlit==1.41.1
+# Prefer a recent Streamlit (st.html width / JS kwargs). Avoid ultra-narrow pins that
+# break API usage; Cloud redeploys still need a hard refresh after upgrades.
+streamlit>=1.39.0,<1.67
 openai>=1.40.0
 pypdf>=4.0.0
 python-dotenv>=1.0.0

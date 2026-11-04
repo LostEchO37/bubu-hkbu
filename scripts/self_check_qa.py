@@ -40,7 +40,7 @@ def main() -> None:
     from core.changelog import changelog_markdown
 
     md = changelog_markdown("zh-CN")
-    assert "v0.1" in md and "v0.24" in md
+    assert "v0.1" in md and "v0.25" in md
     assert (ROOT / "assets" / "bu_favicon.png").is_file()
     assert t("chunk_reload_tip", "zh-CN")
     assert t("workspace_toggle", "en")
@@ -56,7 +56,12 @@ def main() -> None:
     assert "12000" in ext_ct
     assert "inject_chunk_recovery" in (ROOT / "app.py").read_text(encoding="utf-8")
     assert "workspace_panel_open" in (ROOT / "app.py").read_text(encoding="utf-8")
-    assert "streamlit==1.41.1" in (ROOT / "requirements.txt").read_text(encoding="utf-8")
+    req = (ROOT / "requirements.txt").read_text(encoding="utf-8")
+    assert "streamlit>=" in req
+    assert "safe_st_html" in (ROOT / "core" / "ui.py").read_text(encoding="utf-8")
+    from core.ui import inject_chunk_recovery, safe_st_html
+
+    assert callable(inject_chunk_recovery) and callable(safe_st_html)
     assert "密钥" not in md and "secret" not in md.lower()
     assert "OPENAI" not in md and "LostEchO" not in md
     assert t("changelog_privacy", "en")

@@ -23,6 +23,14 @@ def _all_welcome_bodies() -> set[str]:
 UiPhase = Literal["hub", "burst", "chat"]
 
 
+def _html(body: str, *, width: str = "content") -> None:
+    """st.html without crashing on older Streamlit that lack width=."""
+    try:
+        st.html(body, width=width)  # type: ignore[call-arg]
+    except TypeError:
+        st.html(body)
+
+
 def inject_ui_phase(phase: UiPhase) -> None:
     """Backward-compatible alias; prefer core.ui.inject_ui_phase."""
     _ensure_shell_css(phase)
@@ -34,7 +42,7 @@ def inject_ui_phase(phase: UiPhase) -> None:
 
 def _ensure_shell_css(phase: UiPhase | None = None) -> None:
     phase_attr = phase or "chat"
-    st.html(
+    _html(
         f"""
 <style>
 section[data-testid="stMain"]:has(.ui-phase-marker[data-phase="hub"]) .block-container,
@@ -179,7 +187,7 @@ def render_agent_bubble(
         wake_params["lang"] = ui_lang
     wake_href = html.escape(_q(wake_params))
 
-    st.html(
+    _html(
         f"""
 <div class="hub-stage-marker" style="display:none"></div>
 <style>
@@ -436,7 +444,7 @@ def render_mini_prompt_bubbles(
     hint_e = html.escape(hint)
     cards_html = "\n".join(cards)
 
-    st.html(
+    _html(
         f"""
 <div class="mitosis-stage-marker" style="display:none"></div>
 <style>

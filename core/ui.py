@@ -3,10 +3,30 @@
 from __future__ import annotations
 
 import html
+import inspect
+from typing import Any
 
 import streamlit as st
 
 from core.app_settings import FONT_PX, HERO_SCALE, AppSettings
+
+
+def safe_st_html(body: str, *, width: str = "content") -> None:
+    """Call st.html across Streamlit versions (width / JS kwargs differ)."""
+    kwargs: dict[str, Any] = {}
+    try:
+        params = inspect.signature(st.html).parameters
+    except (TypeError, ValueError):
+        params = {}
+    if "width" in params:
+        kwargs["width"] = width
+    if "unsafe_allow_javascript" in params and "<script" in body.lower():
+        kwargs["unsafe_allow_javascript"] = True
+    try:
+        st.html(body, **kwargs)
+    except TypeError:
+        # Extremely old / odd builds: positional only.
+        st.html(body)
 
 
 def inject_ui_phase(phase: str) -> None:
@@ -22,9 +42,9 @@ def inject_ui_phase(phase: str) -> None:
 
 def inject_chunk_recovery() -> None:
     """One-shot soft reload when Streamlit JS chunks fail after Cloud redeploy."""
-    # Avoid HTML tags inside the script string comments — Streamlit sanitizers are brittle.
-    st.html(
-        """
+    # components.html reliably runs script across Streamlit versions; st.html may strip JS
+    # or reject kwargs (width / unsafe_allow_javascript) on older Cloud pins.
+    script = """
 <script>
 (function () {
   if (window.__bubuChunkGuard) return;
@@ -59,9 +79,16 @@ def inject_chunk_recovery() -> None:
   }, 15000);
 })();
 </script>
-        """,
-        width="content",
-    )
+"""
+    try:
+        import streamlit.components.v1 as components
+
+        components.html(script, height=0, width=0)
+    except Exception:
+        try:
+            safe_st_html(script, width="content")
+        except Exception:
+            pass
 
 
 def inject_bu_theme(settings: AppSettings) -> None:
@@ -123,7 +150,7 @@ def inject_bu_theme(settings: AppSettings) -> None:
     exp_fg = "#e8f6fb" if is_dark else "#1f4554"
     # st.html with style-only goes to the event container (not shown as page text).
     # Never put raw HTML tags inside CSS comments — sanitizers break the style block.
-    st.html(
+    safe_st_html(
         f"""
 <style>
 @import url("https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap");
@@ -623,7 +650,7 @@ div[role="dialog"] h3 {{
 
 def render_login_header(title: str, hint: str) -> None:
     t, h = html.escape(title), html.escape(hint)
-    st.html(
+    safe_st_html(
         f"""
 <div class="bu-hero bu-login">
   <h2>{t}</h2>
@@ -658,4 +685,5 @@ __all__ = [
     "render_agent_bubble",
     "render_fun_home",
     "render_login_header",
+    "safe_st_html",
 ]
