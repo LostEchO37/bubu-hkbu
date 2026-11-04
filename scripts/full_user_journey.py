@@ -200,8 +200,8 @@ def check_chat_and_hub_invariants() -> None:
     assert "st.button" not in mini and "bu-prompt" in mini
 
     md = changelog_markdown("en")
-    assert "v0.26" in md
-    assert ENTRIES[0]["tag"] == "v0.26"
+    assert "v0.27" in md
+    assert ENTRIES[0]["tag"] == "v0.27"
     assert (ROOT / "assets" / "bu_favicon.png").is_file()
     blob = " ".join(
         str(v) for e in ENTRIES for v in (e.get("body") or {}).values()

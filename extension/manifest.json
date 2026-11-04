@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "阿Bu · 悬浮球",
-  "version": "1.5.0",
-  "description": "其它网页右下角悬浮球（不进 Cloud 页抢加载）；展开菜单切换语言。",
+  "version": "1.5.1",
+  "description": "其它网页右下角悬浮球；菜单只向左上展开避免遮挡；轻跳转。",
   "action": {
     "default_title": "阿Bu 悬浮球",
     "default_popup": "popup.html",

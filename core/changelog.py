@@ -8,6 +8,20 @@ from core.i18n import Lang
 ENTRIES: list[dict[str, dict[Lang, str] | str]] = [
     {
         "date": "2026-11-04",
+        "tag": "v0.27",
+        "title": {
+            "zh-CN": "悬浮球防遮挡",
+            "zh-TW": "懸浮球防遮擋",
+            "en": "FAB no clip",
+        },
+        "body": {
+            "zh-CN": "· 功能泡泡只向左上展开，右侧不再被切边\n· 去掉全屏模糊、简化动画；跳转改为单次 tabs.update",
+            "zh-TW": "· 功能泡泡只向左上展開，右側不再被切邊\n· 去掉全螢幕模糊、簡化動畫；跳轉改為單次 tabs.update",
+            "en": "· Bubbles fan only up-left so the right edge no longer clips them\n· Dropped heavy blur; faster single-tab navigation",
+        },
+    },
+    {
+        "date": "2026-11-04",
         "tag": "v0.26",
         "title": {
             "zh-CN": "悬浮球美化 + 减卡顿",

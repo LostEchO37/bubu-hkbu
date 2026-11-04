@@ -40,7 +40,7 @@ def main() -> None:
     from core.changelog import changelog_markdown
 
     md = changelog_markdown("zh-CN")
-    assert "v0.1" in md and "v0.26" in md
+    assert "v0.1" in md and "v0.27" in md
     assert (ROOT / "assets" / "bu_favicon.png").is_file()
     assert t("chunk_reload_tip", "zh-CN")
     assert t("workspace_toggle", "en")
@@ -54,6 +54,8 @@ def main() -> None:
     assert "zh-TW" in ext_ct and "lang-sat" in ext_ct
     assert "lang-chip" not in ext_ct
     assert "streamlit.app" in ext_ct
+    assert "at(100)" in ext_ct and "backdrop-filter" not in ext_ct
+    assert "tabs.update" in ext_bg
     assert "inject_chunk_recovery" in (ROOT / "app.py").read_text(encoding="utf-8")
     assert "workspace_panel_open" in (ROOT / "app.py").read_text(encoding="utf-8")
     ui_src = (ROOT / "core" / "ui.py").read_text(encoding="utf-8")

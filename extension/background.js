@@ -95,9 +95,10 @@ async function openFab(action) {
   const base = await getAppUrl();
   const lang = await getLang();
   const url = new URL(base);
+  // Keep query tiny — fewer Streamlit query-param churn / cache keys.
   const auth = await resolveAuth(url.origin);
   if (auth) url.searchParams.set("auth", auth);
-  url.searchParams.set("lang", lang);
+  if (lang && lang !== "zh-CN") url.searchParams.set("lang", lang);
 
   if (action === "chat") {
     url.searchParams.set("wake", "1");
@@ -109,39 +110,25 @@ async function openFab(action) {
   const tabs = await chrome.tabs.query({});
   const hit = tabs.find((t) => {
     try {
-      const u = new URL(t.url || "");
-      return u.origin === url.origin;
+      return new URL(t.url || "").origin === url.origin;
     } catch {
       return false;
     }
   });
 
+  // Single tabs.update is faster than inject+assign+focus round-trips.
   if (hit?.id != null) {
-    // Navigate inside the existing warm tab (faster than opening a cold one).
-    try {
-      await chrome.scripting.executeScript({
-        target: { tabId: hit.id },
-        func: (next) => {
-          try {
-            if (location.href === next) {
-              location.reload();
-              return;
-            }
-            location.assign(next);
-          } catch {
-            location.href = next;
-          }
-        },
-        args: [target],
-      });
-    } catch {
-      await chrome.tabs.update(hit.id, { url: target, active: true });
+    await chrome.tabs.update(hit.id, { url: target, active: true });
+    if (hit.windowId != null) {
+      try {
+        await chrome.windows.update(hit.windowId, { focused: true });
+      } catch {
+        /* ignore */
+      }
     }
-    await chrome.tabs.update(hit.id, { active: true });
-    if (hit.windowId != null) await chrome.windows.update(hit.windowId, { focused: true });
     return;
   }
-  await chrome.tabs.create({ url: target });
+  await chrome.tabs.create({ url: target, active: true });
 }
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
