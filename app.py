@@ -65,7 +65,7 @@ from core.today import pulse_html
 from core.ui import inject_bu_theme, inject_ui_phase, render_login_header
 
 # Bump when chat UI flow changes — forces one-time hub reset for logged-in sessions.
-_UI_REVISION = 30
+_UI_REVISION = 31
 
 st.set_page_config(
     page_title="阿Bu · HKBU Student Assistant",
@@ -501,11 +501,18 @@ def render_plugin_download(lang: Lang, *, key: str) -> None:
         st.warning("extension/ missing")
 
 
+def render_changelog_corner(lang: Lang) -> None:
+    """Top-right changelog — product notes only, no private ops details."""
+    _left, right = st.columns([4.2, 1.15])
+    with right:
+        with st.popover("📋 " + t("changelog_title", lang), use_container_width=True):
+            st.caption(t("changelog_privacy", lang))
+            st.markdown(changelog_markdown(lang))
+
+
 def login_screen(lang: Lang) -> None:
     render_login_header(t("login_title", lang), t("login_hint", lang))
     render_storage_notice(lang)
-    with st.expander(t("changelog_title", lang), expanded=False):
-        st.markdown(changelog_markdown(lang))
     with st.expander(t("plugin_section", lang), expanded=False):
         render_plugin_download(lang, key="plugin_dl_login")
     tab_in, tab_up = st.tabs([t("tab_login", lang), t("tab_register", lang)])
@@ -606,8 +613,6 @@ def sidebar_chrome(lang: Lang) -> None:
             st.session_state.ui_lang = keep_lang
             st.session_state._lang_user_set = True
             st.rerun()
-    with st.sidebar.expander(t("changelog_title", lang), expanded=False):
-        st.markdown(changelog_markdown(lang))
     with st.sidebar.expander(t("plugin_section", lang), expanded=False):
         render_plugin_download(lang, key="plugin_dl_sidebar")
 
@@ -1152,6 +1157,7 @@ def main() -> None:
         ensure_lang_query_param(lang)
         inject_bu_theme(get_app_settings())
         lang = sidebar_settings(lang)
+        render_changelog_corner(lang)
         login_screen(lang)
         return
 
@@ -1172,6 +1178,7 @@ def main() -> None:
     inject_bu_theme(get_app_settings())
     lang = sidebar_settings(lang)
     sidebar_chrome(lang)
+    render_changelog_corner(lang)
 
     # Full-width chat; workspace is one independent dropdown (avoids column reflow glitches).
     main_chat(lang)

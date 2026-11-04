@@ -39,8 +39,11 @@ def main() -> None:
 
     from core.changelog import changelog_markdown
 
-    assert "2026-11-04" in changelog_markdown("zh-CN")
-    assert "Changelog" in t("changelog_title", "en") or "更新" in t("changelog_title", "zh-CN")
+    md = changelog_markdown("zh-CN")
+    assert "v0.1" in md and "v0.14" in md
+    assert "密钥" not in md and "secret" not in md.lower()
+    assert "OPENAI" not in md and "LostEchO" not in md
+    assert t("changelog_privacy", "en")
 
     for key in (
         "tt_ready_hint",

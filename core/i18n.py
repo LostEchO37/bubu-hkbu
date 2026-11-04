@@ -285,6 +285,11 @@ MESSAGES: dict[str, dict[Lang, str]] = {
         "zh-TW": "更新日誌",
         "en": "Changelog",
     },
+    "changelog_privacy": {
+        "zh-CN": "仅展示产品改动；不含账号、密钥或内部路径。",
+        "zh-TW": "僅展示產品改動；不含帳號、密鑰或內部路徑。",
+        "en": "Product changes only — no accounts, secrets, or private paths.",
+    },
     "fab_tip": {
         "zh-CN": "点开功能球",
         "zh-TW": "點開功能球",
