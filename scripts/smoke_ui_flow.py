@@ -41,7 +41,8 @@ def main() -> None:
     assert "wake" in hub_src and "auth_token" in hub_src
     assert "ui_lang" in hub_src
     assert "bu-cta" in hub_src and "bu-title" in hub_src
-    assert "Outfit" in hub_src
+    assert "PingFang SC" in hub_src
+    assert "fonts.googleapis.com" not in hub_src
     assert "bu-credit" in hub_src
     assert "GTSC2066 Group 16" in hub_src
 

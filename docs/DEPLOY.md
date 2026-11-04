@@ -21,6 +21,17 @@ After any rename, reboot, or “not found” page, open [share.streamlit.io](htt
 7. Keep a sensible `streamlit` range in `requirements.txt` so Cloud rebuilds stay predictable.
 8. Reboot the app from Cloud “Manage app” if chunk errors persist after refresh.
 
+## Other devices feel stuck / never finish loading
+
+Common causes on phones / campus Wi‑Fi:
+
+1. **Cloud sleep** — after ~12h without traffic the app hibernates. Visitors see a wake page; click **Yes, get this app back up** and wait **30–60s**, then hard-refresh.
+2. **Sharing not Public** — other accounts get “not found / no access”.
+3. **Stale JS chunks after redeploy** — hard-refresh (Ctrl/⌘+Shift+R) once.
+4. The app avoids Google Fonts and heavy infinite animations so weak networks / phones paint faster.
+
+Optional: GitHub Action `.github/workflows/keep-awake.yml` pings the live URL on a schedule (best-effort; Cloud may still sleep).
+
 ## “You do not have access to this app or it does not exist”
 
 1. Confirm you are signed into Streamlit as the same GitHub user that owns the deploy (`lostecho37`).

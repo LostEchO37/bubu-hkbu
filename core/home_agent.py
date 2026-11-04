@@ -83,7 +83,6 @@ section[data-testid="stMain"]:has(.ui-phase-marker[data-phase="chat"]) [data-tes
   text-align: left;
   white-space: pre-wrap;
   background: var(--cream, rgba(255,255,255,0.88));
-  backdrop-filter: blur(14px);
   border-radius: 22px 22px 6px 22px;
   padding: 0.72rem 1.1rem;
   box-shadow: 0 12px 32px rgba(36, 110, 130, 0.11);
@@ -123,8 +122,7 @@ div[data-testid="stHorizontalBlock"]:has(.chat-lead)
   > div:last-child [data-testid="stMarkdownContainer"],
 div[data-testid="stHorizontalBlock"]:has(.chat-lead)
   > div:last-child [data-testid="stWriteStreamContainer"] {{
-  background: var(--cream, rgba(255,255,255,0.42));
-  backdrop-filter: blur(12px);
+  background: var(--cream, rgba(255,255,255,0.72));
   border-radius: 6px 22px 22px 22px;
   padding: 0.75rem 1.1rem;
   box-shadow: 0 10px 28px rgba(36, 110, 130, 0.08);
@@ -191,7 +189,6 @@ def render_agent_bubble(
         f"""
 <div class="hub-stage-marker" style="display:none"></div>
 <style>
-@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&family=Noto+Sans+SC:wght@400;600;700&display=swap");
 .bu-stage {{
   position: relative;
   min-height: 74vh;
@@ -200,15 +197,13 @@ def render_agent_bubble(
   justify-content: center;
   padding: 2rem 0.5rem 3.5rem;
   overflow: hidden;
-  font-family: "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", sans-serif;
+  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
 }}
 .bu-orb {{
   position: absolute;
   border-radius: 50%;
-  filter: blur(2px);
   pointer-events: none;
   z-index: 0;
-  will-change: transform, opacity;
 }}
 .bu-orb-a {{
   width: min(460px, 78vw);
@@ -221,19 +216,16 @@ def render_agent_bubble(
     rgba(170,224,238,0.5) 42%,
     rgba(90,180,200,0.14) 68%,
     transparent 78%);
-  animation: bu-breathe 8s ease-in-out infinite;
 }}
 .bu-orb-b {{
   width: 200px; height: 200px;
   right: 6%; top: 14%;
   background: radial-gradient(circle, rgba(255,214,170,0.42), transparent 72%);
-  animation: bu-drift 12s ease-in-out infinite alternate;
 }}
 .bu-orb-c {{
   width: 160px; height: 160px;
   left: 8%; bottom: 14%;
   background: radial-gradient(circle, rgba(110,198,220,0.45), transparent 72%);
-  animation: bu-drift 10s ease-in-out infinite alternate-reverse;
 }}
 .bu-ring {{
   position: absolute;
@@ -246,14 +238,13 @@ def render_agent_bubble(
   box-shadow: inset 0 0 40px rgba(255,255,255,0.12);
   pointer-events: none;
   z-index: 0;
-  animation: bu-ring 10s ease-in-out infinite;
 }}
 .bu-hero {{
   position: relative;
   z-index: 1;
   text-align: center;
   max-width: 38rem;
-  animation: bu-rise 0.8s cubic-bezier(.22,.9,.28,1) both;
+  animation: bu-rise 0.55s cubic-bezier(.22,.9,.28,1) both;
 }}
 .bu-kicker {{
   display: inline-flex;
@@ -267,10 +258,8 @@ def render_agent_bubble(
   margin: 0 0 1.05rem;
   padding: 0.35rem 0.85rem;
   border-radius: 999px;
-  background: rgba(255,255,255,0.4);
+  background: rgba(255,255,255,0.55);
   border: 1px solid rgba(255,255,255,0.55);
-  backdrop-filter: blur(10px);
-  animation: bu-rise 0.8s cubic-bezier(.22,.9,.28,1) 0.06s both;
 }}
 .bu-kicker .bu-face {{
   font-size: 1.05rem;
@@ -280,14 +269,13 @@ def render_agent_bubble(
 }}
 .bu-title {{
   margin: 0;
-  font-family: "Outfit", "Noto Sans SC", "PingFang SC", sans-serif;
+  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
   font-weight: 700;
   font-size: clamp(2.35rem, 6.4vw, 3.45rem);
   line-height: 1.22;
   letter-spacing: -0.01em;
   color: #143744;
   text-wrap: balance;
-  animation: bu-rise 0.85s cubic-bezier(.22,.9,.28,1) 0.1s both;
 }}
 .bu-title span {{
   display: inline-block;
@@ -303,7 +291,6 @@ def render_agent_bubble(
   font-size: 1.06rem;
   line-height: 1.62;
   color: #4a6878;
-  animation: bu-rise 0.85s cubic-bezier(.22,.9,.28,1) 0.18s both;
 }}
 a.bu-cta {{
   position: relative;
@@ -325,15 +312,6 @@ a.bu-cta {{
     0 18px 42px rgba(31, 115, 140, 0.36),
     inset 0 1px 0 rgba(255,255,255,0.38);
   transition: transform 0.22s ease, box-shadow 0.22s ease, filter 0.22s ease;
-  animation: bu-rise 0.9s cubic-bezier(.22,.9,.28,1) 0.28s both, bu-glow 3.8s ease-in-out 1.1s infinite;
-}}
-a.bu-cta::before {{
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.28) 50%, transparent 65%);
-  transform: translateX(-120%);
-  animation: bu-shimmer 3.2s ease-in-out 1.6s infinite;
 }}
 a.bu-cta:hover {{
   transform: translateY(-3px) scale(1.025);
@@ -353,37 +331,19 @@ a.bu-cta:hover .bu-cta-arrow {{ transform: translateX(5px); }}
   text-transform: uppercase;
   color: #6a8a9a;
   opacity: 0.85;
-  animation: bu-rise 0.9s cubic-bezier(.22,.9,.28,1) 0.4s both;
-}}
-@keyframes bu-breathe {{
-  0%, 100% {{ transform: translate(-50%, -50%) scale(1); opacity: 0.94; }}
-  50% {{ transform: translate(-50%, -53%) scale(1.07); opacity: 1; }}
-}}
-@keyframes bu-drift {{
-  from {{ transform: translate(0, 0); }}
-  to {{ transform: translate(20px, -16px); }}
-}}
-@keyframes bu-ring {{
-  0%, 100% {{ opacity: 0.35; transform: translate(-50%, -50%) scale(1); }}
-  50% {{ opacity: 0.65; transform: translate(-50%, -50%) scale(1.04); }}
 }}
 @keyframes bu-rise {{
-  from {{ opacity: 0; transform: translateY(20px); }}
+  from {{ opacity: 0; transform: translateY(16px); }}
   to {{ opacity: 1; transform: translateY(0); }}
 }}
-@keyframes bu-glow {{
-  0%, 100% {{ box-shadow: 0 18px 42px rgba(31, 115, 140, 0.36), inset 0 1px 0 rgba(255,255,255,0.38); }}
-  50% {{ box-shadow: 0 22px 54px rgba(31, 115, 140, 0.5), inset 0 1px 0 rgba(255,255,255,0.42); }}
-}}
-@keyframes bu-shimmer {{
-  0% {{ transform: translateX(-120%); }}
-  40%, 100% {{ transform: translateX(120%); }}
-}}
 @media (prefers-reduced-motion: reduce) {{
-  .bu-orb, .bu-ring, .bu-hero, .bu-kicker, .bu-title, .bu-sub, a.bu-cta, .bu-credit {{
-    animation: none !important;
-  }}
-  a.bu-cta::before {{ display: none; }}
+  .bu-hero {{ animation: none !important; }}
+}}
+@media (max-width: 900px) {{
+  .bu-stage {{ min-height: 62vh; padding: 1.2rem 0.35rem 2.2rem; }}
+  .bu-orb-b, .bu-orb-c, .bu-ring {{ display: none !important; }}
+  .bu-orb-a {{ width: min(320px, 70vw); height: min(320px, 70vw); }}
+  .bu-title {{ font-size: clamp(1.85rem, 7vw, 2.6rem); }}
 }}
 </style>
 <div class="bu-stage">
@@ -495,8 +455,7 @@ a.bu-prompt {{
   border-radius: 18px;
   text-decoration: none !important;
   color: #1f4554 !important;
-  background: rgba(255,255,255,0.58);
-  backdrop-filter: blur(16px);
+  background: rgba(255,255,255,0.88);
   border: 1px solid rgba(255,255,255,0.72);
   border-left: 3px solid rgba(47, 158, 184, 0.55);
   box-shadow: 0 12px 32px rgba(36, 110, 130, 0.1);
@@ -515,7 +474,7 @@ a.bu-prompt:hover .bu-prompt-go {{
   color: #1f738c;
 }}
 .bu-prompt-num {{
-  font-family: "Outfit", "Noto Sans SC", sans-serif;
+  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
   font-weight: 700;
   font-size: 0.82rem;
   letter-spacing: 0.05em;

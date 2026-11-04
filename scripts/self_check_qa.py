@@ -73,8 +73,13 @@ def main() -> None:
     assert "dock_workspace_below_chat_input" in ui_src
     assert "--field-border: #8fb6c6" in ui_src
     assert "hideCloudFavoriteStar" in ui_src
+    assert "fonts.googleapis.com" not in ui_src
+    assert "feTurbulence" not in ui_src
     assert "components.html" not in ui_src
     assert "rgba(255,255,255,0.85)" not in ui_src
+    ha_src = (ROOT / "core" / "home_agent.py").read_text(encoding="utf-8")
+    assert "fonts.googleapis.com" not in ha_src
+    assert t("cold_start_tip", "zh-CN")
     req = (ROOT / "requirements.txt").read_text(encoding="utf-8")
     assert "streamlit>=" in req
     assert "safe_st_html" in ui_src

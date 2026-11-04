@@ -1,0 +1,25 @@
+# Best-effort ping so Community Cloud is less likely to hibernate between demos.
+# Streamlit may still sleep; visitors can always click "Yes, get this app back up".
+name: Keep Cloud awake
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Ping Streamlit health + home
+        run: |
+          set +e
+          for url in \
+            "https://bubu-hkbu.streamlit.app/_stcore/health" \
+            "https://bubu-hkbu.streamlit.app/"
+          do
+            echo "GET $url"
+            curl -fsS -L --max-time 45 -A "BuBuKeepAlive/1.0" -o /dev/null -w "status=%{http_code} time=%{time_total}s\n" "$url"
+          done
+          exit 0

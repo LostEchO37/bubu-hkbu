@@ -488,6 +488,11 @@ MESSAGES: dict[str, dict[Lang, str]] = {
         "zh-TW": "若輸入框報錯或空白：點右上角 ⋮ → Rerun，或硬重新整理（Ctrl/⌘+Shift+R）。多半是部署後舊快取。",
         "en": "If inputs error/blank: menu ⋮ → Rerun, or hard-refresh (Ctrl/⌘+Shift+R). Usually a stale cache after deploy.",
     },
+    "cold_start_tip": {
+        "zh-CN": "其他设备第一次打开若一直转圈：可能是 Cloud 休眠，点 Yes, get this app back up 后等 30–60 秒；再硬刷新一次。",
+        "zh-TW": "其他裝置第一次打開若一直轉圈：可能是 Cloud 休眠，點 Yes, get this app back up 後等 30–60 秒；再硬重新整理一次。",
+        "en": "If another device spins forever: the Cloud app may be asleep — tap “Yes, get this app back up”, wait 30–60s, then hard-refresh.",
+    },
     "workspace_toggle": {
         "zh-CN": "我的资料（课表 / 任务 / 邮件）",
         "zh-TW": "我的資料（課表 / 任務 / 郵件）",

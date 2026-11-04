@@ -71,14 +71,15 @@ from core.ui import (
 )
 
 # Bump when chat UI flow changes — forces one-time hub reset for logged-in sessions.
-_UI_REVISION = 48
+_UI_REVISION = 50
 
 _FAVICON = Path(__file__).resolve().parent / "assets" / "bu_favicon.png"
 st.set_page_config(
     page_title="阿Bu · HKBU Student Assistant",
     page_icon=str(_FAVICON) if _FAVICON.is_file() else "🫧",
     layout="wide",
-    initial_sidebar_state="expanded",
+    # Collapsed first paint is faster on phones / other devices.
+    initial_sidebar_state="collapsed",
 )
 
 
@@ -1197,6 +1198,7 @@ def main() -> None:
         inject_bu_theme(get_app_settings())
         lang = sidebar_settings(lang)
         render_changelog_corner(lang)
+        st.caption(t("cold_start_tip", lang))
         st.caption(t("chunk_reload_tip", lang))
         login_screen(lang)
         return

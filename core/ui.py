@@ -154,7 +154,7 @@ def inject_bu_theme(settings: AppSettings) -> None:
     safe_st_html(
         f"""
 <style>
-@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap");
+/* System fonts only — Google Fonts often hang on campus / CN networks */
 :root {{
 {vars_css}
   --font-base: {fs};
@@ -163,14 +163,15 @@ def inject_bu_theme(settings: AppSettings) -> None:
   --btn-fg: {btn_fg};
   --exp-bg: {exp_bg};
   --exp-fg: {exp_fg};
+  --font-ui: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC",
+    -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }}
 
 .stApp {{
   background: var(--app-bg) fixed;
   background-color: var(--sky-bg) !important;
   color: var(--text);
-  font-family: "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
-    -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--font-ui);
   font-size: var(--font-base);
   letter-spacing: 0.01em;
 }}
@@ -191,21 +192,6 @@ def inject_bu_theme(settings: AppSettings) -> None:
     radial-gradient(ellipse 62% 48% at 88% 6%, var(--glow-a), transparent 58%),
     radial-gradient(ellipse 55% 42% at 10% 90%, var(--glow-b), transparent 55%),
     radial-gradient(ellipse 42% 36% at 48% 42%, var(--glow-c), transparent 65%);
-  animation: bu-sky 18s ease-in-out infinite alternate;
-}}
-.stApp::after {{
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0.45;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.45'/%3E%3C/svg%3E");
-  mix-blend-mode: soft-light;
-}}
-@keyframes bu-sky {{
-  from {{ opacity: 0.86; transform: scale(1) translateY(0); }}
-  to {{ opacity: 1; transform: scale(1.035) translateY(-1.2%); }}
 }}
 
 .block-container {{
@@ -227,7 +213,7 @@ def inject_bu_theme(settings: AppSettings) -> None:
 }}
 .bu-workspace-head h3 {{
   margin: 0;
-  font-family: "Outfit", "Noto Sans SC", sans-serif;
+  font-family: var(--font-ui);
   font-size: 1.15rem;
   font-weight: 700;
   color: var(--accent-title);
@@ -315,7 +301,7 @@ header[data-testid="stHeader"] > div {{
 }}
 .bu-hero h1, .bu-hero h2 {{
   margin: 0.35rem 0 0;
-  font-family: "Outfit", "Noto Sans SC", sans-serif;
+  font-family: var(--font-ui);
   font-size: var(--font-hero);
   font-weight: 700;
   color: var(--accent-title);
@@ -663,9 +649,18 @@ header[data-testid="stHeader"] a[title*="Favorite" i] {{
 @media (prefers-reduced-motion: reduce) {{
   .stApp::before, .bu-hero {{ animation: none !important; }}
 }}
+@media (max-width: 900px) {{
+  .stApp::before {{ opacity: 0.7; }}
+  .bu-hero {{ backdrop-filter: none !important; }}
+  [data-testid="stChatInput"] textarea,
+  [data-testid="stChatInput"] [data-baseweb="textarea"] {{
+    backdrop-filter: none !important;
+  }}
+}}
 </style>
 <script>
 (function hideCloudFavoriteStar() {{
+  if (window.__bubuHideFavoriteDone) return;
   function hide() {{
     var nodes = document.querySelectorAll("header button, header a, [data-testid='stToolbar'] button, [data-testid='stToolbar'] a");
     for (var i = 0; i < nodes.length; i++) {{
@@ -681,17 +676,19 @@ header[data-testid="stHeader"] a[title*="Favorite" i] {{
         label.indexOf("收藏") >= 0
       ) {{
         el.style.setProperty("display", "none", "important");
+        window.__bubuHideFavoriteDone = true;
       }}
     }}
   }}
   hide();
   if (window.__bubuHideFavoriteObs) return;
   window.__bubuHideFavoriteObs = true;
-  var t = null;
-  new MutationObserver(function () {{
-    if (t) return;
-    t = setTimeout(function () {{ t = null; hide(); }}, 80);
-  }}).observe(document.body, {{ childList: true, subtree: true }});
+  var tries = 0;
+  var t = setInterval(function () {{
+    hide();
+    tries += 1;
+    if (window.__bubuHideFavoriteDone || tries > 20) clearInterval(t);
+  }}, 400);
 }})();
 </script>
         """,
@@ -770,15 +767,13 @@ def dock_workspace_below_chat_input() -> None:
   dock();
   if (window.__bubuWorkspaceDockObs) return;
   window.__bubuWorkspaceDockObs = true;
-  var t = null;
-  var obs = new MutationObserver(function () {
-    if (t) return;
-    t = setTimeout(function () {
-      t = null;
-      dock();
-    }, 60);
-  });
-  obs.observe(document.body, { childList: true, subtree: true });
+  // Poll lightly instead of a body-wide MutationObserver (cheaper on phones).
+  var n = 0;
+  var t = setInterval(function () {
+    dock();
+    n += 1;
+    if (n > 25) clearInterval(t);
+  }, 250);
 })();
 </script>
         """,

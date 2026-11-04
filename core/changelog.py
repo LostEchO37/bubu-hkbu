@@ -8,6 +8,20 @@ from core.i18n import Lang
 ENTRIES: list[dict[str, dict[Lang, str] | str]] = [
     {
         "date": "2026-11-04",
+        "tag": "v1.0.0",
+        "title": {
+            "zh-CN": "正式版 1.0 · 跨设备更快",
+            "zh-TW": "正式版 1.0 · 跨裝置更快",
+            "en": "v1.0 · Faster on other devices",
+        },
+        "body": {
+            "zh-CN": "· 第一个大版本发布\n· 去掉 Google 字体外链（校园网常卡住）\n· 减轻首屏动画/模糊，手机更顺\n· 侧栏默认收起；Cloud 休眠唤醒说明更清楚",
+            "zh-TW": "· 第一個大版本發佈\n· 去掉 Google 字体外鏈（校園網常卡住）\n· 減輕首屏動畫/模糊，手機更順\n· 側欄預設收起；Cloud 休眠喚醒說明更清楚",
+            "en": "· First major release\n· Drop Google Fonts (often hangs on campus nets)\n· Lighter hub motion/blur for phones\n· Sidebar starts collapsed; clearer Cloud wake tip",
+        },
+    },
+    {
+        "date": "2026-11-04",
         "tag": "v0.32",
         "title": {
             "zh-CN": "输入框可见 + 隐藏收藏星",
