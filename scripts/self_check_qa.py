@@ -45,7 +45,7 @@ def main() -> None:
     ext_bg = (ROOT / "extension" / "background.js").read_text(encoding="utf-8")
     ext_ct = (ROOT / "extension" / "content.js").read_text(encoding="utf-8")
     assert "bubu-hkbu.streamlit.app" in ext_bg
-    assert "localhost:8501" not in ext_bg.split("DEFAULT_APP_URL")[1][:80]
+    assert 'DEFAULT_APP_URL = "https://bubu-hkbu.streamlit.app"' in ext_bg
     assert "bubu_lang" in ext_bg and "lang" in ext_bg
     assert "bubu-set-lang" in ext_bg
     assert "zh-TW" in ext_ct and "lang-chip" in ext_ct

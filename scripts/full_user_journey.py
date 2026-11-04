@@ -235,6 +235,9 @@ def check_auth_roundtrip() -> None:
 
 
 def check_extension_pack() -> None:
+    import io
+    import zipfile
+
     from core.extension_pack import extension_zip_bytes
 
     z = extension_zip_bytes()
@@ -249,9 +252,12 @@ def check_extension_pack() -> None:
     assert "bubu_lang" in bg and "bubu-set-lang" in bg
     assert "lang-chip" in js and "zh-TW" in js
     assert "bubu_lang" in opt and "bubu-hkbu.streamlit.app" in opt
-    # zip must include updated defaults (not localhost-only pack)
-    assert b"bubu-hkbu.streamlit.app" in z
-    assert b"bubu-set-lang" in z
+    with zipfile.ZipFile(io.BytesIO(z)) as zf:
+        packed_bg = zf.read("bubu-fab-extension/background.js").decode("utf-8")
+        packed_ct = zf.read("bubu-fab-extension/content.js").decode("utf-8")
+    assert "bubu-hkbu.streamlit.app" in packed_bg
+    assert "bubu-set-lang" in packed_bg
+    assert "lang-chip" in packed_ct
 
 
 def main() -> None:
