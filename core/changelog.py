@@ -8,6 +8,20 @@ from core.i18n import Lang
 ENTRIES: list[dict[str, dict[Lang, str] | str]] = [
     {
         "date": "2026-11-04",
+        "tag": "v0.32",
+        "title": {
+            "zh-CN": "输入框可见 + 隐藏收藏星",
+            "zh-TW": "輸入框可見 + 隱藏收藏星",
+            "en": "Visible fields + hide star",
+        },
+        "body": {
+            "zh-CN": "· 浅色模式姓名/学号等输入框描边加实，不再「看不见」\n· 右上角收藏星是 Cloud 书签不是阿Bu功能，已隐藏避免误会",
+            "zh-TW": "· 淺色模式姓名/學號等輸入框描邊加實，不再「看不見」\n· 右上角收藏星是 Cloud 書籤不是阿Bu功能，已隱藏避免誤會",
+            "en": "· Light-mode profile fields get a solid border again\n· Hide Cloud Favorite star (not a BuBu control)",
+        },
+    },
+    {
+        "date": "2026-11-04",
         "tag": "v0.31",
         "title": {
             "zh-CN": "资料区贴在提问框下",
@@ -16,7 +30,7 @@ ENTRIES: list[dict[str, dict[Lang, str] | str]] = [
         },
         "body": {
             "zh-CN": "· 「我的资料」真正挂到吸底提问框下方（不再夹在对话和输入框中间）",
-            "zh-TW": "· 「我的資料」真正掛到吸底提問框下方（不再夾在對話和輸入框中間）",
+            "zh-TW": "· 「我的資料」折疊區真正掛到吸底提問框下方（不再夾在對話和輸入框中間）",
             "en": "· Workspace docks under the sticky chat input (not between thread and input)",
         },
     },

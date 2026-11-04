@@ -71,7 +71,7 @@ from core.ui import (
 )
 
 # Bump when chat UI flow changes — forces one-time hub reset for logged-in sessions.
-_UI_REVISION = 47
+_UI_REVISION = 48
 
 _FAVICON = Path(__file__).resolve().parent / "assets" / "bu_favicon.png"
 st.set_page_config(

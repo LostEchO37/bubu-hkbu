@@ -71,7 +71,10 @@ def main() -> None:
     ui_src = (ROOT / "core" / "ui.py").read_text(encoding="utf-8")
     assert "_bubu_chunk_guard_injected" in ui_src
     assert "dock_workspace_below_chat_input" in ui_src
+    assert "--field-border: #8fb6c6" in ui_src
+    assert "hideCloudFavoriteStar" in ui_src
     assert "components.html" not in ui_src
+    assert "rgba(255,255,255,0.85)" not in ui_src
     req = (ROOT / "requirements.txt").read_text(encoding="utf-8")
     assert "streamlit>=" in req
     assert "safe_st_html" in ui_src

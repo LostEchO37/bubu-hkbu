@@ -201,7 +201,7 @@ def check_chat_and_hub_invariants() -> None:
 
     md = changelog_markdown("en")
     assert "v0.30" in md
-    assert ENTRIES[0]["tag"] == "v0.31"
+    assert ENTRIES[0]["tag"] == "v0.32"
     assert (ROOT / "assets" / "bu_favicon.png").is_file()
     blob = " ".join(
         str(v) for e in ENTRIES for v in (e.get("body") or {}).values()

@@ -131,9 +131,9 @@ def inject_bu_theme(settings: AppSettings) -> None:
   --cream-border: #d2e6ee;
   --text: #1f4554;
   --text-soft: #4a6878;
-  --field-bg: rgba(255, 255, 255, 0.86);
+  --field-bg: #ffffff;
   --field-text: #1f4554;
-  --field-border: rgba(255,255,255,0.85);
+  --field-border: #8fb6c6;
   --app-bg: linear-gradient(168deg, #eef8fb 0%, #d8f0f7 36%, #bce4f0 70%, #a6d8e8 100%);
   --sidebar-bg: linear-gradient(180deg, #d8eef6 0%, #c2e3ef 100%);
   --accent-title: #1f738c;
@@ -547,21 +547,24 @@ h1, h2, h3, label,
   color: var(--text);
 }}
 
-[data-testid="stTextInput"] > div,
+/* Form fields — solid fill + teal border so boxes stay visible on sky bg */
+[data-testid="stTextInput"] > div > div,
 [data-testid="stTextInput"] [data-baseweb="base-input"],
-[data-testid="stTextArea"] > div,
+[data-testid="stTextArea"] > div > div,
 [data-testid="stTextArea"] [data-baseweb="base-input"],
-[data-testid="stNumberInput"] > div,
+[data-testid="stNumberInput"] > div > div,
 [data-testid="stNumberInput"] [data-baseweb="base-input"],
-[data-testid="stDateInput"] > div,
+[data-testid="stDateInput"] > div > div,
 [data-testid="stDateInput"] [data-baseweb="base-input"],
 [data-testid="stSelectbox"] > div,
 [data-testid="stSelectbox"] [data-baseweb="select"] > div {{
   background: var(--field-bg) !important;
   background-color: var(--field-bg) !important;
+  border: 1.5px solid var(--field-border) !important;
   border-color: var(--field-border) !important;
+  border-radius: 14px !important;
   color: var(--field-text) !important;
-  box-shadow: none !important;
+  box-shadow: 0 2px 12px rgba(31, 115, 140, 0.1) !important;
 }}
 [data-testid="stTextInput"] input,
 [data-testid="stTextArea"] textarea,
@@ -569,17 +572,24 @@ h1, h2, h3, label,
 [data-testid="stDateInput"] input {{
   background: transparent !important;
   background-color: transparent !important;
-  border: 1px solid var(--field-border) !important;
+  border: none !important;
   border-radius: 14px !important;
   color: var(--field-text) !important;
   -webkit-text-fill-color: var(--field-text) !important;
   box-shadow: none !important;
 }}
+[data-testid="stTextInput"] [data-baseweb="base-input"]:focus-within,
+[data-testid="stTextArea"] [data-baseweb="base-input"]:focus-within,
+[data-testid="stDateInput"] [data-baseweb="base-input"]:focus-within,
+[data-testid="stSelectbox"] [data-baseweb="select"] > div:focus-within {{
+  border-color: rgba(47, 158, 184, 0.75) !important;
+  box-shadow: 0 8px 22px rgba(31, 115, 140, 0.16) !important;
+}}
 [data-testid="stTextInput"] input:focus,
 [data-testid="stTextArea"] textarea:focus,
 [data-testid="stDateInput"] input:focus {{
-  border-color: rgba(47, 158, 184, 0.55) !important;
-  box-shadow: 0 8px 22px rgba(31, 115, 140, 0.14) !important;
+  outline: none !important;
+  box-shadow: none !important;
 }}
 [data-testid="stTextInput"] label,
 [data-testid="stTextArea"] label,
@@ -640,10 +650,50 @@ div[role="dialog"] h3 {{
 
 #MainMenu, footer {{ visibility: hidden; }}
 
+/* Cloud host chrome: Favorite/star is not a BuBu control — hide to avoid confusion */
+header[data-testid="stHeader"] button[aria-label*="Favorite" i],
+header[data-testid="stHeader"] button[aria-label*="Favourite" i],
+header[data-testid="stHeader"] button[title*="Favorite" i],
+header[data-testid="stHeader"] button[title*="Favourite" i],
+header[data-testid="stHeader"] a[aria-label*="Favorite" i],
+header[data-testid="stHeader"] a[title*="Favorite" i] {{
+  display: none !important;
+}}
+
 @media (prefers-reduced-motion: reduce) {{
   .stApp::before, .bu-hero {{ animation: none !important; }}
 }}
 </style>
+<script>
+(function hideCloudFavoriteStar() {{
+  function hide() {{
+    var nodes = document.querySelectorAll("header button, header a, [data-testid='stToolbar'] button, [data-testid='stToolbar'] a");
+    for (var i = 0; i < nodes.length; i++) {{
+      var el = nodes[i];
+      var label = (
+        (el.getAttribute("aria-label") || "") + " " +
+        (el.getAttribute("title") || "") + " " +
+        (el.textContent || "")
+      ).toLowerCase();
+      if (
+        label.indexOf("favorite") >= 0 ||
+        label.indexOf("favourite") >= 0 ||
+        label.indexOf("收藏") >= 0
+      ) {{
+        el.style.setProperty("display", "none", "important");
+      }}
+    }}
+  }}
+  hide();
+  if (window.__bubuHideFavoriteObs) return;
+  window.__bubuHideFavoriteObs = true;
+  var t = null;
+  new MutationObserver(function () {{
+    if (t) return;
+    t = setTimeout(function () {{ t = null; hide(); }}, 80);
+  }}).observe(document.body, {{ childList: true, subtree: true }});
+}})();
+</script>
         """,
         width="content",
     )
