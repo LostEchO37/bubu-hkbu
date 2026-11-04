@@ -2,8 +2,11 @@
 
 ## Live URL
 
-- Current: https://bubu-hkbu-mdic9zba2hqxaqskyfihkn.streamlit.app/
+- Preferred short (if you renamed it and Sharing is Public): https://bubu-hkbu.streamlit.app/
+- Legacy hash URL (may 404 after rename/delete): `https://bubu-hkbu-*.streamlit.app/`
 - Repo: https://github.com/LostEchO37/bubu-hkbu (`main` / `app.py`)
+
+After any rename, reboot, or “not found” page, open [share.streamlit.io](https://share.streamlit.io/) → **My apps** and copy the URL shown on the app card — that is the source of truth. Update the browser-extension default if it changed.
 
 ## Checklist
 
@@ -12,11 +15,19 @@
 3. Paste Secrets (see `.streamlit/secrets.toml.example`):
    - `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `OPENAI_MODEL`, `OPENAI_VISION_MODEL`
    - `LLM_PROVIDER`, `HKBU_SESSION_SECRET` (long random string)
-4. Sharing → **Public**.
-5. Optional: rename App URL to `bubu-hkbu` for a shorter link.
+4. Sharing → **Public** (Private shows “You do not have access… / not found” for most visitors).
+5. Optional: rename App URL to `bubu-hkbu` for a shorter link, then reboot once.
 6. After deploy, hard-refresh once (Ctrl/⌘+Shift+R) if widgets show “Failed to fetch dynamically imported module”. The app also auto soft-reloads once on that error.
-7. Pin `streamlit==…` in `requirements.txt` so Cloud does not silently upgrade and bust JS chunk hashes mid-session.
+7. Keep a sensible `streamlit` range in `requirements.txt` so Cloud rebuilds stay predictable.
 8. Reboot the app from Cloud “Manage app” if chunk errors persist after refresh.
+
+## “You do not have access to this app or it does not exist”
+
+1. Confirm you are signed into Streamlit as the same GitHub user that owns the deploy (`lostecho37`).
+2. Open **My apps** — if the card is missing, **Create app** again from `LostEchO37/bubu-hkbu` / `main` / `app.py`.
+3. App ⋮ → **Settings** → **Sharing = Public**.
+4. ⋮ → **Reboot**. Wait until status is running, then open the URL from the app card (not an old bookmarked hash).
+5. Paste that URL into the floating-orb extension options.
 
 ## Storage caveat
 
