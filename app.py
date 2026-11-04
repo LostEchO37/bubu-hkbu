@@ -64,7 +64,7 @@ from core.today import pulse_html
 from core.ui import inject_bu_theme, inject_ui_phase, render_login_header
 
 # Bump when chat UI flow changes — forces one-time hub reset for logged-in sessions.
-_UI_REVISION = 22
+_UI_REVISION = 23
 
 st.set_page_config(
     page_title="阿Bu · HKBU Student Assistant",
@@ -330,8 +330,50 @@ def init_state(lang: Lang) -> None:
     st.session_state._lang_init = lang
 
 
+def _repair_settings_widgets(settings: AppSettings, lang: Lang) -> None:
+    """Keep sidebar widget keys valid — stale None theme was flipping Apply → dark."""
+    # Migrate old integer theme key → string theme key.
+    if "settings_theme_idx" in st.session_state:
+        old = st.session_state.pop("settings_theme_idx", None)
+        if "settings_theme" not in st.session_state:
+            st.session_state.settings_theme = "dark" if old == 1 else "light"
+    if st.session_state.get("settings_theme") not in ("light", "dark"):
+        st.session_state.settings_theme = (
+            settings.theme if settings.theme in ("light", "dark") else "light"
+        )
+
+    codes = [code for _, code in LANG_OPTIONS]
+    if "settings_lang_idx" in st.session_state:
+        old_i = st.session_state.pop("settings_lang_idx", None)
+        if "settings_lang" not in st.session_state and isinstance(old_i, int) and 0 <= old_i < len(codes):
+            st.session_state.settings_lang = codes[old_i]
+    if st.session_state.get("settings_lang") not in codes:
+        st.session_state.settings_lang = lang
+
+    fonts = ["small", "medium", "large"]
+    if "settings_font_idx" in st.session_state:
+        old_f = st.session_state.pop("settings_font_idx", None)
+        if "settings_font" not in st.session_state and isinstance(old_f, int) and 0 <= old_f < 3:
+            st.session_state.settings_font = fonts[old_f]
+    if st.session_state.get("settings_font") not in fonts:
+        st.session_state.settings_font = (
+            settings.font_size if settings.font_size in fonts else "medium"
+        )
+
+    tones = ["playful", "balanced", "calm"]
+    if "settings_pers_idx" in st.session_state:
+        old_p = st.session_state.pop("settings_pers_idx", None)
+        if "settings_pers" not in st.session_state and isinstance(old_p, int) and 0 <= old_p < 3:
+            st.session_state.settings_pers = tones[old_p]
+    if st.session_state.get("settings_pers") not in tones:
+        st.session_state.settings_pers = (
+            settings.personality if settings.personality in tones else "playful"
+        )
+
+
 def sidebar_settings(lang: Lang) -> Lang:
     settings = get_app_settings()
+    _repair_settings_widgets(settings, lang)
     on_login = not bool(st.session_state.get("user_id"))
     if on_login:
         st.sidebar.caption(t("lang_sidebar_tip", lang))
@@ -341,56 +383,62 @@ def sidebar_settings(lang: Lang) -> Lang:
         "⚙️ " + t("settings_title", lang),
         expanded=on_login,
     ):
-        labels = [label for label, _ in LANG_OPTIONS]
+        lang_labels = {code: label for label, code in LANG_OPTIONS}
         codes: list[Lang] = [code for _, code in LANG_OPTIONS]  # type: ignore[misc]
-        lang_idx = st.selectbox(
+        chosen_lang = st.selectbox(
             t("lang_label", lang),
-            range(len(labels)),
-            format_func=lambda i: labels[i],
-            index=codes.index(lang) if lang in codes else 0,
-            key="settings_lang_idx",
+            codes,
+            format_func=lambda c: lang_labels.get(c, c),
+            key="settings_lang",
         )
         # Apply language immediately so foreigners don't need to find "Apply".
-        chosen_lang = codes[lang_idx]
         if chosen_lang != lang:
             set_ui_lang(chosen_lang, persist=bool(st.session_state.get("user_id")))
             st.rerun()
 
-        font_idx = st.selectbox(
+        font_choice = st.selectbox(
             t("settings_font", lang),
-            range(3),
-            format_func=lambda i: [t("font_small", lang), t("font_medium", lang), t("font_large", lang)][i],
-            index=["small", "medium", "large"].index(settings.font_size),
-            key="settings_font_idx",
+            ["small", "medium", "large"],
+            format_func=lambda v: {
+                "small": t("font_small", lang),
+                "medium": t("font_medium", lang),
+                "large": t("font_large", lang),
+            }[v],
+            key="settings_font",
         )
-        theme_idx = st.radio(
+        theme_choice = st.radio(
             t("settings_theme", lang),
-            [0, 1],
-            format_func=lambda i: t("theme_light", lang) if i == 0 else t("theme_dark", lang),
-            index=0 if settings.theme == "light" else 1,
+            ["light", "dark"],
+            format_func=lambda v: t("theme_light", lang) if v == "light" else t("theme_dark", lang),
             horizontal=True,
-            key="settings_theme_idx",
+            key="settings_theme",
         )
-        pers_idx = st.selectbox(
+        pers_choice = st.selectbox(
             t("settings_personality", lang),
-            range(3),
-            format_func=lambda i: [
-                t("personality_playful", lang),
-                t("personality_balanced", lang),
-                t("personality_calm", lang),
-            ][i],
-            index=["playful", "balanced", "calm"].index(settings.personality),
-            key="settings_pers_idx",
+            ["playful", "balanced", "calm"],
+            format_func=lambda v: {
+                "playful": t("personality_playful", lang),
+                "balanced": t("personality_balanced", lang),
+                "calm": t("personality_calm", lang),
+            }[v],
+            key="settings_pers",
         )
 
         if st.button(t("settings_apply", lang), use_container_width=True, key="settings_apply_btn"):
-            new_lang = codes[lang_idx]
+            # Never treat a missing radio value as dark — default light.
+            safe_theme = theme_choice if theme_choice in ("light", "dark") else "light"
+            safe_font = font_choice if font_choice in ("small", "medium", "large") else "medium"
+            safe_pers = (
+                pers_choice if pers_choice in ("playful", "balanced", "calm") else "playful"
+            )
+            new_lang = chosen_lang if chosen_lang in codes else lang
             new_settings = AppSettings(
-                font_size=["small", "medium", "large"][font_idx],  # type: ignore[arg-type]
-                theme="light" if theme_idx == 0 else "dark",
-                personality=["playful", "balanced", "calm"][pers_idx],  # type: ignore[arg-type]
+                font_size=safe_font,  # type: ignore[arg-type]
+                theme=safe_theme,  # type: ignore[arg-type]
+                personality=safe_pers,  # type: ignore[arg-type]
                 ui_lang=new_lang,
             )
+            st.session_state.settings_theme = safe_theme
             st.session_state._lang_user_set = True
             st.session_state.ui_lang = new_lang
             ensure_lang_query_param(new_lang)
@@ -491,6 +539,14 @@ def sidebar_profile(lang: Lang) -> None:
                 "fab_panel",
                 "mail_draft",
                 "_ui_revision",
+                "settings_theme_idx",
+                "settings_lang_idx",
+                "settings_font_idx",
+                "settings_pers_idx",
+                "settings_theme",
+                "settings_lang",
+                "settings_font",
+                "settings_pers",
             ):
                 st.session_state.pop(key, None)
             try:
@@ -997,6 +1053,9 @@ def main_chat(lang: Lang) -> None:
             except Exception as e:
                 reply = str(e)
                 st.error(reply)
+        if not isinstance(reply, str):
+            reply = "" if reply is None else str(reply)
+        reply = reply.strip() or t("chat_empty_reply", lang)
         welcomes = all_welcome_bodies()
         st.session_state.messages = [
             m

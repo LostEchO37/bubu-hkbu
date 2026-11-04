@@ -41,9 +41,12 @@ def get_openai_client() -> OpenAI:
 @functools.lru_cache(maxsize=8)
 def _client_cached(api_key: str, base_url: str, provider: str, model_set: str) -> OpenAI:
     del model_set  # part of cache key so missing-model fails fast when env changes
+    # Hard timeout so a stuck GenAI call cannot freeze the Streamlit session forever.
+    timeout = float(os.environ.get("OPENAI_TIMEOUT", "90"))
+    kwargs = {"api_key": api_key, "timeout": timeout}
     if provider in {"hkbu", "hkbu_genai", "genai"}:
-        return OpenAI(api_key=api_key, base_url=base_url or "https://genai.hkbu.edu.hk/api/v1")
-    return OpenAI(api_key=api_key, base_url=base_url or None)
+        return OpenAI(base_url=base_url or "https://genai.hkbu.edu.hk/api/v1", **kwargs)
+    return OpenAI(base_url=base_url or None, **kwargs)
 
 
 def _client() -> OpenAI:
@@ -152,10 +155,17 @@ def chat_completion_stream(
         temperature=temperature_for(personality),
         stream=True,
     )
+    yielded = False
     for chunk in stream:
-        delta = chunk.choices[0].delta.content
+        choices = getattr(chunk, "choices", None) or []
+        if not choices:
+            continue
+        delta = getattr(choices[0].delta, "content", None)
         if delta:
+            yielded = True
             yield delta
+    if not yielded:
+        yield ""
 
 
 def suggest_study_plan(

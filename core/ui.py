@@ -23,8 +23,10 @@ def inject_ui_phase(phase: str) -> None:
 def inject_bu_theme(settings: AppSettings) -> None:
     fs = FONT_PX.get(settings.font_size, "16px")
     hero = HERO_SCALE.get(settings.font_size, "1.65rem")
+    # Corrupt / missing theme must never silently become dark.
+    is_dark = settings.theme == "dark"
 
-    if settings.theme == "dark":
+    if is_dark:
         vars_css = """
   --sky: #3d8fab;
   --sky-deep: #5eb8d9;
@@ -34,9 +36,14 @@ def inject_bu_theme(settings: AppSettings) -> None:
   --cream-border: #3d5565;
   --text: #e6f3f8;
   --text-soft: #a8c5d4;
+  --field-bg: #1b2c36;
+  --field-text: #e6f3f8;
+  --field-border: #3d5565;
   --app-bg: linear-gradient(165deg, #1c303a 0%, #15242c 42%, #101c22 100%);
   --sidebar-bg: linear-gradient(180deg, #162832 0%, #1e3440 100%);
   --accent-title: #7ec8e3;
+  --hero-bg: rgba(36, 53, 64, 0.72);
+  --hero-border: rgba(126, 200, 227, 0.22);
   --grain: rgba(255,255,255,0.03);
 """
     else:
@@ -49,9 +56,14 @@ def inject_bu_theme(settings: AppSettings) -> None:
   --cream-border: #d2e6ee;
   --text: #1f4554;
   --text-soft: #4a6878;
+  --field-bg: rgba(255, 255, 255, 0.86);
+  --field-text: #1f4554;
+  --field-border: rgba(255,255,255,0.85);
   --app-bg: linear-gradient(168deg, #eef8fb 0%, #d8f0f7 36%, #bce4f0 70%, #a6d8e8 100%);
   --sidebar-bg: linear-gradient(180deg, #d8eef6 0%, #c2e3ef 100%);
   --accent-title: #1f738c;
+  --hero-bg: rgba(255, 255, 255, 0.5);
+  --hero-border: rgba(255,255,255,0.58);
   --grain: rgba(20, 55, 68, 0.025);
 """
 
@@ -69,6 +81,7 @@ def inject_bu_theme(settings: AppSettings) -> None:
 
 .stApp {{
   background: var(--app-bg) fixed;
+  color: var(--text);
   font-family: "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
     -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: var(--font-base);
@@ -126,8 +139,19 @@ header[data-testid="stHeader"] > div {{
   background: var(--sidebar-bg);
   border-right: none !important;
   box-shadow: 6px 0 28px rgba(31, 115, 140, 0.08);
+  overflow-x: hidden !important;
+  color: var(--text);
 }}
-[data-testid="stSidebar"] * {{ color: var(--text) !important; }}
+/* Do NOT force color on every descendant — that made select text invisible in dark mode. */
+[data-testid="stSidebar"] label,
+[data-testid="stSidebar"] p,
+[data-testid="stSidebar"] span,
+[data-testid="stSidebar"] .stMarkdown,
+[data-testid="stSidebar"] .stCaption,
+[data-testid="stSidebar"] [data-testid="stCaptionContainer"],
+[data-testid="stSidebar"] [data-testid="stWidgetLabel"] {{
+  color: var(--text) !important;
+}}
 [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p {{
   line-height: 1.5;
   overflow-wrap: anywhere;
@@ -138,14 +162,30 @@ header[data-testid="stHeader"] > div {{
   word-break: break-word;
   white-space: normal !important;
 }}
-[data-testid="stSidebar"] {{
-  overflow-x: hidden !important;
+
+/* Selects / radios readable in both themes */
+[data-testid="stSidebar"] [data-baseweb="select"] > div,
+[data-testid="stSidebar"] [data-baseweb="base-input"],
+[data-testid="stSidebar"] div[data-baseweb="select"] {{
+  background-color: var(--field-bg) !important;
+  color: var(--field-text) !important;
+  border-color: var(--field-border) !important;
+}}
+[data-testid="stSidebar"] [data-baseweb="select"] *,
+[data-testid="stSidebar"] [data-baseweb="select"] input {{
+  color: var(--field-text) !important;
+  -webkit-text-fill-color: var(--field-text) !important;
+}}
+[data-testid="stSidebar"] [role="radiogroup"] label,
+[data-testid="stSidebar"] [role="radiogroup"] p,
+[data-testid="stSidebar"] [role="radiogroup"] span {{
+  color: var(--text) !important;
 }}
 
 .bu-hero {{
-  background: rgba(255, 255, 255, 0.5);
+  background: var(--hero-bg);
   backdrop-filter: blur(18px);
-  border: 1px solid rgba(255,255,255,0.58);
+  border: 1px solid var(--hero-border);
   border-radius: 24px;
   padding: 1.5rem 1.65rem;
   margin-bottom: 1rem;
@@ -170,8 +210,8 @@ header[data-testid="stHeader"] > div {{
 
 section[data-testid="stSidebar"] .stButton > button {{
   border-radius: 999px !important;
-  border: none !important;
-  background: rgba(255, 255, 255, 0.58) !important;
+  border: 1px solid var(--cream-border) !important;
+  background: var(--field-bg) !important;
   backdrop-filter: blur(8px) !important;
   color: var(--accent-title) !important;
   font-weight: 600 !important;
@@ -187,6 +227,7 @@ section[data-testid="stSidebar"] .stButton > button[kind="primary"],
 section[data-testid="stMain"] .stButton > button[kind="primary"] {{
   background: linear-gradient(135deg, #1f738c, #2f9eb8) !important;
   color: #f7fcff !important;
+  border: none !important;
 }}
 
 [data-testid="stChatMessage"] {{
@@ -201,11 +242,12 @@ section[data-testid="stMain"] .stButton > button[kind="primary"] {{
   box-shadow: none !important;
 }}
 [data-testid="stChatInput"] textarea {{
-  background: rgba(255, 255, 255, 0.62) !important;
+  background: var(--field-bg) !important;
   backdrop-filter: blur(18px) !important;
-  color: var(--text) !important;
+  color: var(--field-text) !important;
+  -webkit-text-fill-color: var(--field-text) !important;
   font-size: var(--font-base) !important;
-  border: 1px solid rgba(255,255,255,0.7) !important;
+  border: 1px solid var(--field-border) !important;
   border-radius: 999px !important;
   box-shadow: 0 14px 36px rgba(31, 115, 140, 0.13) !important;
   padding: 0.75rem 1.2rem !important;
@@ -221,10 +263,11 @@ h1, h2, h3, label, .stMarkdown, .stCaption, p {{ color: var(--text); }}
 [data-testid="stTextInput"] input,
 [data-testid="stTextArea"] textarea,
 [data-testid="stNumberInput"] input {{
-  background: rgba(255, 255, 255, 0.78) !important;
-  border: 1px solid rgba(255,255,255,0.85) !important;
+  background: var(--field-bg) !important;
+  border: 1px solid var(--field-border) !important;
   border-radius: 14px !important;
-  color: var(--text) !important;
+  color: var(--field-text) !important;
+  -webkit-text-fill-color: var(--field-text) !important;
   box-shadow: 0 6px 18px rgba(31, 115, 140, 0.08) !important;
 }}
 [data-testid="stTextInput"] input:focus,
@@ -234,6 +277,7 @@ h1, h2, h3, label, .stMarkdown, .stCaption, p {{ color: var(--text); }}
 }}
 [data-baseweb="tab"] {{
   font-weight: 650 !important;
+  color: var(--text) !important;
 }}
 
 #MainMenu, footer {{ visibility: hidden; }}

@@ -36,10 +36,18 @@ class AppSettings:
             return cls()
         raw_lang = data.get("ui_lang", "zh-CN")
         ui_lang: UiLang = raw_lang if raw_lang in _VALID_LANG else "zh-CN"  # type: ignore[assignment]
+        raw_theme = data.get("theme", "light")
+        theme: ThemeMode = raw_theme if raw_theme in {"light", "dark"} else "light"  # type: ignore[assignment]
+        raw_font = data.get("font_size", "medium")
+        font_size: FontSize = raw_font if raw_font in FONT_PX else "medium"  # type: ignore[assignment]
+        raw_pers = data.get("personality", "playful")
+        personality: Personality = (
+            raw_pers if raw_pers in {"playful", "balanced", "calm"} else "playful"
+        )  # type: ignore[assignment]
         return cls(
-            font_size=data.get("font_size", "medium"),  # type: ignore[arg-type]
-            theme=data.get("theme", "light"),  # type: ignore[arg-type]
-            personality=data.get("personality", "playful"),  # type: ignore[arg-type]
+            font_size=font_size,
+            theme=theme,
+            personality=personality,
             ui_lang=ui_lang,
         )
 

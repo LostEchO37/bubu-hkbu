@@ -527,6 +527,11 @@ MESSAGES: dict[str, dict[Lang, str]] = {
     "personality_balanced": {"zh-CN": "平衡", "zh-TW": "平衡", "en": "Balanced"},
     "personality_calm": {"zh-CN": "收敛", "zh-TW": "收斂", "en": "Calm"},
     "settings_apply": {"zh-CN": "应用设置", "zh-TW": "套用設定", "en": "Apply settings"},
+    "chat_empty_reply": {
+        "zh-CN": "我这边没收到完整回复，可能是网络或模型超时。请再发一次～",
+        "zh-TW": "我這邊沒收到完整回覆，可能是網絡或模型超時。請再發一次～",
+        "en": "I didn’t get a full reply (network or model timeout). Please try again.",
+    },
     "save_profile": {"zh-CN": "保存个人资料", "zh-TW": "保存個人資料", "en": "Save profile"},
     "profile_saved": {"zh-CN": "已保存", "zh-TW": "已保存", "en": "Saved"},
     "new_chat": {"zh-CN": "新对话", "zh-TW": "新對話", "en": "New chat"},
