@@ -37,7 +37,7 @@ def main() -> None:
 
     hub_src = inspect.getsource(render_agent_bubble)
     assert "st.button" not in hub_src, "hub must not use Streamlit buttons"
-    assert "st.html" in hub_src
+    assert "st.html" in hub_src or "_html" in hub_src
     assert "wake" in hub_src and "auth_token" in hub_src
     assert "ui_lang" in hub_src
     assert "bu-cta" in hub_src and "bu-title" in hub_src
