@@ -76,7 +76,7 @@ def inject_bu_theme(settings: AppSettings) -> None:
     st.html(
         f"""
 <style>
-@import url("https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Noto+Sans+SC:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap");
 :root {{
 {vars_css}
   --font-base: {fs};
@@ -140,11 +140,11 @@ def inject_bu_theme(settings: AppSettings) -> None:
 }}
 .bu-workspace-head h3 {{
   margin: 0;
-  font-family: "Syne", "Noto Sans SC", sans-serif;
+  font-family: "Outfit", "Noto Sans SC", sans-serif;
   font-size: 1.15rem;
-  font-weight: 750;
+  font-weight: 700;
   color: var(--accent-title);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
 }}
 .bu-workspace-head p {{
   margin: 0.35rem 0 0;
@@ -225,12 +225,12 @@ header[data-testid="stHeader"] > div {{
 }}
 .bu-hero h1, .bu-hero h2 {{
   margin: 0.35rem 0 0;
-  font-family: "Syne", "Noto Sans SC", sans-serif;
+  font-family: "Outfit", "Noto Sans SC", sans-serif;
   font-size: var(--font-hero);
-  font-weight: 750;
+  font-weight: 700;
   color: var(--accent-title);
-  line-height: 1.3;
-  letter-spacing: -0.02em;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
 }}
 .bu-hero p {{ margin: 0.55rem 0 0; color: var(--text-soft); line-height: 1.55; }}
 .bu-hero.bu-login {{ margin-top: 0.25rem; }}

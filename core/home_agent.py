@@ -182,6 +182,7 @@ def render_agent_bubble(
         f"""
 <div class="hub-stage-marker" style="display:none"></div>
 <style>
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&family=Noto+Sans+SC:wght@400;600;700&display=swap");
 .bu-stage {{
   position: relative;
   min-height: 74vh;
@@ -270,16 +271,18 @@ def render_agent_bubble(
 }}
 .bu-title {{
   margin: 0;
-  font-family: "Syne", "Noto Sans SC", sans-serif;
-  font-weight: 800;
-  font-size: clamp(2.55rem, 7.2vw, 3.85rem);
-  line-height: 1.05;
-  letter-spacing: -0.035em;
+  font-family: "Outfit", "Noto Sans SC", "PingFang SC", sans-serif;
+  font-weight: 700;
+  font-size: clamp(2.35rem, 6.4vw, 3.45rem);
+  line-height: 1.22;
+  letter-spacing: -0.01em;
   color: #143744;
   text-wrap: balance;
   animation: bu-rise 0.85s cubic-bezier(.22,.9,.28,1) 0.1s both;
 }}
 .bu-title span {{
+  display: inline-block;
+  margin-top: 0.12em;
   background: linear-gradient(118deg, #176a82 0%, #2a9bb8 48%, #5bc0d4 100%);
   -webkit-background-clip: text;
   background-clip: text;
@@ -503,7 +506,7 @@ a.bu-prompt:hover .bu-prompt-go {{
   color: #1f738c;
 }}
 .bu-prompt-num {{
-  font-family: "Syne", sans-serif;
+  font-family: "Outfit", "Noto Sans SC", sans-serif;
   font-weight: 700;
   font-size: 0.82rem;
   letter-spacing: 0.05em;

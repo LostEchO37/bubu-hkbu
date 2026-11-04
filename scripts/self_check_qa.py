@@ -37,9 +37,15 @@ def main() -> None:
 
     assert _UI_REVISION >= 20
 
+    from core.changelog import changelog_markdown
+
+    assert "2026-11-04" in changelog_markdown("zh-CN")
+    assert "Changelog" in t("changelog_title", "en") or "更新" in t("changelog_title", "zh-CN")
+
     for key in (
         "tt_ready_hint",
         "hub_credit",
+        "changelog_title",
         "pulse_today",
         "remind_rush",
         "countdown_exam_sem1",

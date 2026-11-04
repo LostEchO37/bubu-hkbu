@@ -59,12 +59,13 @@ from core.home_agent import (
     render_chat_thread,
     render_mini_prompt_bubbles,
 )
+from core.changelog import changelog_markdown
 from core.identity import PROJECT_CREDIT, bot_nick
 from core.today import pulse_html
 from core.ui import inject_bu_theme, inject_ui_phase, render_login_header
 
 # Bump when chat UI flow changes — forces one-time hub reset for logged-in sessions.
-_UI_REVISION = 29
+_UI_REVISION = 30
 
 st.set_page_config(
     page_title="阿Bu · HKBU Student Assistant",
@@ -503,6 +504,8 @@ def render_plugin_download(lang: Lang, *, key: str) -> None:
 def login_screen(lang: Lang) -> None:
     render_login_header(t("login_title", lang), t("login_hint", lang))
     render_storage_notice(lang)
+    with st.expander(t("changelog_title", lang), expanded=False):
+        st.markdown(changelog_markdown(lang))
     with st.expander(t("plugin_section", lang), expanded=False):
         render_plugin_download(lang, key="plugin_dl_login")
     tab_in, tab_up = st.tabs([t("tab_login", lang), t("tab_register", lang)])
@@ -603,6 +606,8 @@ def sidebar_chrome(lang: Lang) -> None:
             st.session_state.ui_lang = keep_lang
             st.session_state._lang_user_set = True
             st.rerun()
+    with st.sidebar.expander(t("changelog_title", lang), expanded=False):
+        st.markdown(changelog_markdown(lang))
     with st.sidebar.expander(t("plugin_section", lang), expanded=False):
         render_plugin_download(lang, key="plugin_dl_sidebar")
 

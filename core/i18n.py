@@ -280,6 +280,11 @@ MESSAGES: dict[str, dict[Lang, str]] = {
         "zh-TW": "proudly presented by GTSC2066 Group 16",
         "en": "proudly presented by GTSC2066 Group 16",
     },
+    "changelog_title": {
+        "zh-CN": "更新日志",
+        "zh-TW": "更新日誌",
+        "en": "Changelog",
+    },
     "fab_tip": {
         "zh-CN": "点开功能球",
         "zh-TW": "點開功能球",
