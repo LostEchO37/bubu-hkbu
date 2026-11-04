@@ -67,17 +67,16 @@ def inject_bu_theme(settings: AppSettings) -> None:
   --grain: rgba(20, 55, 68, 0.025);
 """
 
-    # Prefer markdown for global CSS — more reliable than st.html against Streamlit specificity.
     btn_bg = "#1b2c36" if is_dark else "rgba(255,255,255,0.86)"
     btn_fg = "#e8f6fb" if is_dark else "#1f4554"
     exp_bg = "#243540" if is_dark else "#f7fbfd"
     exp_fg = "#e8f6fb" if is_dark else "#1f4554"
-    st.markdown(
+    # st.html with style-only goes to the event container (not shown as page text).
+    # Never put raw HTML tags inside CSS comments — sanitizers break the style block.
+    st.html(
         f"""
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <style>
+@import url("https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Noto+Sans+SC:wght@400;500;600;700&display=swap");
 :root {{
 {vars_css}
   --font-base: {fs};
@@ -340,7 +339,7 @@ header[data-testid="stHeader"] > div {{
   box-shadow: 0 16px 40px rgba(31, 115, 140, 0.18) !important;
 }}
 
-/* Scope body text — do NOT paint every <p> (buttons/expanders include <p>). */
+/* Scope body text; avoid styling button or expander inner paragraphs. */
 h1, h2, h3, label,
 [data-testid="stMarkdownContainer"] > p,
 [data-testid="stCaptionContainer"],
@@ -378,7 +377,7 @@ h1, h2, h3, label,
 }}
 </style>
         """,
-        unsafe_allow_html=True,
+        width="content",
     )
 
 

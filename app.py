@@ -64,7 +64,7 @@ from core.today import pulse_html
 from core.ui import inject_bu_theme, inject_ui_phase, render_login_header
 
 # Bump when chat UI flow changes — forces one-time hub reset for logged-in sessions.
-_UI_REVISION = 28
+_UI_REVISION = 29
 
 st.set_page_config(
     page_title="阿Bu · HKBU Student Assistant",
