@@ -8,6 +8,20 @@ from core.i18n import Lang
 ENTRIES: list[dict[str, dict[Lang, str] | str]] = [
     {
         "date": "2026-11-04",
+        "tag": "v1.0.3",
+        "title": {
+            "zh-CN": "登录页输入框空白修复",
+            "zh-TW": "登入頁輸入框空白修復",
+            "en": "Fix blank login inputs",
+        },
+        "body": {
+            "zh-CN": "· 登录页不再默认展开侧栏设置，也不再双开登录+注册输入框\n· 减少首屏控件，避免 Cloud 上输入框一直骨架/空白",
+            "zh-TW": "· 登入頁不再預設展開側欄設定，也不再雙開登入+註冊輸入框\n· 減少首屏控件，避免 Cloud 上輸入框一直骨架/空白",
+            "en": "· Login no longer auto-opens settings or mounts both login+register fields\n· Fewer first-paint widgets so Cloud stops showing blank skeleton inputs",
+        },
+    },
+    {
+        "date": "2026-11-04",
         "tag": "v1.0.2",
         "title": {
             "zh-CN": "手机可输入 + 公开分享提醒",

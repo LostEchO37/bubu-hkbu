@@ -70,7 +70,7 @@ from core.ui import (
 )
 
 # Bump when chat UI flow changes — forces one-time hub reset for logged-in sessions.
-_UI_REVISION = 53
+_UI_REVISION = 54
 
 _FAVICON = Path(__file__).resolve().parent / "assets" / "bu_favicon.png"
 st.set_page_config(
@@ -429,9 +429,10 @@ def sidebar_settings(lang: Lang) -> Lang:
     if on_streamlit_cloud():
         st.sidebar.caption(t("storage_cloud_note", lang))
 
-    # Toggle keeps open state across reruns (expander was snapping shut).
+    # Keep settings closed by default — auto-open on login mounted select/radio
+    # widgets that starved login text_input JS chunks (blank skeleton inputs).
     if "settings_panel_open" not in st.session_state:
-        st.session_state.settings_panel_open = on_login
+        st.session_state.settings_panel_open = False
     settings_open = st.sidebar.toggle(
         "⚙️ " + t("settings_title", lang),
         key="settings_panel_open",
@@ -551,11 +552,16 @@ def render_changelog_corner(lang: Lang) -> None:
 def login_screen(lang: Lang) -> None:
     render_login_header(t("login_title", lang), t("login_hint", lang))
     render_storage_notice(lang)
-    if st.toggle("🧩 " + t("plugin_section", lang), key="plugin_panel_login", value=False):
-        render_plugin_download(lang, key="plugin_dl_login")
-    tab_in, tab_up = st.tabs([t("tab_login", lang), t("tab_register", lang)])
-
-    with tab_in:
+    # Radio (not tabs): Streamlit tabs mount BOTH panes → too many text_inputs
+    # on first paint → blank skeleton fields on slow Cloud/mobile.
+    mode = st.radio(
+        t("login_title", lang),
+        [t("tab_login", lang), t("tab_register", lang)],
+        horizontal=True,
+        label_visibility="collapsed",
+        key="login_mode",
+    )
+    if mode == t("tab_login", lang):
         u = st.text_input(t("username", lang), key="login_user")
         p = st.text_input(t("password", lang), type="password", key="login_pass")
         if st.button(t("btn_login", lang), type="primary", use_container_width=True):
@@ -568,8 +574,7 @@ def login_screen(lang: Lang) -> None:
                 st.session_state.account_username = u.strip().lower()
                 st.session_state._db_loaded = False
                 st.rerun()
-
-    with tab_up:
+    else:
         u2 = st.text_input(t("username", lang), key="reg_user")
         p2 = st.text_input(t("password", lang), type="password", key="reg_pass")
         dn = st.text_input(t("display_name", lang), key="reg_name")
@@ -590,6 +595,8 @@ def login_screen(lang: Lang) -> None:
                 st.session_state._db_loaded = False
                 st.success(t("register_ok", lang))
                 st.rerun()
+    if st.toggle("🧩 " + t("plugin_section", lang), key="plugin_panel_login", value=False):
+        render_plugin_download(lang, key="plugin_dl_login")
 
 
 def sidebar_chrome(lang: Lang) -> None:
@@ -1201,9 +1208,11 @@ def main() -> None:
         inject_bu_theme(get_app_settings())
         lang = sidebar_settings(lang)
         render_changelog_corner(lang)
-        st.warning(t("sharing_public_tip", lang))
-        st.caption(t("cold_start_tip", lang))
-        st.caption(t("chunk_reload_tip", lang))
+        # Minimal chrome on first paint so login inputs can load their JS chunks.
+        with st.expander("ℹ️ " + t("help_tips_title", lang), expanded=False):
+            st.caption(t("sharing_public_tip", lang))
+            st.caption(t("cold_start_tip", lang))
+            st.caption(t("chunk_reload_tip", lang))
         login_screen(lang)
         return
 

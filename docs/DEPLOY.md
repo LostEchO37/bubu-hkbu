@@ -25,16 +25,14 @@ After any rename, reboot, or “not found” page, open [share.streamlit.io](htt
 
 ## Other devices feel stuck / never finish loading
 
-Common causes on phones / campus Wi‑Fi:
+Sharing **Public** is required, but Public alone does not prevent spinners. Observed on Cloud:
 
-1. **Cloud sleep** — after ~12h without traffic the app hibernates. Visitors see a wake page; click **Yes, get this app back up** and wait **30–60s**, then hard-refresh.
-2. **Sharing not Public** — other accounts get “not found / no access”.
-3. **Stale JS chunks after redeploy / sleep** — hard-refresh (Ctrl/⌘+Shift+R) once. The app also auto soft-reloads once when it detects `Failed to fetch dynamically imported module` (typical chat_input / uploader failure).
-4. **Too many widgets on first paint** — fixed in v1.0.1: workspace uploaders/inputs stay unmounted until the user opens 「我的资料」.
+1. **Cold connect** — first open after idle can sit on Streamlit’s spinner **30–90s** while the app iframe boots. Wait; if still blank after ~2 minutes: **Manage app → Reboot**.
+2. **Backend hung** — `/~/+/_stcore/health` should return `ok`. If it times out, Reboot (not a Sharing issue).
+3. **Blank skeleton inputs** — too many widgets on first paint starve JS chunks. v1.0.3 keeps login minimal (settings closed; login/register not both mounted).
+4. **Stale chunks after redeploy** — hard-refresh (Ctrl/⌘+Shift+R). App auto soft-reloads once on `Failed to fetch dynamically imported module`.
 
-Optional: GitHub Action `.github/workflows/keep-awake.yml` pings the live URL on a schedule (best-effort; Cloud may still sleep).
-
-If chat_input still errors after deploy: Cloud **Manage app → Reboot**, then open the app in a private window once.
+Optional: GitHub Action `.github/workflows/keep-awake.yml` pings the live URL on a schedule (best-effort).
 
 ## “You do not have access to this app or it does not exist”
 

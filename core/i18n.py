@@ -498,6 +498,11 @@ MESSAGES: dict[str, dict[Lang, str]] = {
         "zh-TW": "若跳到 Streamlit 登入頁 / 一直轉圈進不去：打開 share.streamlit.io → 你的 app → Settings → Sharing = Public（不要 Require login）。私有分享會讓其他手機永遠轉圈。",
         "en": "If you bounce to a Streamlit login / endless spinner: share.streamlit.io → your app → Settings → Sharing = Public (no Require login). Private sharing blocks other phones forever.",
     },
+    "help_tips_title": {
+        "zh-CN": "打不开 / 转圈时点这里",
+        "zh-TW": "打不開 / 轉圈時點這裡",
+        "en": "Stuck loading? Open tips",
+    },
     "workspace_toggle": {
         "zh-CN": "我的资料（课表 / 任务 / 邮件）",
         "zh-TW": "我的資料（課表 / 任務 / 郵件）",
