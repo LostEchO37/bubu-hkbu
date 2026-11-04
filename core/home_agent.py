@@ -52,9 +52,7 @@ section[data-testid="stMain"]:has(.ui-phase-marker[data-phase="burst"]) .block-c
   margin: 0 auto !important;
   padding-top: 1.8vh !important;
 }}
-section[data-testid="stMain"]:has(.ui-phase-marker[data-phase="hub"]) [data-testid="stBottomBlockContainer"] {{
-  display: none !important;
-}}
+/* Never hide stBottom / chat_input — that made phones unable to type on the hub. */
 .chat-thread {{
   max-width: 720px;
   margin: 0 auto;
@@ -145,8 +143,7 @@ def render_agent_bubble(
     cta: str = "开始聊聊",
     credit: str = "proudly presented by GTSC2066 Group 16",
 ) -> None:
-    """Brand-first hub — CTA opens prompts via ?wake=1&auth=…&lang=…"""
-    del on_wake
+    """Brand-first hub. Prefer Streamlit button wake (no full reload); keep ?wake= link as fallback."""
     face = html.escape(AGENT_FACE)
     hint_e = html.escape(hint)
     brand_e = html.escape(brand)
@@ -160,6 +157,13 @@ def render_agent_bubble(
     if ui_lang:
         wake_params["lang"] = ui_lang
     wake_href = html.escape(_q(wake_params))
+    if on_wake is not None:
+        cta_html = '<div class="bu-cta bu-blob" aria-hidden="true" style="visibility:hidden;height:0;margin:0;padding:0;border:0"></div>'
+    else:
+        cta_html = (
+            f'<a class="bu-cta bu-blob" href="{wake_href}" title="{hint_e}">'
+            f'{cta_e} <span class="bu-cta-arrow">→</span></a>'
+        )
 
     _html(
         f"""
@@ -331,15 +335,16 @@ a.bu-cta:hover .bu-cta-arrow {{ transform: translateX(5px); }}
     <p class="bu-kicker"><span class="bu-face">{face}</span> {brand_e}</p>
     <h1 class="bu-title">{t1}<br/><span>{t2}</span></h1>
     <p class="bu-sub">{hint_e}</p>
-    <a class="bu-cta bu-blob" href="{wake_href}" title="{hint_e}">
-      {cta_e} <span class="bu-cta-arrow">→</span>
-    </a>
+    {cta_html}
     <p class="bu-credit">{credit_e}</p>
   </div>
 </div>
         """,
         width="stretch",
     )
+    if on_wake is not None:
+        if st.button(f"{cta} →", type="primary", use_container_width=True, key="hub_wake_btn"):
+            on_wake()
 
 
 def render_mini_prompt_bubbles(

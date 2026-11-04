@@ -81,6 +81,12 @@ def main() -> None:
     ha_src = (ROOT / "core" / "home_agent.py").read_text(encoding="utf-8")
     assert "fonts.googleapis.com" not in ha_src
     assert t("cold_start_tip", "zh-CN")
+    assert t("sharing_public_tip", "zh-CN")
+    assert "hub_wake_btn" in ha_src
+    assert 'data-phase="hub"]) [data-testid="stBottomBlockContainer"]' not in ha_src
+    assert 'st.chat_input(t("chat_placeholder", lang))' in app_src
+    assert "chat_ready = not show_agent_hub" not in app_src
+    assert "bubu_chunk_ts" in ui_src
     req = (ROOT / "requirements.txt").read_text(encoding="utf-8")
     assert "streamlit>=" in req
     assert "safe_st_html" in ui_src

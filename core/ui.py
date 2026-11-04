@@ -63,9 +63,13 @@ def inject_chunk_recovery() -> None:
   function recover() {
     if (recovering) return;
     try {
+      // At most one auto-reload per 3 minutes — looping reload looked like endless spinner.
+      var last = Number(localStorage.getItem("bubu_chunk_ts") || "0");
+      if (Date.now() - last < 180000) return;
       if (sessionStorage.getItem("bubu_chunk_reload") === "1") return;
       recovering = true;
       sessionStorage.setItem("bubu_chunk_reload", "1");
+      localStorage.setItem("bubu_chunk_ts", String(Date.now()));
       try {
         if (window.caches && caches.keys) {
           caches.keys().then(function (keys) {

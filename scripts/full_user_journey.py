@@ -194,7 +194,7 @@ def check_chat_and_hub_invariants() -> None:
         assert "阿Bu" in prompt or "BuBu" in prompt
 
     hub = inspect.getsource(render_agent_bubble)
-    assert "st.button" not in hub
+    assert "hub_wake_btn" in hub and "st.button" in hub
     assert "bu-cta" in hub and "PingFang SC" in hub
     assert "fonts.googleapis.com" not in hub
     mini = inspect.getsource(render_mini_prompt_bubbles)
@@ -202,7 +202,7 @@ def check_chat_and_hub_invariants() -> None:
 
     md = changelog_markdown("en")
     assert "v0.30" in md
-    assert ENTRIES[0]["tag"] == "v1.0.1"
+    assert ENTRIES[0]["tag"] == "v1.0.2"
     assert (ROOT / "assets" / "bu_favicon.png").is_file()
     blob = " ".join(
         str(v) for e in ENTRIES for v in (e.get("body") or {}).values()

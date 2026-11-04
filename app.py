@@ -70,7 +70,7 @@ from core.ui import (
 )
 
 # Bump when chat UI flow changes — forces one-time hub reset for logged-in sessions.
-_UI_REVISION = 52
+_UI_REVISION = 53
 
 _FAVICON = Path(__file__).resolve().parent / "assets" / "bu_favicon.png"
 st.set_page_config(
@@ -1099,11 +1099,15 @@ def main_chat(lang: Lang) -> None:
     agent_burst = st.session_state.get("agent_burst", False)
     show_agent_hub = pristine and not agent_burst
 
+    def _wake_hub() -> None:
+        st.session_state.agent_burst = True
+        st.rerun()
+
     if show_agent_hub:
         inject_ui_phase("hub")
         render_agent_bubble(
             t("agent_bubble_hint", lang),
-            on_wake=None,
+            on_wake=_wake_hub,
             auth_token=auth_token,
             ui_lang=lang,
             brand=t("hub_brand", lang),
@@ -1128,8 +1132,8 @@ def main_chat(lang: Lang) -> None:
         render_chat_thread(messages)
 
     pending = st.session_state.pop("pending_prompt", None)
-    chat_ready = not show_agent_hub
-    user_input = st.chat_input(t("chat_placeholder", lang)) if chat_ready else None
+    # Always mount chat_input (incl. hub/mobile) — hiding it made phones unable to type.
+    user_input = st.chat_input(t("chat_placeholder", lang))
     if pending:
         user_input = pending
 
@@ -1197,6 +1201,7 @@ def main() -> None:
         inject_bu_theme(get_app_settings())
         lang = sidebar_settings(lang)
         render_changelog_corner(lang)
+        st.warning(t("sharing_public_tip", lang))
         st.caption(t("cold_start_tip", lang))
         st.caption(t("chunk_reload_tip", lang))
         login_screen(lang)

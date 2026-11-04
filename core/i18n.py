@@ -493,6 +493,11 @@ MESSAGES: dict[str, dict[Lang, str]] = {
         "zh-TW": "其他裝置第一次打開若一直轉圈：可能是 Cloud 休眠，點 Yes, get this app back up 後等 30–60 秒；再硬重新整理一次。",
         "en": "If another device spins forever: the Cloud app may be asleep — tap “Yes, get this app back up”, wait 30–60s, then hard-refresh.",
     },
+    "sharing_public_tip": {
+        "zh-CN": "若跳到 Streamlit 登录页 / 一直转圈进不去：打开 share.streamlit.io → 你的 app → Settings → Sharing = Public（不要 Require login）。私有分享会让其他手机永远转圈。",
+        "zh-TW": "若跳到 Streamlit 登入頁 / 一直轉圈進不去：打開 share.streamlit.io → 你的 app → Settings → Sharing = Public（不要 Require login）。私有分享會讓其他手機永遠轉圈。",
+        "en": "If you bounce to a Streamlit login / endless spinner: share.streamlit.io → your app → Settings → Sharing = Public (no Require login). Private sharing blocks other phones forever.",
+    },
     "workspace_toggle": {
         "zh-CN": "我的资料（课表 / 任务 / 邮件）",
         "zh-TW": "我的資料（課表 / 任務 / 郵件）",

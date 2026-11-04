@@ -8,6 +8,20 @@ from core.i18n import Lang
 ENTRIES: list[dict[str, dict[Lang, str] | str]] = [
     {
         "date": "2026-11-04",
+        "tag": "v1.0.2",
+        "title": {
+            "zh-CN": "手机可输入 + 公开分享提醒",
+            "zh-TW": "手機可輸入 + 公開分享提醒",
+            "en": "Mobile input + Public sharing tip",
+        },
+        "body": {
+            "zh-CN": "· 首页不再隐藏底栏提问框；手机可直接打字\n· 「开始聊聊」改用按钮，避免整页重载一直转圈\n· 若进不去：Cloud Sharing 必须 Public（私有会跳登录死循环）",
+            "zh-TW": "· 首頁不再隱藏底欄提問框；手機可直接打字\n· 「開始聊聊」改用按鈕，避免整頁重載一直轉圈\n· 若進不去：Cloud Sharing 必須 Public（私有會跳登入死循環）",
+            "en": "· Hub no longer hides chat_input — phones can type\n· Wake uses a button (no full-page reload spinner)\n· If stuck: Cloud Sharing must be Public (private causes auth redirect loops)",
+        },
+    },
+    {
+        "date": "2026-11-04",
         "tag": "v1.0.1",
         "title": {
             "zh-CN": "根治转圈 / 输入框报错",

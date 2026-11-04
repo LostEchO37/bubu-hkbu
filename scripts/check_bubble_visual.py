@@ -72,9 +72,9 @@ def main() -> None:
     assert not at.exception, f"hub error: {at.exception}"
 
     html_blob = _html_blob(at)
-    assert "bu-cta" in html_blob, "hub HTML missing CTA"
-    assert not any(b.key == "hub_blob_tap" for b in at.button), "hub must not use st.button"
-    assert "wake" in html_blob
+    assert "bu-cta" in html_blob, "hub HTML missing CTA marker"
+    assert not any(b.key == "hub_blob_tap" for b in at.button), "legacy hub_blob_tap must stay gone"
+    assert any(getattr(b, "key", None) == "hub_wake_btn" for b in at.button), "hub needs wake button"
 
     # --- Burst phase ---
     at2 = AppTest.from_file(str(ROOT_DIR / "app.py"), default_timeout=90)

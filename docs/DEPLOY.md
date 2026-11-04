@@ -15,7 +15,9 @@ After any rename, reboot, or “not found” page, open [share.streamlit.io](htt
 3. Paste Secrets (see `.streamlit/secrets.toml.example`):
    - `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `OPENAI_MODEL`, `OPENAI_VISION_MODEL`
    - `LLM_PROVIDER`, `HKBU_SESSION_SECRET` (long random string)
-4. Sharing → **Public** (Private shows “You do not have access… / not found” for most visitors).
+4. Sharing → **Public** and turn **OFF** any “Require login / authentication” for viewers.
+   - If Sharing is private, phones/other accounts get stuck in a **303 login redirect loop** (`share.streamlit.io/-/auth/app`) that looks like an endless spinner.
+   - Verify in an **incognito** window while logged out of Streamlit: the app must open without asking you to sign in to Streamlit.
 5. Optional: rename App URL to `bubu-hkbu` for a shorter link, then reboot once.
 6. After deploy, hard-refresh once (Ctrl/⌘+Shift+R) if widgets show “Failed to fetch dynamically imported module”. The app also auto soft-reloads once on that error.
 7. Keep a sensible `streamlit` range in `requirements.txt` so Cloud rebuilds stay predictable.
