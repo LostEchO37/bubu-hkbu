@@ -64,7 +64,7 @@ from core.today import pulse_html
 from core.ui import inject_bu_theme, inject_ui_phase, render_login_header
 
 # Bump when chat UI flow changes — forces one-time hub reset for logged-in sessions.
-_UI_REVISION = 25
+_UI_REVISION = 26
 
 st.set_page_config(
     page_title="阿Bu · HKBU Student Assistant",
@@ -315,6 +315,10 @@ def load_user_data_once(lang: Lang) -> None:
         lang = session_lang
         st.session_state.ui_lang = lang
     ensure_lang_query_param(lang)
+    # Sync notes widget from loaded profile (avoid stale textarea key).
+    st.session_state.custom_notes_area = getattr(
+        st.session_state.get("profile"), "custom_notes", ""
+    ) or ""
     # Always land on bubble hub after login — do not restore stale chat from DB.
     reset_to_hub(lang, persist=True)
     st.session_state._db_loaded = True
@@ -390,10 +394,20 @@ def sidebar_settings(lang: Lang) -> Lang:
         st.session_state[pers_key] = pers_labels[pers_codes.index(cur_p)]
 
     on_login = not bool(st.session_state.get("user_id"))
+    flash = st.session_state.pop("_settings_flash", None)
+    if flash:
+        st.sidebar.success(flash)
     if on_login:
         st.sidebar.caption(t("lang_sidebar_tip", lang))
     if on_streamlit_cloud():
         st.sidebar.caption(t("storage_cloud_note", lang))
+    # Show the *applied* tone so users know chat is using it.
+    active_tone = {
+        "playful": t("personality_playful", lang),
+        "balanced": t("personality_balanced", lang),
+        "calm": t("personality_calm", lang),
+    }.get(settings.personality, t("personality_playful", lang))
+    st.sidebar.caption(t("tone_active", lang, tone=active_tone))
     with st.sidebar.expander(
         "⚙️ " + t("settings_title", lang),
         expanded=on_login,
@@ -444,6 +458,20 @@ def sidebar_settings(lang: Lang) -> Lang:
             ensure_lang_query_param(new_lang)
             save_app_settings(new_settings)
             sync_welcome_language(new_lang)
+            tone_name = {
+                "playful": t("personality_playful", new_lang),
+                "balanced": t("personality_balanced", new_lang),
+                "calm": t("personality_calm", new_lang),
+            }[safe_pers]
+            theme_name = t("theme_light", new_lang) if safe_theme == "light" else t("theme_dark", new_lang)
+            lang_name = lang_labels.get(new_lang, new_lang)
+            st.session_state._settings_flash = t(
+                "settings_applied",
+                new_lang,
+                lang=lang_name,
+                tone=tone_name,
+                theme=theme_name,
+            )
             st.rerun()
     ensure_lang_query_param(get_lang())
     return get_lang()
@@ -516,7 +544,8 @@ def sidebar_profile(lang: Lang) -> None:
             t("logged_as", lang, name=st.session_state.get("display_name", ""))
         )
         st.sidebar.caption(f"{bot_nick(lang)} · {PROJECT_CREDIT}")
-        st.sidebar.html(pulse_html(p, lang), width="stretch")
+        # markdown avoids the st.html "streamlitApp" chip overlaying pulse text
+        st.sidebar.markdown(pulse_html(p, lang), unsafe_allow_html=True)
         with st.sidebar.expander(t("plugin_section", lang), expanded=False):
             render_plugin_download(lang, key="plugin_dl_sidebar")
         if st.sidebar.button(t("new_chat", lang), use_container_width=True):
@@ -547,6 +576,8 @@ def sidebar_profile(lang: Lang) -> None:
                 "settings_lang",
                 "settings_font",
                 "settings_pers",
+                "custom_notes_area",
+                "_settings_flash",
             ):
                 st.session_state.pop(key, None)
             for key in list(st.session_state.keys()):
@@ -753,8 +784,28 @@ def sidebar_profile(lang: Lang) -> None:
                 key="mail_reply_body_view",
             )
 
-    with st.sidebar.expander(t("more_options", lang), expanded=False):
-        p.custom_notes = st.sidebar.text_area(t("notes", lang), value=p.custom_notes, height=50)
+    has_notes = bool((p.custom_notes or "").strip())
+    with st.sidebar.expander(t("more_options", lang), expanded=has_notes):
+        st.caption(t("notes_hint", lang))
+        # Use st.text_area (not st.sidebar.*) so the field stays inside the expander.
+        if "custom_notes_area" not in st.session_state:
+            st.session_state.custom_notes_area = p.custom_notes or ""
+        notes_val = st.text_area(
+            t("notes", lang),
+            height=110,
+            key="custom_notes_area",
+            placeholder=t("notes_empty", lang),
+        )
+        p.custom_notes = notes_val
+        save_notes = st.button(
+            t("save_notes", lang),
+            use_container_width=True,
+            key="save_notes_btn",
+        )
+        if save_notes:
+            if st.session_state.get("user_id"):
+                persist_user_data()
+            st.success(t("notes_saved", lang))
 
 
 def run_plan_week(lang: Lang, p: StudentProfile, settings: AppSettings) -> None:

@@ -195,14 +195,18 @@ def today_free_gaps(profile: StudentProfile, *, now: datetime | None = None) -> 
     return remaining_free_gaps(profile, now=now, min_minutes=30)
 
 
-def upcoming_tasks(profile: StudentProfile, *, limit: int = 4) -> list[str]:
+def upcoming_tasks(
+    profile: StudentProfile, *, limit: int = 4, lang: Lang = "zh-CN"
+) -> list[str]:
+    """Task lines for the sidebar pulse. Titles stay as the user wrote them."""
+    no_due = {"zh-CN": "无日期", "zh-TW": "無日期", "en": "No date"}.get(lang, "—")
     lines: list[str] = []
     for task in profile.tasks[:40]:
         due = (task.due or "").strip()
         title = task.title.strip()
         if not title:
             continue
-        lines.append(f"{due or '—'}: {title}")
+        lines.append(f"{due or no_due}: {title}")
         if len(lines) >= limit:
             break
     return lines
@@ -322,7 +326,7 @@ def pulse_html(profile: StudentProfile, lang: Lang, *, now: datetime | None = No
     gaps = today_free_gaps(profile, now=now)
     reminders = detect_reminders(profile, lang=lang)
     cd_label, cd_detail = format_countdown(lang, today=now.date())
-    tasks = upcoming_tasks(profile)
+    tasks = upcoming_tasks(profile, lang=lang)
 
     # Today body
     if not profile.timetable:

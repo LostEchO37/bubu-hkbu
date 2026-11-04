@@ -145,6 +145,36 @@ MESSAGES: dict[str, dict[Lang, str]] = {
         "zh-TW": "其他備註（如社團、兼職）",
         "en": "Other notes (clubs, part-time, etc.)",
     },
+    "notes_hint": {
+        "zh-CN": "写在这里的内容会告诉阿Bu（例如兴趣、偏好）。改完请点保存。",
+        "zh-TW": "寫在這裡的內容會告訴阿Bu（例如興趣、偏好）。改完請點保存。",
+        "en": "BuBu reads these notes (interests, preferences). Tap save when done.",
+    },
+    "save_notes": {
+        "zh-CN": "保存备注",
+        "zh-TW": "保存備註",
+        "en": "Save notes",
+    },
+    "notes_saved": {
+        "zh-CN": "备注已保存，对话里会用到",
+        "zh-TW": "備註已保存，對話裏會用到",
+        "en": "Notes saved — BuBu will use them in chat",
+    },
+    "notes_empty": {
+        "zh-CN": "还没有备注，写一点生活/学习偏好吧",
+        "zh-TW": "還沒有備註，寫一點生活/學習偏好吧",
+        "en": "No notes yet — add a preference or two",
+    },
+    "tone_active": {
+        "zh-CN": "当前语气：{tone}（点「应用设置」后对对话生效）",
+        "zh-TW": "當前語氣：{tone}（點「套用設定」後對對話生效）",
+        "en": "Active tone: {tone} (applies to chat after Apply settings)",
+    },
+    "settings_applied": {
+        "zh-CN": "已应用：{lang} · {tone} · {theme}",
+        "zh-TW": "已套用：{lang} · {tone} · {theme}",
+        "en": "Applied: {lang} · {tone} · {theme}",
+    },
     "ai_settings": {"zh-CN": "AI 设置", "zh-TW": "AI 設定", "en": "AI settings"},
     "api_provider": {"zh-CN": "API 来源", "zh-TW": "API 來源", "en": "API provider"},
     "provider_hkbu": {
