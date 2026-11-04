@@ -171,9 +171,19 @@ MESSAGES: dict[str, dict[Lang, str]] = {
         "en": "Active tone: {tone} (applies to chat after Apply settings)",
     },
     "settings_applied": {
-        "zh-CN": "已应用：{lang} · {tone} · {theme}",
-        "zh-TW": "已套用：{lang} · {tone} · {theme}",
-        "en": "Applied: {lang} · {tone} · {theme}",
+        "zh-CN": "已应用：{lang_label} · {tone} · {theme}",
+        "zh-TW": "已套用：{lang_label} · {tone} · {theme}",
+        "en": "Applied: {lang_label} · {tone} · {theme}",
+    },
+    "workspace_title": {
+        "zh-CN": "我的资料",
+        "zh-TW": "我的資料",
+        "en": "My workspace",
+    },
+    "workspace_hint": {
+        "zh-CN": "课表、任务、邮件在这里；左边留给今天和设置。",
+        "zh-TW": "課表、任務、郵件在這裡；左邊留給今天和設定。",
+        "en": "Timetable, tasks, and mail live here — left keeps Today & Settings.",
     },
     "ai_settings": {"zh-CN": "AI 设置", "zh-TW": "AI 設定", "en": "AI settings"},
     "api_provider": {"zh-CN": "API 来源", "zh-TW": "API 來源", "en": "API provider"},

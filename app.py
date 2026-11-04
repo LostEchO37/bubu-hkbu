@@ -64,7 +64,7 @@ from core.today import pulse_html
 from core.ui import inject_bu_theme, inject_ui_phase, render_login_header
 
 # Bump when chat UI flow changes — forces one-time hub reset for logged-in sessions.
-_UI_REVISION = 26
+_UI_REVISION = 27
 
 st.set_page_config(
     page_title="阿Bu · HKBU Student Assistant",
@@ -401,17 +401,16 @@ def sidebar_settings(lang: Lang) -> Lang:
         st.sidebar.caption(t("lang_sidebar_tip", lang))
     if on_streamlit_cloud():
         st.sidebar.caption(t("storage_cloud_note", lang))
-    # Show the *applied* tone so users know chat is using it.
-    active_tone = {
-        "playful": t("personality_playful", lang),
-        "balanced": t("personality_balanced", lang),
-        "calm": t("personality_calm", lang),
-    }.get(settings.personality, t("personality_playful", lang))
-    st.sidebar.caption(t("tone_active", lang, tone=active_tone))
     with st.sidebar.expander(
         "⚙️ " + t("settings_title", lang),
         expanded=on_login,
     ):
+        active_tone = {
+            "playful": t("personality_playful", lang),
+            "balanced": t("personality_balanced", lang),
+            "calm": t("personality_calm", lang),
+        }.get(settings.personality, t("personality_playful", lang))
+        st.caption(t("tone_active", lang, tone=active_tone))
         chosen_lang = st.selectbox(
             t("lang_label", lang),
             codes,
@@ -463,12 +462,14 @@ def sidebar_settings(lang: Lang) -> Lang:
                 "balanced": t("personality_balanced", new_lang),
                 "calm": t("personality_calm", new_lang),
             }[safe_pers]
-            theme_name = t("theme_light", new_lang) if safe_theme == "light" else t("theme_dark", new_lang)
-            lang_name = lang_labels.get(new_lang, new_lang)
+            theme_name = (
+                t("theme_light", new_lang) if safe_theme == "light" else t("theme_dark", new_lang)
+            )
+            # Must not pass kwarg name "lang" — it collides with t(key, lang, **fmt).
             st.session_state._settings_flash = t(
                 "settings_applied",
                 new_lang,
-                lang=lang_name,
+                lang_label=lang_labels.get(new_lang, new_lang),
                 tone=tone_name,
                 theme=theme_name,
             )
@@ -537,21 +538,23 @@ def login_screen(lang: Lang) -> None:
                 st.rerun()
 
 
-def sidebar_profile(lang: Lang) -> None:
+def sidebar_chrome(lang: Lang) -> None:
+    """Slim left rail: account, Today pulse, new chat / logout."""
     p: StudentProfile = st.session_state.profile
-    if st.session_state.get("user_id"):
-        st.sidebar.success(
-            t("logged_as", lang, name=st.session_state.get("display_name", ""))
-        )
-        st.sidebar.caption(f"{bot_nick(lang)} · {PROJECT_CREDIT}")
-        # markdown avoids the st.html "streamlitApp" chip overlaying pulse text
-        st.sidebar.markdown(pulse_html(p, lang), unsafe_allow_html=True)
-        with st.sidebar.expander(t("plugin_section", lang), expanded=False):
-            render_plugin_download(lang, key="plugin_dl_sidebar")
-        if st.sidebar.button(t("new_chat", lang), use_container_width=True):
+    if not st.session_state.get("user_id"):
+        return
+    st.sidebar.success(
+        t("logged_as", lang, name=st.session_state.get("display_name", ""))
+    )
+    st.sidebar.caption(f"{bot_nick(lang)} · {PROJECT_CREDIT}")
+    st.sidebar.markdown(pulse_html(p, lang), unsafe_allow_html=True)
+    c1, c2 = st.sidebar.columns(2)
+    with c1:
+        if st.button(t("new_chat", lang), use_container_width=True, key="btn_new_chat"):
             reset_to_hub(lang, persist=True)
             st.rerun()
-        if st.sidebar.button(t("logout", lang), use_container_width=True):
+    with c2:
+        if st.button(t("logout", lang), use_container_width=True, key="btn_logout"):
             keep_lang = parse_lang(st.session_state.get("ui_lang"), lang)
             for key in (
                 "user_id",
@@ -593,182 +596,186 @@ def sidebar_profile(lang: Lang) -> None:
             st.session_state.ui_lang = keep_lang
             st.session_state._lang_user_set = True
             st.rerun()
+    with st.sidebar.expander(t("plugin_section", lang), expanded=False):
+        render_plugin_download(lang, key="plugin_dl_sidebar")
 
-    st.sidebar.header(t("sidebar_profile", lang))
-    p.name = st.sidebar.text_input(t("name", lang), value=p.name)
-    p.student_id = st.sidebar.text_input(t("student_id", lang), value=p.student_id)
-    p.programme = st.sidebar.text_input(t("programme", lang), value=p.programme)
-    if st.session_state.get("user_id") and st.sidebar.button(
-        t("save_profile", lang), use_container_width=True, key="save_profile_btn"
-    ):
-        persist_user_data()
-        st.sidebar.success(t("profile_saved", lang))
 
-    st.sidebar.subheader(t("timetable", lang))
-    st.sidebar.caption(t("tt_image_tip", lang))
-    tt_img = st.sidebar.file_uploader(
-        t("upload_tt_image", lang),
-        type=["png", "jpg", "jpeg", "webp"],
-        key="tt_image",
+def render_workspace_panel(lang: Lang) -> None:
+    """Profile / timetable / tasks / mail / notes — shown on the right of chat."""
+    p: StudentProfile = st.session_state.profile
+    st.markdown(
+        f'<div class="bu-workspace-head"><h3>{html.escape(t("workspace_title", lang))}</h3>'
+        f'<p>{html.escape(t("workspace_hint", lang))}</p></div>',
+        unsafe_allow_html=True,
     )
 
-    def _apply_timetable_slots(slots: list, *, file_sig: str | None = None) -> None:
-        p.timetable = slots
-        if file_sig:
-            st.session_state._tt_scanned_sig = file_sig
-        persist_user_data()
-        st.sidebar.success(t("imported_slots", lang, n=len(slots)))
-        # Tell the chat thread so history matches injected profile.
-        note = t("tt_scan_ok_chat", lang, n=len(slots))
-        msgs = list(st.session_state.get("messages") or [])
-        welcomes = all_welcome_bodies()
-        msgs = [
-            m
-            for m in msgs
-            if not (m.get("role") == "assistant" and m.get("content") in welcomes)
-        ]
-        msgs.append({"role": "assistant", "content": note})
-        st.session_state.messages = msgs
-        st.session_state.agent_burst = True
+    with st.expander(t("sidebar_profile", lang), expanded=True):
+        p.name = st.text_input(t("name", lang), value=p.name, key="ws_name")
+        p.student_id = st.text_input(t("student_id", lang), value=p.student_id, key="ws_sid")
+        p.programme = st.text_input(t("programme", lang), value=p.programme, key="ws_prog")
+        if st.session_state.get("user_id") and st.button(
+            t("save_profile", lang), use_container_width=True, key="save_profile_btn"
+        ):
+            persist_user_data()
+            st.success(t("profile_saved", lang))
 
-    def _run_tt_scan(*, mark_sig: str | None = None) -> None:
-        if not tt_img:
-            st.sidebar.warning(t("upload_tt_image", lang))
-            return
-        with st.spinner(t("scanning_tt", lang)):
-            try:
-                mime = tt_img.type or "image/png"
-                slots = parse_timetable_from_image(tt_img.getvalue(), mime=mime)
-                if slots:
-                    _apply_timetable_slots(slots, file_sig=mark_sig)
-                    st.rerun()
-                else:
-                    # Mark attempted so auto-scan won't hammer the vision API every rerun.
+    with st.expander(t("timetable", lang), expanded=bool(p.timetable)):
+        st.caption(t("tt_image_tip", lang))
+        tt_img = st.file_uploader(
+            t("upload_tt_image", lang),
+            type=["png", "jpg", "jpeg", "webp"],
+            key="tt_image",
+        )
+
+        def _apply_timetable_slots(slots: list, *, file_sig: str | None = None) -> None:
+            p.timetable = slots
+            if file_sig:
+                st.session_state._tt_scanned_sig = file_sig
+            persist_user_data()
+            st.success(t("imported_slots", lang, n=len(slots)))
+            note = t("tt_scan_ok_chat", lang, n=len(slots))
+            msgs = list(st.session_state.get("messages") or [])
+            welcomes = all_welcome_bodies()
+            msgs = [
+                m
+                for m in msgs
+                if not (m.get("role") == "assistant" and m.get("content") in welcomes)
+            ]
+            msgs.append({"role": "assistant", "content": note})
+            st.session_state.messages = msgs
+            st.session_state.agent_burst = True
+
+        def _run_tt_scan(*, mark_sig: str | None = None) -> None:
+            if not tt_img:
+                st.warning(t("upload_tt_image", lang))
+                return
+            with st.spinner(t("scanning_tt", lang)):
+                try:
+                    mime = tt_img.type or "image/png"
+                    slots = parse_timetable_from_image(tt_img.getvalue(), mime=mime)
+                    if slots:
+                        _apply_timetable_slots(slots, file_sig=mark_sig)
+                        st.rerun()
+                    else:
+                        if mark_sig:
+                            st.session_state._tt_scanned_sig = mark_sig
+                        st.warning(t("vision_fail", lang))
+                except Exception as exc:
                     if mark_sig:
                         st.session_state._tt_scanned_sig = mark_sig
-                    st.sidebar.warning(t("vision_fail", lang))
-            except Exception as exc:
-                if mark_sig:
-                    st.session_state._tt_scanned_sig = mark_sig
-                st.sidebar.error(f"{t('vision_fail', lang)}\n{exc}")
+                    st.error(f"{t('vision_fail', lang)}\n{exc}")
 
-    # Auto-scan once per newly uploaded file (chat box cannot see sidebar uploads).
-    if tt_img is not None:
-        file_sig = f"{tt_img.name}:{tt_img.size}:{getattr(tt_img, 'file_id', '')}"
-        if st.session_state.get("_tt_scanned_sig") != file_sig:
-            _run_tt_scan(mark_sig=file_sig)
-
-    if st.sidebar.button(t("scan_tt", lang), use_container_width=True):
-        mark = None
         if tt_img is not None:
-            mark = f"{tt_img.name}:{tt_img.size}:{getattr(tt_img, 'file_id', '')}"
-        _run_tt_scan(mark_sig=mark)
+            file_sig = f"{tt_img.name}:{tt_img.size}:{getattr(tt_img, 'file_id', '')}"
+            if st.session_state.get("_tt_scanned_sig") != file_sig:
+                _run_tt_scan(mark_sig=file_sig)
 
-    if p.timetable:
-        # Keep collapsed by default — pulse card already shows today; avoids sidebar overflow.
-        with st.sidebar.expander("📅 " + t("timetable", lang), expanded=False):
-            st.html(week_grid_html(p), width="stretch")
+        if st.button(t("scan_tt", lang), use_container_width=True, key="ws_scan_tt"):
+            mark = None
+            if tt_img is not None:
+                mark = f"{tt_img.name}:{tt_img.size}:{getattr(tt_img, 'file_id', '')}"
+            _run_tt_scan(mark_sig=mark)
+
+        if p.timetable:
+            st.markdown(week_grid_html(p), unsafe_allow_html=True)
             st.markdown(analyze_timetable(p))
             st.caption(t("tt_ready_hint", lang))
             st.caption(t("tt_gaps_caption", lang))
 
-    st.sidebar.subheader(t("tasks", lang))
-    new_task = st.sidebar.text_input(t("new_task", lang))
-    new_due = st.sidebar.text_input(t("new_due", lang))
-    if st.sidebar.button(t("add_task", lang)):
-        if new_task.strip():
-            p.tasks.append(TaskItem(title=new_task.strip(), due=new_due.strip()))
-            st.sidebar.success(t("task_added", lang))
-            persist_user_data()
-
-    if p.tasks:
-        with st.sidebar.expander("✅ " + t("tasks", lang), expanded=False):
+    with st.expander(t("tasks", lang), expanded=False):
+        new_task = st.text_input(t("new_task", lang), key="ws_new_task")
+        new_due = st.text_input(t("new_due", lang), key="ws_new_due")
+        if st.button(t("add_task", lang), use_container_width=True, key="ws_add_task"):
+            if new_task.strip():
+                p.tasks.append(TaskItem(title=new_task.strip(), due=new_due.strip()))
+                st.success(t("task_added", lang))
+                persist_user_data()
+        if p.tasks:
             for task in p.tasks[-12:]:
                 st.caption(f"[{task.due or '—'}] {task.title}")
 
-    st.sidebar.subheader(t("email_section", lang))
-    st.sidebar.caption(t("email_hint", lang))
-    mail_img = st.sidebar.file_uploader(
-        t("upload_email_shot", lang),
-        type=["png", "jpg", "jpeg", "webp"],
-        key="mail_image_v2",
-    )
-    tone_map = {
-        t("email_tone_polite", lang): "polite",
-        t("email_tone_concise", lang): "concise",
-        t("email_tone_friendly", lang): "friendly",
-    }
-    tone_choice = st.sidebar.selectbox(
-        t("email_tone", lang),
-        options=list(tone_map.keys()),
-        key="mail_tone_v2",
-    )
-    add_mail_tasks = st.sidebar.checkbox(
-        t("email_add_tasks", lang), value=True, key="mail_add_tasks_v2"
-    )
+    with st.expander(t("email_section", lang), expanded=False):
+        st.caption(t("email_hint", lang))
+        mail_img = st.file_uploader(
+            t("upload_email_shot", lang),
+            type=["png", "jpg", "jpeg", "webp"],
+            key="mail_image_v2",
+        )
+        tone_map = {
+            t("email_tone_polite", lang): "polite",
+            t("email_tone_concise", lang): "concise",
+            t("email_tone_friendly", lang): "friendly",
+        }
+        tone_choice = st.selectbox(
+            t("email_tone", lang),
+            options=list(tone_map.keys()),
+            key="mail_tone_v2",
+        )
+        add_mail_tasks = st.checkbox(
+            t("email_add_tasks", lang), value=True, key="mail_add_tasks_v2"
+        )
 
-    def _run_mail_draft(*, mark_sig: str | None = None) -> None:
-        if not mail_img:
-            st.sidebar.warning(t("upload_email_shot", lang))
-            return
-        with st.spinner(t("scanning_email", lang)):
-            try:
-                mime = mail_img.type or "image/png"
-                result = draft_reply_from_email_image(
-                    mail_img.getvalue(),
-                    mime=mime,
-                    tone=tone_map.get(tone_choice, "polite"),
-                    lang=lang,
-                )
-                if mark_sig:
-                    st.session_state._mail_scanned_sig = mark_sig
-                st.session_state.mail_draft = result
-                p.emails.insert(
-                    0,
-                    EmailSnippet(
-                        subject=result.subject or "(screenshot)",
-                        sender=result.sender,
-                        date=result.date,
-                        body_preview=(result.summary or result.reply_body)[:500],
-                    ),
-                )
-                if add_mail_tasks:
-                    for item in result.tasks:
-                        p.tasks.append(
-                            TaskItem(
-                                title=item["title"],
-                                due=item.get("due", ""),
-                                source="email",
+        def _run_mail_draft(*, mark_sig: str | None = None) -> None:
+            if not mail_img:
+                st.warning(t("upload_email_shot", lang))
+                return
+            with st.spinner(t("scanning_email", lang)):
+                try:
+                    mime = mail_img.type or "image/png"
+                    result = draft_reply_from_email_image(
+                        mail_img.getvalue(),
+                        mime=mime,
+                        tone=tone_map.get(tone_choice, "polite"),
+                        lang=lang,
+                    )
+                    if mark_sig:
+                        st.session_state._mail_scanned_sig = mark_sig
+                    st.session_state.mail_draft = result
+                    p.emails.insert(
+                        0,
+                        EmailSnippet(
+                            subject=result.subject or "(screenshot)",
+                            sender=result.sender,
+                            date=result.date,
+                            body_preview=(result.summary or result.reply_body)[:500],
+                        ),
+                    )
+                    if add_mail_tasks:
+                        for item in result.tasks:
+                            p.tasks.append(
+                                TaskItem(
+                                    title=item["title"],
+                                    due=item.get("due", ""),
+                                    source="email",
+                                )
                             )
-                        )
-                note = format_draft_for_chat(result, lang)
-                msgs = list(st.session_state.get("messages") or [])
-                welcomes = all_welcome_bodies()
-                msgs = [
-                    m
-                    for m in msgs
-                    if not (m.get("role") == "assistant" and m.get("content") in welcomes)
-                ]
-                msgs.append({"role": "assistant", "content": note})
-                st.session_state.messages = msgs
-                st.session_state.agent_burst = True
-                persist_user_data()
-                st.sidebar.success(t("email_ok", lang))
-                st.rerun()
-            except Exception as exc:
-                if mark_sig:
-                    st.session_state._mail_scanned_sig = mark_sig
-                st.sidebar.error(f"{t('email_vision_fail', lang)}\n{exc}")
+                    note = format_draft_for_chat(result, lang)
+                    msgs = list(st.session_state.get("messages") or [])
+                    welcomes = all_welcome_bodies()
+                    msgs = [
+                        m
+                        for m in msgs
+                        if not (m.get("role") == "assistant" and m.get("content") in welcomes)
+                    ]
+                    msgs.append({"role": "assistant", "content": note})
+                    st.session_state.messages = msgs
+                    st.session_state.agent_burst = True
+                    persist_user_data()
+                    st.success(t("email_ok", lang))
+                    st.rerun()
+                except Exception as exc:
+                    if mark_sig:
+                        st.session_state._mail_scanned_sig = mark_sig
+                    st.error(f"{t('email_vision_fail', lang)}\n{exc}")
 
-    if st.sidebar.button(t("scan_email_reply", lang), use_container_width=True, key="scan_mail_btn"):
-        mark = None
-        if mail_img is not None:
-            mark = f"{mail_img.name}:{mail_img.size}:{getattr(mail_img, 'file_id', '')}"
-        _run_mail_draft(mark_sig=mark)
+        if st.button(t("scan_email_reply", lang), use_container_width=True, key="scan_mail_btn"):
+            mark = None
+            if mail_img is not None:
+                mark = f"{mail_img.name}:{mail_img.size}:{getattr(mail_img, 'file_id', '')}"
+            _run_mail_draft(mark_sig=mark)
 
-    draft = st.session_state.get("mail_draft")
-    if draft is not None:
-        with st.sidebar.expander(t("email_ok", lang), expanded=True):
+        draft = st.session_state.get("mail_draft")
+        if draft is not None:
             if draft.summary:
                 st.caption(f"{t('email_summary_label', lang)}: {draft.summary}")
             if draft.reply_subject:
@@ -780,14 +787,13 @@ def sidebar_profile(lang: Lang) -> None:
             st.text_area(
                 t("email_reply_body", lang),
                 value=draft.reply_body,
-                height=180,
+                height=140,
                 key="mail_reply_body_view",
             )
 
     has_notes = bool((p.custom_notes or "").strip())
-    with st.sidebar.expander(t("more_options", lang), expanded=has_notes):
+    with st.expander(t("more_options", lang), expanded=has_notes):
         st.caption(t("notes_hint", lang))
-        # Use st.text_area (not st.sidebar.*) so the field stays inside the expander.
         if "custom_notes_area" not in st.session_state:
             st.session_state.custom_notes_area = p.custom_notes or ""
         notes_val = st.text_area(
@@ -797,12 +803,7 @@ def sidebar_profile(lang: Lang) -> None:
             placeholder=t("notes_empty", lang),
         )
         p.custom_notes = notes_val
-        save_notes = st.button(
-            t("save_notes", lang),
-            use_container_width=True,
-            key="save_notes_btn",
-        )
-        if save_notes:
+        if st.button(t("save_notes", lang), use_container_width=True, key="save_notes_btn"):
             if st.session_state.get("user_id"):
                 persist_user_data()
             st.success(t("notes_saved", lang))
@@ -1157,8 +1158,14 @@ def main() -> None:
     ensure_lang_query_param(lang)
     inject_bu_theme(get_app_settings())
     lang = sidebar_settings(lang)
-    sidebar_profile(lang)
-    main_chat(lang)
+    sidebar_chrome(lang)
+
+    # Slim left rail; profile / timetable / mail live on the right.
+    chat_col, tools_col = st.columns([1.55, 1], gap="large")
+    with chat_col:
+        main_chat(lang)
+    with tools_col:
+        render_workspace_panel(lang)
 
 
 if __name__ == "__main__":

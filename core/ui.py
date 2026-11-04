@@ -115,11 +115,34 @@ def inject_bu_theme(settings: AppSettings) -> None:
 }}
 
 .block-container {{
-  max-width: 920px;
-  padding-top: 2.5rem;
+  max-width: 1180px;
+  padding-top: 1.75rem;
   padding-bottom: 2rem;
   position: relative;
   z-index: 1;
+}}
+
+.bu-workspace-head {{
+  margin: 0 0 0.85rem;
+  padding: 0.85rem 1rem;
+  border-radius: 18px;
+  background: var(--hero-bg, rgba(255,255,255,0.55));
+  border: 1px solid var(--hero-border, rgba(255,255,255,0.6));
+  box-shadow: 0 10px 28px rgba(31, 115, 140, 0.08);
+}}
+.bu-workspace-head h3 {{
+  margin: 0;
+  font-family: "Syne", "Noto Sans SC", sans-serif;
+  font-size: 1.15rem;
+  font-weight: 750;
+  color: var(--accent-title);
+  letter-spacing: -0.02em;
+}}
+.bu-workspace-head p {{
+  margin: 0.35rem 0 0;
+  color: var(--text-soft);
+  font-size: 0.86rem;
+  line-height: 1.45;
 }}
 
 header[data-testid="stHeader"] {{
