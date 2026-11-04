@@ -8,6 +8,20 @@ from core.i18n import Lang
 ENTRIES: list[dict[str, dict[Lang, str] | str]] = [
     {
         "date": "2026-11-04",
+        "tag": "v0.15",
+        "title": {
+            "zh-CN": "更新日志移到右上角",
+            "zh-TW": "更新日誌移到右上角",
+            "en": "Changelog moved top-right",
+        },
+        "body": {
+            "zh-CN": "· 更新日志改为页面右上角弹出\n· 按每次公开发布补充说明（仅产品改动，不含隐私信息）",
+            "zh-TW": "· 更新日誌改為頁面右上角彈出\n· 按每次公開發布補充說明（僅產品改動，不含隱私資訊）",
+            "en": "· Changelog opens from the top-right popover\n· Per-release notes expanded (product-only, privacy-safe)",
+        },
+    },
+    {
+        "date": "2026-11-04",
         "tag": "v0.14",
         "title": {
             "zh-CN": "更新日志入口 + 标题字体",

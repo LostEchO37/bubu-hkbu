@@ -40,7 +40,7 @@ def main() -> None:
     from core.changelog import changelog_markdown
 
     md = changelog_markdown("zh-CN")
-    assert "v0.1" in md and "v0.14" in md
+    assert "v0.1" in md and "v0.15" in md
     assert "密钥" not in md and "secret" not in md.lower()
     assert "OPENAI" not in md and "LostEchO" not in md
     assert t("changelog_privacy", "en")
