@@ -41,27 +41,25 @@ def check_theme_css() -> None:
     from core.ui import inject_bu_theme
 
     st = _fake_streamlit()
-    with patch.dict(sys.modules, {"streamlit": st}):
-        # Re-import not needed — inject_bu_theme uses already-imported st; patch the symbol.
-        import core.ui as ui
+    import core.ui as ui
 
-        with patch.object(ui, "st", st):
-            inject_bu_theme(AppSettings(theme="dark"))
-            assert st.html.called
-            css = st.html.call_args[0][0]
-            assert "--sky-bg: #15242c" in css or "--sky-bg:#15242c" in css.replace(" ", "")
-            assert "[data-testid=\"stExpander\"]" in css
-            assert "stBottomBlockContainer" in css
-            assert "stFileUploaderDropzone" in css
-            # Must NOT paint every dropzone child with dark btn-bg (black Upload rectangle).
-            assert "stFileUploaderDropzone\"] *" not in css
-            assert "button *" in css and "background: transparent" in css
-            assert "linear-gradient(135deg, #1f738c, #2f9eb8)" in css
+    with patch.object(ui, "st", st):
+        inject_bu_theme(AppSettings(theme="dark"))
+        assert st.html.called
+        css = st.html.call_args[0][0]
+        assert "--sky-bg: #15242c" in css or "--sky-bg:#15242c" in css.replace(" ", "")
+        assert "[data-testid=\"stExpander\"]" in css
+        assert "stBottomBlockContainer" in css
+        assert "stFileUploaderDropzone" in css
+        # Must NOT paint every dropzone child with dark btn-bg (black Upload rectangle).
+        assert "stFileUploaderDropzone\"] *" not in css
+        assert "button *" in css and "background: transparent" in css
+        assert "linear-gradient(135deg, #1f738c, #2f9eb8)" in css
 
-            st.html.reset_mock()
-            inject_bu_theme(AppSettings(theme="light"))
-            css_l = st.html.call_args[0][0]
-            assert "--sky-bg: #cfeaf3" in css_l or "#cfeaf3" in css_l
+        st.html.reset_mock()
+        inject_bu_theme(AppSettings(theme="light"))
+        css_l = st.html.call_args[0][0]
+        assert "--sky-bg: #cfeaf3" in css_l or "#cfeaf3" in css_l
 
 
 def check_login_theme_survives_hydrate() -> None:

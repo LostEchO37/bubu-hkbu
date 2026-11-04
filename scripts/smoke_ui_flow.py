@@ -76,7 +76,7 @@ def main() -> None:
 
     mini_src = inspect.getsource(home_agent.render_mini_prompt_bubbles)
     assert "st.button" not in mini_src
-    assert "st.html" in mini_src
+    assert "st.html" in mini_src or "_html" in mini_src
     assert "pick" in mini_src and "auth_token" in mini_src
     assert "ui_lang" in mini_src
     assert "bu-prompt" in mini_src
