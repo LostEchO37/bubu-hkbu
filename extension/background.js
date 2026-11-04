@@ -1,8 +1,25 @@
-const DEFAULT_APP_URL = "http://localhost:8501";
+const DEFAULT_APP_URL = "https://bubu-hkbu.streamlit.app";
+const DEFAULT_LANG = "zh-CN";
+const LANGS = ["zh-CN", "zh-TW", "en"];
+
+function normalizeAppUrl(raw) {
+  const s = String(raw || "").trim().replace(/\/$/, "");
+  if (!s || /localhost|127\.0\.0\.1/i.test(s)) return DEFAULT_APP_URL;
+  return s;
+}
 
 async function getAppUrl() {
   const { bubu_app_url } = await chrome.storage.sync.get({ bubu_app_url: DEFAULT_APP_URL });
-  return String(bubu_app_url || DEFAULT_APP_URL).replace(/\/$/, "");
+  const url = normalizeAppUrl(bubu_app_url);
+  if (url !== bubu_app_url) {
+    await chrome.storage.sync.set({ bubu_app_url: url });
+  }
+  return url;
+}
+
+async function getLang() {
+  const { bubu_lang } = await chrome.storage.sync.get({ bubu_lang: DEFAULT_LANG });
+  return LANGS.includes(bubu_lang) ? bubu_lang : DEFAULT_LANG;
 }
 
 function canInject(url) {
@@ -56,9 +73,11 @@ async function resolveAuth(appOrigin) {
 
 async function openFab(action) {
   const base = await getAppUrl();
+  const lang = await getLang();
   const url = new URL(base);
   const auth = await resolveAuth(url.origin);
   if (auth) url.searchParams.set("auth", auth);
+  url.searchParams.set("lang", lang);
 
   if (action === "chat") {
     url.searchParams.set("wake", "1");
@@ -78,7 +97,6 @@ async function openFab(action) {
   });
 
   if (hit?.id != null) {
-    // Prefer same tab so Streamlit can restore via ?auth=
     await chrome.tabs.update(hit.id, { url: target, active: true });
     if (hit.windowId != null) await chrome.windows.update(hit.windowId, { focused: true });
     return;
@@ -91,6 +109,19 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     openFab(msg.action)
       .then(() => sendResponse({ ok: true }))
       .catch((e) => sendResponse({ ok: false, error: String(e) }));
+    return true;
+  }
+  if (msg?.type === "bubu-get-prefs") {
+    Promise.all([getAppUrl(), getLang()])
+      .then(([appUrl, lang]) => sendResponse({ ok: true, appUrl, lang }))
+      .catch((e) => sendResponse({ ok: false, error: String(e) }));
+    return true;
+  }
+  if (msg?.type === "bubu-set-lang") {
+    const lang = LANGS.includes(msg.lang) ? msg.lang : DEFAULT_LANG;
+    chrome.storage.sync.set({ bubu_lang: lang }, () => {
+      sendResponse({ ok: true, lang });
+    });
     return true;
   }
   if (msg?.type === "bubu-inject-active") {
@@ -150,6 +181,11 @@ async function registerScripts() {
 }
 
 chrome.runtime.onInstalled.addListener(async () => {
+  await getAppUrl(); // migrate localhost → Cloud
+  const { bubu_lang } = await chrome.storage.sync.get({ bubu_lang: DEFAULT_LANG });
+  if (!LANGS.includes(bubu_lang)) {
+    await chrome.storage.sync.set({ bubu_lang: DEFAULT_LANG });
+  }
   await registerScripts();
   const tabs = await chrome.tabs.query({});
   for (const tab of tabs) {
@@ -158,5 +194,6 @@ chrome.runtime.onInstalled.addListener(async () => {
 });
 
 chrome.runtime.onStartup.addListener(() => {
+  getAppUrl();
   registerScripts();
 });

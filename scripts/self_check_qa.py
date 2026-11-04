@@ -40,8 +40,16 @@ def main() -> None:
     from core.changelog import changelog_markdown
 
     md = changelog_markdown("zh-CN")
-    assert "v0.1" in md and "v0.22" in md
+    assert "v0.1" in md and "v0.23" in md
     assert (ROOT / "assets" / "bu_favicon.png").is_file()
+    ext_bg = (ROOT / "extension" / "background.js").read_text(encoding="utf-8")
+    ext_ct = (ROOT / "extension" / "content.js").read_text(encoding="utf-8")
+    assert "bubu-hkbu.streamlit.app" in ext_bg
+    assert "localhost:8501" not in ext_bg.split("DEFAULT_APP_URL")[1][:80]
+    assert "bubu_lang" in ext_bg and "lang" in ext_bg
+    assert "bubu-set-lang" in ext_bg
+    assert "zh-TW" in ext_ct and "lang-chip" in ext_ct
+    assert "bubu-hkbu.streamlit.app" in ext_ct
     assert "密钥" not in md and "secret" not in md.lower()
     assert "OPENAI" not in md and "LostEchO" not in md
     assert t("changelog_privacy", "en")

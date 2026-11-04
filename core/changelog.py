@@ -8,6 +8,20 @@ from core.i18n import Lang
 ENTRIES: list[dict[str, dict[Lang, str] | str]] = [
     {
         "date": "2026-11-04",
+        "tag": "v0.23",
+        "title": {
+            "zh-CN": "悬浮球 Cloud + 语言",
+            "zh-TW": "懸浮球 Cloud + 語言",
+            "en": "FAB Cloud URL + language",
+        },
+        "body": {
+            "zh-CN": "· 悬浮球默认打开 Cloud 站，不再指向 localhost\n· 弹窗/设置/球体可切换简繁英，跳转带 lang=",
+            "zh-TW": "· 懸浮球預設打開 Cloud 站，不再指向 localhost\n· 彈窗/設定/球體可切換簡繁英，跳轉帶 lang=",
+            "en": "· Floating orb defaults to Cloud, not localhost\n· Popup/settings/orb switch zh-CN/zh-TW/en with lang=",
+        },
+    },
+    {
+        "date": "2026-11-04",
         "tag": "v0.22",
         "title": {
             "zh-CN": "自定义页签图标",

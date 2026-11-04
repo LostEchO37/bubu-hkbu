@@ -2,6 +2,42 @@
   if (window.__bubuFabInstalled) return;
   window.__bubuFabInstalled = true;
 
+  const DEFAULT_APP_URL = "https://bubu-hkbu.streamlit.app";
+  const LANGS = ["zh-CN", "zh-TW", "en"];
+  const I18N = {
+    "zh-CN": {
+      orb: "阿Bu 功能球",
+      chat: "开聊",
+      mail: "回信",
+      task: "任务",
+      tt: "课表",
+      plan: "计划",
+      lang: "语言",
+      langHint: "切换语言",
+    },
+    "zh-TW": {
+      orb: "阿Bu 功能球",
+      chat: "開聊",
+      mail: "回信",
+      task: "任務",
+      tt: "課表",
+      plan: "計劃",
+      lang: "語言",
+      langHint: "切換語言",
+    },
+    en: {
+      orb: "BuBu menu",
+      chat: "Chat",
+      mail: "Mail",
+      task: "Tasks",
+      tt: "Timetable",
+      plan: "Plan",
+      lang: "Lang",
+      langHint: "Switch language",
+    },
+  };
+  const LANG_BADGE = { "zh-CN": "简", "zh-TW": "繁", en: "EN" };
+
   const R = 158;
   const deg = (d) => (d * Math.PI) / 180;
   const at = (angleDeg) => ({
@@ -9,12 +45,13 @@
     y: Math.round(-R * Math.sin(deg(angleDeg))),
   });
 
-  const ITEMS = [
-    { action: "chat", label: "开聊", n: "1", ...at(180) },
-    { action: "mail", label: "回信", n: "2", ...at(157.5) },
-    { action: "task", label: "任务", n: "3", ...at(135) },
-    { action: "tt", label: "课表", n: "4", ...at(112.5) },
-    { action: "plan", label: "计划", n: "5", ...at(90) },
+  const ACTION_LAYOUT = [
+    { action: "chat", n: "1", ...at(180) },
+    { action: "mail", n: "2", ...at(157.5) },
+    { action: "task", n: "3", ...at(135) },
+    { action: "tt", n: "4", ...at(112.5) },
+    { action: "plan", n: "5", ...at(90) },
+    { action: "lang", n: "文", ...at(67.5) },
   ];
 
   const CSS = `
@@ -58,6 +95,15 @@
 .orb .x { display: none; font-size: 20px; font-weight: 500; line-height: 1; }
 .wrap.open .orb .face { display: none; }
 .wrap.open .orb .x { display: block; }
+.lang-chip {
+  position: absolute; right: 50px; bottom: 4px; z-index: 3;
+  pointer-events: auto; cursor: pointer;
+  min-width: 28px; height: 22px; padding: 0 6px;
+  border-radius: 999px; border: 1px solid rgba(255,255,255,0.9);
+  background: rgba(255,255,255,0.95); color: #1f738c;
+  font-size: 11px; font-weight: 800; line-height: 22px; text-align: center;
+  box-shadow: 0 6px 16px rgba(31,115,140,0.22);
+}
 .canvas {
   position: absolute; right: 50%; bottom: 50%;
   width: 400px; height: 400px;
@@ -92,6 +138,10 @@
   transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(1);
 }
 .sat:hover { box-shadow: 0 12px 28px rgba(36,110,130,0.32); }
+.sat.lang-sat {
+  background: linear-gradient(160deg, #e8f7fb, #cfeaf3);
+  color: #1f738c;
+}
 .num { font-size: 9px; font-weight: 800; color: #2f9eb8; line-height: 1; }
 .lab { font-size: 12px; font-weight: 700; line-height: 1.1; text-align: center; }
 @keyframes draw {
@@ -100,13 +150,26 @@
 }
 `;
 
+  let currentLang = "zh-CN";
+
+  function t(key) {
+    return (I18N[currentLang] || I18N["zh-CN"])[key] || key;
+  }
+
+  function actionLabel(action) {
+    if (action === "lang") return t("lang");
+    return t(action);
+  }
+
   function syncAuthFromUrl() {
     try {
       const auth = new URLSearchParams(location.search).get("auth");
       if (!auth) return;
-      chrome.storage.sync.get({ bubu_app_url: "http://localhost:8501" }, (data) => {
+      chrome.storage.sync.get({ bubu_app_url: DEFAULT_APP_URL }, (data) => {
         try {
-          const app = new URL(String(data.bubu_app_url || "http://localhost:8501"));
+          let raw = String(data.bubu_app_url || DEFAULT_APP_URL);
+          if (/localhost|127\.0\.0\.1/i.test(raw)) raw = DEFAULT_APP_URL;
+          const app = new URL(raw);
           if (location.origin === app.origin) {
             chrome.storage.local.set({ bubu_auth: auth });
           }
@@ -122,6 +185,23 @@
   function go(action) {
     chrome.runtime.sendMessage({ type: "bubu-fab", action }, () => {
       void chrome.runtime.lastError;
+    });
+  }
+
+  function cycleLang(applyUi) {
+    const i = LANGS.indexOf(currentLang);
+    const next = LANGS[(i + 1) % LANGS.length];
+    chrome.runtime.sendMessage({ type: "bubu-set-lang", lang: next }, (res) => {
+      void chrome.runtime.lastError;
+      currentLang = res?.lang || next;
+      applyUi();
+    });
+  }
+
+  function loadLang(cb) {
+    chrome.storage.sync.get({ bubu_lang: "zh-CN" }, (data) => {
+      currentLang = LANGS.includes(data.bubu_lang) ? data.bubu_lang : "zh-CN";
+      cb();
     });
   }
 
@@ -150,9 +230,13 @@
     const orb = document.createElement("button");
     orb.type = "button";
     orb.className = "orb";
-    orb.setAttribute("aria-label", "阿Bu 功能球");
     orb.innerHTML =
       '<span class="face">(^o^)</span><span class="x" aria-hidden="true">×</span>';
+
+    const langChip = document.createElement("button");
+    langChip.type = "button";
+    langChip.className = "lang-chip";
+    langChip.title = t("langHint");
 
     const canvas = document.createElement("div");
     canvas.className = "canvas";
@@ -163,7 +247,21 @@
     svg.setAttribute("viewBox", "0 0 400 400");
     svg.setAttribute("aria-hidden", "true");
 
-    ITEMS.forEach((item, i) => {
+    const satButtons = [];
+
+    function applyLabels() {
+      orb.setAttribute("aria-label", t("orb"));
+      langChip.textContent = LANG_BADGE[currentLang] || "简";
+      langChip.title = t("langHint");
+      satButtons.forEach(({ el, action, n }) => {
+        const label = actionLabel(action);
+        el.setAttribute("aria-label", label);
+        const num = action === "lang" ? LANG_BADGE[currentLang] || "文" : n;
+        el.innerHTML = `<span class="num">${num}</span><span class="lab">${label}</span>`;
+      });
+    }
+
+    ACTION_LAYOUT.forEach((item, i) => {
       const delay = `${0.03 + i * 0.045}s`;
       const line = document.createElementNS(svgNS, "line");
       line.setAttribute("class", "branch");
@@ -176,18 +274,21 @@
 
       const sat = document.createElement("button");
       sat.type = "button";
-      sat.className = "sat";
+      sat.className = item.action === "lang" ? "sat lang-sat" : "sat";
       sat.style.setProperty("--x", `${item.x}px`);
       sat.style.setProperty("--y", `${item.y}px`);
       sat.style.setProperty("--d", delay);
-      sat.setAttribute("aria-label", item.label);
-      sat.innerHTML = `<span class="num">${item.n}</span><span class="lab">${item.label}</span>`;
       sat.addEventListener("click", (e) => {
         e.stopPropagation();
+        if (item.action === "lang") {
+          cycleLang(applyLabels);
+          return;
+        }
         wrap.classList.remove("open");
         go(item.action);
       });
       canvas.appendChild(sat);
+      satButtons.push({ el: sat, action: item.action, n: item.n });
     });
 
     canvas.insertBefore(svg, canvas.firstChild);
@@ -195,8 +296,15 @@
       e.stopPropagation();
       wrap.classList.toggle("open");
     });
+    langChip.addEventListener("click", (e) => {
+      e.stopPropagation();
+      cycleLang(applyLabels);
+    });
+
+    applyLabels();
 
     dock.appendChild(orb);
+    dock.appendChild(langChip);
     dock.appendChild(canvas);
     wrap.appendChild(scrim);
     wrap.appendChild(dock);
@@ -205,17 +313,25 @@
 
     const parent = document.documentElement || document.body;
     parent.appendChild(host);
+
+    chrome.storage.onChanged.addListener((changes, area) => {
+      if (area !== "sync" || !changes.bubu_lang) return;
+      const next = changes.bubu_lang.newValue;
+      if (LANGS.includes(next)) {
+        currentLang = next;
+        applyLabels();
+      }
+    });
   }
 
   function boot() {
     syncAuthFromUrl();
-    mount();
+    loadLang(() => mount());
   }
 
   if (document.documentElement) boot();
   else document.addEventListener("DOMContentLoaded", boot, { once: true });
 
-  // Streamlit / SPA URL updates — keep auth token synced
   setInterval(syncAuthFromUrl, 2500);
   chrome.runtime.onMessage.addListener((msg) => {
     if (msg?.type === "bubu-remount") {

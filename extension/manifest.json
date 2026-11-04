@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "阿Bu · 悬浮球",
-  "version": "1.2.0",
-  "description": "任意网页右下角悬浮球；跳转阿Bu 时保留登录。",
+  "version": "1.3.0",
+  "description": "任意网页右下角悬浮球；跳转 Cloud 阿Bu，可切换简/繁/EN。",
   "action": {
     "default_title": "阿Bu 悬浮球",
     "default_popup": "popup.html",

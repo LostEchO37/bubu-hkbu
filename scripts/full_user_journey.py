@@ -202,8 +202,8 @@ def check_chat_and_hub_invariants() -> None:
     assert "st.button" not in mini and "bu-prompt" in mini
 
     md = changelog_markdown("en")
-    assert "v0.22" in md
-    assert ENTRIES[0]["tag"] == "v0.22"
+    assert "v0.23" in md
+    assert ENTRIES[0]["tag"] == "v0.23"
     assert (ROOT / "assets" / "bu_favicon.png").is_file()
     blob = " ".join(
         str(v) for e in ENTRIES for v in (e.get("body") or {}).values()
@@ -241,8 +241,17 @@ def check_extension_pack() -> None:
     assert z[:2] == b"PK" and len(z) > 500
     manifest = (ROOT / "extension" / "manifest.json").read_text(encoding="utf-8")
     assert "manifest_version" in manifest
+    bg = (ROOT / "extension" / "background.js").read_text(encoding="utf-8")
     js = (ROOT / "extension" / "content.js").read_text(encoding="utf-8")
+    opt = (ROOT / "extension" / "options.js").read_text(encoding="utf-8")
     assert "bubu-fab" in js
+    assert "bubu-hkbu.streamlit.app" in bg
+    assert "bubu_lang" in bg and "bubu-set-lang" in bg
+    assert "lang-chip" in js and "zh-TW" in js
+    assert "bubu_lang" in opt and "bubu-hkbu.streamlit.app" in opt
+    # zip must include updated defaults (not localhost-only pack)
+    assert b"bubu-hkbu.streamlit.app" in z
+    assert b"bubu-set-lang" in z
 
 
 def main() -> None:
