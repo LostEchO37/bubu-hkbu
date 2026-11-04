@@ -12,6 +12,14 @@ LANG_OPTIONS: list[tuple[str, Lang]] = [
     ("English", "en"),
 ]
 
+LANG_CODES: set[str] = {code for _, code in LANG_OPTIONS}
+
+
+def parse_lang(value: str | None, default: Lang = "zh-CN") -> Lang:
+    if value in LANG_CODES:
+        return value  # type: ignore[return-value]
+    return default
+
 SPEECH_LANG: dict[Lang, str] = {
     "zh-CN": "zh-CN",
     "zh-TW": "zh-HK",
@@ -502,6 +510,11 @@ MESSAGES: dict[str, dict[Lang, str]] = {
     "email_summary_label": {"zh-CN": "摘要", "zh-TW": "摘要", "en": "Summary"},
     "logged_as": {"zh-CN": "已登录：{name}", "zh-TW": "已登入：{name}", "en": "Signed in as {name}"},
     "settings_title": {"zh-CN": "设置", "zh-TW": "設定", "en": "Settings"},
+    "lang_sidebar_tip": {
+        "zh-CN": "Change language here · 在此切换语言",
+        "zh-TW": "Change language here · 在此切換語言",
+        "en": "Change language here · open Settings below",
+    },
     "settings_font": {"zh-CN": "字体大小", "zh-TW": "字體大小", "en": "Font size"},
     "font_small": {"zh-CN": "小", "zh-TW": "小", "en": "Small"},
     "font_medium": {"zh-CN": "中", "zh-TW": "中", "en": "Medium"},

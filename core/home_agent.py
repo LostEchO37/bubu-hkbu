@@ -155,13 +155,14 @@ def render_agent_bubble(
     *,
     on_wake: Callable[[], None] | None = None,
     auth_token: str | None = None,
+    ui_lang: str | None = None,
     brand: str = "阿Bu · HKBU",
     title_line1: str = "阿Bu",
     title_line2: str = "同学助手",
     cta: str = "开始聊聊",
     credit: str = "proudly presented by GTSC2066 Group 16",
 ) -> None:
-    """Brand-first hub — CTA opens prompts via ?wake=1&auth=…"""
+    """Brand-first hub — CTA opens prompts via ?wake=1&auth=…&lang=…"""
     del on_wake
     face = html.escape(AGENT_FACE)
     hint_e = html.escape(hint)
@@ -173,6 +174,8 @@ def render_agent_bubble(
     wake_params: dict[str, str] = {"wake": "1"}
     if auth_token:
         wake_params["auth"] = auth_token
+    if ui_lang:
+        wake_params["lang"] = ui_lang
     wake_href = html.escape(_q(wake_params))
 
     st.html(
@@ -397,8 +400,9 @@ def render_mini_prompt_bubbles(
     plan_label: str | None = None,
     hint: str = "Pick a topic to start chatting",
     auth_token: str | None = None,
+    ui_lang: str | None = None,
 ) -> None:
-    """Staggered glass prompt cards — clicks via ?pick=N&auth=…"""
+    """Staggered glass prompt cards — clicks via ?pick=N&auth=…&lang=…"""
     labels = list(prompts)
     if plan_label:
         labels.append(plan_label)
@@ -408,6 +412,8 @@ def render_mini_prompt_bubbles(
         pick_params: dict[str, str] = {"pick": str(i)}
         if auth_token:
             pick_params["auth"] = auth_token
+        if ui_lang:
+            pick_params["lang"] = ui_lang
         href = html.escape(_q(pick_params))
         delay = 0.05 + i * 0.065
         num = f"{i + 1:02d}"

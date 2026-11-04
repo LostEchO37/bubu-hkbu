@@ -39,6 +39,7 @@ def main() -> None:
     assert "st.button" not in hub_src, "hub must not use Streamlit buttons"
     assert "st.html" in hub_src
     assert "wake" in hub_src and "auth_token" in hub_src
+    assert "ui_lang" in hub_src
     assert "bu-cta" in hub_src and "bu-title" in hub_src
     assert "bu-credit" in hub_src
     assert "GTSC2066 Group 16" in hub_src
@@ -76,6 +77,7 @@ def main() -> None:
     assert "st.button" not in mini_src
     assert "st.html" in mini_src
     assert "pick" in mini_src and "auth_token" in mini_src
+    assert "ui_lang" in mini_src
     assert "bu-prompt" in mini_src
     assert "bu-card-in" in mini_src
 

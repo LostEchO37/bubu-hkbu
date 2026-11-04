@@ -40,7 +40,7 @@ from core.app_settings import AppSettings
 from core.auth import get_user_by_id, load_session, login_user, register_user, save_session
 from core.session_token import make_auth_token, verify_auth_token
 from core.database import init_db
-from core.i18n import LANG_OPTIONS, Lang, t
+from core.i18n import LANG_OPTIONS, Lang, parse_lang, t
 from core.profile import (
     EmailSnippet,
     StudentProfile,
@@ -64,7 +64,7 @@ from core.today import pulse_html
 from core.ui import inject_bu_theme, inject_ui_phase, render_login_header
 
 # Bump when chat UI flow changes — forces one-time hub reset for logged-in sessions.
-_UI_REVISION = 21
+_UI_REVISION = 22
 
 st.set_page_config(
     page_title="阿Bu · HKBU Student Assistant",
@@ -77,7 +77,44 @@ st.set_page_config(
 def get_lang() -> Lang:
     if "ui_lang" not in st.session_state:
         st.session_state.ui_lang = "zh-CN"
-    return st.session_state.ui_lang  # type: ignore[return-value]
+    return parse_lang(st.session_state.ui_lang)
+
+
+def restore_lang_from_query() -> None:
+    """Bubble <a href> full-reloads wipe session — restore language from ?lang=."""
+    q = st.query_params.get("lang")
+    if q is None:
+        return
+    st.session_state.ui_lang = parse_lang(q)
+    st.session_state._lang_user_set = True
+
+
+def ensure_lang_query_param(lang: Lang) -> None:
+    """Keep lang= in the URL so hub/burst HTML links preserve UI + chatbot language."""
+    try:
+        existing = st.query_params.get("lang")
+        if existing == lang:
+            return
+        st.query_params["lang"] = lang
+    except Exception:
+        pass
+
+
+def set_ui_lang(lang: Lang, *, persist: bool = True) -> None:
+    lang = parse_lang(lang)
+    st.session_state.ui_lang = lang
+    st.session_state._lang_user_set = True
+    ensure_lang_query_param(lang)
+    settings = get_app_settings()
+    if settings.ui_lang != lang:
+        settings.ui_lang = lang  # type: ignore[assignment]
+        if persist:
+            save_app_settings(settings)
+        else:
+            st.session_state.app_settings = settings
+            if "profile" in st.session_state:
+                st.session_state.profile.settings = settings.to_dict()
+    sync_welcome_language(lang)
 
 
 def on_streamlit_cloud() -> bool:
@@ -98,15 +135,18 @@ def reset_to_hub(lang: Lang, *, persist: bool = True, clear_burst: bool = True) 
     st.session_state.messages = default_welcome(lang)
     if clear_burst:
         st.session_state.agent_burst = False
-    # Keep signed auth token so HTML bubble <a href> reloads stay logged in.
+    # Keep signed auth + lang so HTML bubble <a href> reloads stay logged in / same language.
     # Drop one-shot navigation flags only.
     try:
         auth = st.query_params.get("auth")
+        keep_lang = st.query_params.get("lang") or lang
         for key in ("wake", "pick", "fab"):
             if key in st.query_params:
                 del st.query_params[key]
         if auth:
             st.query_params["auth"] = auth
+        if keep_lang:
+            st.query_params["lang"] = parse_lang(keep_lang)
     except Exception:
         pass
     if persist and st.session_state.get("user_id"):
@@ -252,6 +292,8 @@ def load_user_data_once(lang: Lang) -> None:
     uid = st.session_state.get("user_id")
     if not uid or st.session_state.get("_db_loaded"):
         return
+    user_chose = bool(st.session_state.get("_lang_user_set") or st.query_params.get("lang"))
+    session_lang = parse_lang(st.session_state.get("ui_lang"), lang)
     data = load_session(uid)
     if data:
         prof_dict, _messages = data
@@ -260,6 +302,19 @@ def load_user_data_once(lang: Lang) -> None:
         st.session_state.app_settings = AppSettings.from_dict(
             st.session_state.profile.settings
         )
+        saved = parse_lang(st.session_state.app_settings.ui_lang)
+        if user_chose:
+            lang = session_lang
+            if st.session_state.app_settings.ui_lang != lang:
+                st.session_state.app_settings.ui_lang = lang  # type: ignore[assignment]
+                st.session_state.profile.settings = st.session_state.app_settings.to_dict()
+        else:
+            lang = saved
+            st.session_state.ui_lang = lang
+    else:
+        lang = session_lang
+        st.session_state.ui_lang = lang
+    ensure_lang_query_param(lang)
     # Always land on bubble hub after login — do not restore stale chat from DB.
     reset_to_hub(lang, persist=True)
     st.session_state._db_loaded = True
@@ -277,9 +332,15 @@ def init_state(lang: Lang) -> None:
 
 def sidebar_settings(lang: Lang) -> Lang:
     settings = get_app_settings()
+    on_login = not bool(st.session_state.get("user_id"))
+    if on_login:
+        st.sidebar.caption(t("lang_sidebar_tip", lang))
     if on_streamlit_cloud():
         st.sidebar.caption(t("storage_cloud_note", lang))
-    with st.sidebar.expander("⚙️ " + t("settings_title", lang), expanded=False):
+    with st.sidebar.expander(
+        "⚙️ " + t("settings_title", lang),
+        expanded=on_login,
+    ):
         labels = [label for label, _ in LANG_OPTIONS]
         codes: list[Lang] = [code for _, code in LANG_OPTIONS]  # type: ignore[misc]
         lang_idx = st.selectbox(
@@ -289,6 +350,12 @@ def sidebar_settings(lang: Lang) -> Lang:
             index=codes.index(lang) if lang in codes else 0,
             key="settings_lang_idx",
         )
+        # Apply language immediately so foreigners don't need to find "Apply".
+        chosen_lang = codes[lang_idx]
+        if chosen_lang != lang:
+            set_ui_lang(chosen_lang, persist=bool(st.session_state.get("user_id")))
+            st.rerun()
+
         font_idx = st.selectbox(
             t("settings_font", lang),
             range(3),
@@ -322,11 +389,15 @@ def sidebar_settings(lang: Lang) -> Lang:
                 font_size=["small", "medium", "large"][font_idx],  # type: ignore[arg-type]
                 theme="light" if theme_idx == 0 else "dark",
                 personality=["playful", "balanced", "calm"][pers_idx],  # type: ignore[arg-type]
+                ui_lang=new_lang,
             )
+            st.session_state._lang_user_set = True
             st.session_state.ui_lang = new_lang
+            ensure_lang_query_param(new_lang)
             save_app_settings(new_settings)
             sync_welcome_language(new_lang)
             st.rerun()
+    ensure_lang_query_param(get_lang())
     return get_lang()
 
 
@@ -404,6 +475,7 @@ def sidebar_profile(lang: Lang) -> None:
             reset_to_hub(lang, persist=True)
             st.rerun()
         if st.sidebar.button(t("logout", lang), use_container_width=True):
+            keep_lang = parse_lang(st.session_state.get("ui_lang"), lang)
             for key in (
                 "user_id",
                 "display_name",
@@ -423,8 +495,11 @@ def sidebar_profile(lang: Lang) -> None:
                 st.session_state.pop(key, None)
             try:
                 st.query_params.clear()
+                st.query_params["lang"] = keep_lang
             except Exception:
                 pass
+            st.session_state.ui_lang = keep_lang
+            st.session_state._lang_user_set = True
             st.rerun()
 
     st.sidebar.header(t("sidebar_profile", lang))
@@ -861,6 +936,7 @@ def main_chat(lang: Lang) -> None:
             t("agent_bubble_hint", lang),
             on_wake=None,
             auth_token=auth_token,
+            ui_lang=lang,
             brand=t("hub_brand", lang),
             title_line1=t("hub_title_1", lang),
             title_line2=t("hub_title_2", lang),
@@ -876,6 +952,7 @@ def main_chat(lang: Lang) -> None:
             plan_label=t("plan_week", lang),
             hint=t("burst_pick_hint", lang),
             auth_token=auth_token,
+            ui_lang=lang,
         )
     else:
         inject_ui_phase("chat")
@@ -934,6 +1011,8 @@ def main_chat(lang: Lang) -> None:
 def main() -> None:
     load_server_secrets()
     init_db()
+    # Restore lang before auth — bubble links carry ?lang= across full reloads.
+    restore_lang_from_query()
     lang = get_lang()
 
     # Bubble <a href> causes full reload → new session. Restore user, then nav intents.
@@ -941,6 +1020,7 @@ def main() -> None:
     capture_nav_intents()
 
     if not st.session_state.get("user_id"):
+        ensure_lang_query_param(lang)
         inject_bu_theme(get_app_settings())
         lang = sidebar_settings(lang)
         login_screen(lang)
@@ -951,6 +1031,7 @@ def main() -> None:
         st.session_state._ui_revision = _UI_REVISION
         st.session_state._db_loaded = False
     load_user_data_once(lang)
+    lang = get_lang()
     apply_nav_intents()
     if "messages" not in st.session_state:
         st.session_state.messages = default_welcome(lang)
@@ -958,6 +1039,7 @@ def main() -> None:
         st.session_state.app_settings = AppSettings.from_dict(st.session_state.profile.settings)
 
     ensure_auth_query_param()
+    ensure_lang_query_param(lang)
     inject_bu_theme(get_app_settings())
     lang = sidebar_settings(lang)
     sidebar_profile(lang)
