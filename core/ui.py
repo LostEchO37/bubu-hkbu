@@ -231,26 +231,80 @@ header[data-testid="stHeader"] > div {{
   to {{ opacity: 1; transform: translateY(0); }}
 }}
 
-section[data-testid="stSidebar"] .stButton > button {{
+/* Buttons — both rails. Never inherit light --text onto light button chrome. */
+.stButton > button,
+.stDownloadButton > button {{
   border-radius: 999px !important;
-  border: 1px solid var(--cream-border) !important;
+  border: 1px solid var(--field-border) !important;
   background: var(--field-bg) !important;
-  backdrop-filter: blur(8px) !important;
-  color: var(--accent-title) !important;
+  color: var(--field-text) !important;
   font-weight: 600 !important;
   font-size: var(--font-base) !important;
   box-shadow: 0 8px 20px rgba(31, 115, 140, 0.12) !important;
-  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
 }}
-section[data-testid="stSidebar"] .stButton > button:hover {{
+.stButton > button p,
+.stButton > button span,
+.stDownloadButton > button p,
+.stDownloadButton > button span {{
+  color: var(--field-text) !important;
+  -webkit-text-fill-color: var(--field-text) !important;
+}}
+.stButton > button:hover,
+.stDownloadButton > button:hover {{
   transform: translateY(-1px) !important;
   box-shadow: 0 12px 26px rgba(31, 115, 140, 0.16) !important;
 }}
-section[data-testid="stSidebar"] .stButton > button[kind="primary"],
-section[data-testid="stMain"] .stButton > button[kind="primary"] {{
+.stButton > button[kind="primary"],
+.stDownloadButton > button[kind="primary"] {{
   background: linear-gradient(135deg, #1f738c, #2f9eb8) !important;
   color: #f7fcff !important;
   border: none !important;
+}}
+.stButton > button[kind="primary"] p,
+.stButton > button[kind="primary"] span,
+.stDownloadButton > button[kind="primary"] p,
+.stDownloadButton > button[kind="primary"] span {{
+  color: #f7fcff !important;
+  -webkit-text-fill-color: #f7fcff !important;
+}}
+
+/* Expander headers — were light bars with light text in dark mode */
+[data-testid="stExpander"] {{
+  background: transparent !important;
+}}
+[data-testid="stExpander"] details {{
+  background: var(--cream) !important;
+  border: 1px solid var(--cream-border) !important;
+  border-radius: 16px !important;
+}}
+[data-testid="stExpander"] summary,
+[data-testid="stExpander"] summary span,
+[data-testid="stExpander"] summary p,
+[data-testid="stExpander"] summary svg {{
+  color: var(--text) !important;
+  fill: var(--text) !important;
+}}
+[data-testid="stExpander"] [data-testid="stExpanderDetails"] {{
+  background: transparent !important;
+  color: var(--text) !important;
+}}
+
+/* File uploader browse control */
+[data-testid="stFileUploader"] section,
+[data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] {{
+  background: var(--field-bg) !important;
+  border-color: var(--field-border) !important;
+  color: var(--field-text) !important;
+}}
+[data-testid="stFileUploader"] button {{
+  background: linear-gradient(135deg, #1f738c, #2f9eb8) !important;
+  color: #f7fcff !important;
+  border: none !important;
+}}
+[data-testid="stFileUploader"] button p,
+[data-testid="stFileUploader"] button span {{
+  color: #f7fcff !important;
+  -webkit-text-fill-color: #f7fcff !important;
 }}
 
 [data-testid="stChatMessage"] {{
@@ -281,7 +335,13 @@ section[data-testid="stMain"] .stButton > button[kind="primary"] {{
   box-shadow: 0 16px 40px rgba(31, 115, 140, 0.18) !important;
 }}
 
-h1, h2, h3, label, .stMarkdown, .stCaption, p {{ color: var(--text); }}
+/* Scope body text — do NOT paint every <p> (buttons/expanders include <p>). */
+h1, h2, h3, label,
+[data-testid="stMarkdownContainer"] > p,
+[data-testid="stCaptionContainer"],
+.stCaption {{
+  color: var(--text);
+}}
 
 [data-testid="stTextInput"] input,
 [data-testid="stTextArea"] textarea,
@@ -302,6 +362,9 @@ h1, h2, h3, label, .stMarkdown, .stCaption, p {{ color: var(--text); }}
   font-weight: 650 !important;
   color: var(--text) !important;
 }}
+
+.bu-workspace-head h3 {{ color: var(--accent-title) !important; }}
+.bu-workspace-head p {{ color: var(--text-soft) !important; }}
 
 #MainMenu, footer {{ visibility: hidden; }}
 
