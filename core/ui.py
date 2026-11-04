@@ -649,6 +649,93 @@ div[role="dialog"] h3 {{
     )
 
 
+def dock_workspace_below_chat_input() -> None:
+    """Move the workspace expander under the sticky chat input.
+
+    Streamlit always parks ``st.chat_input`` in the bottom chrome; widgets
+    rendered after it in Python still paint *above* that bar. This relocates
+    the marked workspace block into the bottom container, after the input.
+    """
+    safe_st_html(
+        """
+<style>
+.bu-workspace-host {
+  width: 100%;
+  max-width: 56rem;
+  margin: 0.15rem auto 0.35rem;
+  padding: 0 0.35rem 0.15rem;
+  box-sizing: border-box;
+}
+.bu-workspace-host [data-testid="stExpander"] {
+  border: 1px solid var(--cream-border) !important;
+  border-radius: 14px !important;
+  background: color-mix(in srgb, var(--card-bg, #fff) 88%, transparent) !important;
+  backdrop-filter: blur(10px);
+}
+.bu-workspace-host [data-testid="stCaptionContainer"],
+.bu-workspace-host .stCaption {
+  margin-top: 0.25rem !important;
+  text-align: center;
+}
+[data-testid="stBottomBlockContainer"] {
+  padding-bottom: 0.35rem !important;
+}
+</style>
+<script>
+(function () {
+  function findBottom() {
+    return (
+      document.querySelector('[data-testid="stBottomBlockContainer"]') ||
+      document.querySelector('[data-testid="stBottom"]')
+    );
+  }
+  function blockOf(el) {
+    return (
+      el.closest('[data-testid="element-container"]') ||
+      el.closest('[data-testid="stVerticalBlockBorderWrapper"]') ||
+      el.parentElement
+    );
+  }
+  function dock() {
+    var marker = document.querySelector("[data-bu-workspace-dock]");
+    if (!marker) return;
+    var bottom = findBottom();
+    if (!bottom) return;
+    // No chat input yet (hub) — leave workspace in normal main flow.
+    if (!bottom.querySelector('[data-testid="stChatInput"]')) return;
+    if (marker.closest("[data-bu-workspace-host]")) return;
+    var start = blockOf(marker);
+    if (!start || !start.parentElement) return;
+    var host = bottom.querySelector("[data-bu-workspace-host]");
+    if (!host) {
+      host = document.createElement("div");
+      host.setAttribute("data-bu-workspace-host", "1");
+      host.className = "bu-workspace-host";
+      bottom.appendChild(host);
+    }
+    var nodes = [];
+    for (var n = start; n; n = n.nextElementSibling) nodes.push(n);
+    for (var i = 0; i < nodes.length; i++) host.appendChild(nodes[i]);
+  }
+  dock();
+  if (window.__bubuWorkspaceDockObs) return;
+  window.__bubuWorkspaceDockObs = true;
+  var t = null;
+  var obs = new MutationObserver(function () {
+    if (t) return;
+    t = setTimeout(function () {
+      t = null;
+      dock();
+    }, 60);
+  });
+  obs.observe(document.body, { childList: true, subtree: true });
+})();
+</script>
+        """,
+        width="content",
+    )
+
+
 def render_login_header(title: str, hint: str) -> None:
     t, h = html.escape(title), html.escape(hint)
     safe_st_html(
@@ -680,6 +767,7 @@ def render_fun_home(greeting: str, tagline: str, tip: str, *, animate_in: bool =
 from core.home_agent import render_agent_bubble  # noqa: E402
 
 __all__ = [
+    "dock_workspace_below_chat_input",
     "inject_bu_theme",
     "inject_chunk_recovery",
     "inject_ui_phase",

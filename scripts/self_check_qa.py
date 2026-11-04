@@ -64,10 +64,13 @@ def main() -> None:
     assert 'st.expander("🗂️ " + t("workspace_title"' in app_src
     assert "workspace_panel_open" not in app_src
     assert "main_chat(lang)" in app_src
+    assert 'data-bu-workspace-dock' in app_src
+    assert "dock_workspace_below_chat_input" in app_src
     # Workspace must come after chat in main()
     assert app_src.index("main_chat(lang)") < app_src.index('st.expander("🗂️ " + t("workspace_title"')
     ui_src = (ROOT / "core" / "ui.py").read_text(encoding="utf-8")
     assert "_bubu_chunk_guard_injected" in ui_src
+    assert "dock_workspace_below_chat_input" in ui_src
     assert "components.html" not in ui_src
     req = (ROOT / "requirements.txt").read_text(encoding="utf-8")
     assert "streamlit>=" in req

@@ -62,10 +62,16 @@ from core.home_agent import (
 from core.changelog import changelog_markdown
 from core.identity import PROJECT_CREDIT, bot_nick
 from core.today import pulse_html
-from core.ui import inject_bu_theme, inject_chunk_recovery, inject_ui_phase, render_login_header
+from core.ui import (
+    dock_workspace_below_chat_input,
+    inject_bu_theme,
+    inject_chunk_recovery,
+    inject_ui_phase,
+    render_login_header,
+)
 
 # Bump when chat UI flow changes — forces one-time hub reset for logged-in sessions.
-_UI_REVISION = 46
+_UI_REVISION = 47
 
 _FAVICON = Path(__file__).resolve().parent / "assets" / "bu_favicon.png"
 st.set_page_config(
@@ -1215,11 +1221,14 @@ def main() -> None:
     sidebar_chrome(lang)
     render_changelog_corner(lang)
 
-    # Chat (sticky input at bottom) then workspace expander under the thread / above input.
+    # Chat first. Workspace is marked then docked *under* the sticky chat input
+    # (Streamlit always paints post-chat_input widgets above that bar otherwise).
     main_chat(lang)
+    st.markdown('<div data-bu-workspace-dock="1"></div>', unsafe_allow_html=True)
     with st.expander("🗂️ " + t("workspace_title", lang), expanded=False):
         render_workspace_panel(lang)
     st.caption(t("chunk_reload_tip", lang))
+    dock_workspace_below_chat_input()
 
 
 if __name__ == "__main__":

@@ -8,6 +8,20 @@ from core.i18n import Lang
 ENTRIES: list[dict[str, dict[Lang, str] | str]] = [
     {
         "date": "2026-11-04",
+        "tag": "v0.31",
+        "title": {
+            "zh-CN": "资料区贴在提问框下",
+            "zh-TW": "資料區貼在提問框下",
+            "en": "Workspace below input",
+        },
+        "body": {
+            "zh-CN": "· 「我的资料」真正挂到吸底提问框下方（不再夹在对话和输入框中间）",
+            "zh-TW": "· 「我的資料」真正掛到吸底提問框下方（不再夾在對話和輸入框中間）",
+            "en": "· Workspace docks under the sticky chat input (not between thread and input)",
+        },
+    },
+    {
+        "date": "2026-11-04",
         "tag": "v0.30",
         "title": {
             "zh-CN": "资料区回到提问框下",
