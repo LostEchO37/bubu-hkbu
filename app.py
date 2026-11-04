@@ -65,7 +65,7 @@ from core.today import pulse_html
 from core.ui import inject_bu_theme, inject_chunk_recovery, inject_ui_phase, render_login_header
 
 # Bump when chat UI flow changes — forces one-time hub reset for logged-in sessions.
-_UI_REVISION = 45
+_UI_REVISION = 46
 
 _FAVICON = Path(__file__).resolve().parent / "assets" / "bu_favicon.png"
 st.set_page_config(
@@ -1215,18 +1215,11 @@ def main() -> None:
     sidebar_chrome(lang)
     render_changelog_corner(lang)
 
-    # Chat first; workspace mounts only when opened (avoids loading every TextInput chunk up front).
+    # Chat (sticky input at bottom) then workspace expander under the thread / above input.
     main_chat(lang)
-    if "workspace_panel_open" not in st.session_state:
-        st.session_state.workspace_panel_open = False
-    ws_open = st.toggle(
-        "🗂️ " + t("workspace_toggle", lang),
-        key="workspace_panel_open",
-    )
-    if ws_open:
+    with st.expander("🗂️ " + t("workspace_title", lang), expanded=False):
         render_workspace_panel(lang)
-    else:
-        st.caption(t("chunk_reload_tip", lang))
+    st.caption(t("chunk_reload_tip", lang))
 
 
 if __name__ == "__main__":

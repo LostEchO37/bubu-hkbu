@@ -40,10 +40,10 @@ def main() -> None:
     from core.changelog import changelog_markdown
 
     md = changelog_markdown("zh-CN")
-    assert "v0.1" in md and "v0.29" in md
+    assert "v0.1" in md and "v0.30" in md
     assert (ROOT / "assets" / "bu_favicon.png").is_file()
     assert t("chunk_reload_tip", "zh-CN")
-    assert t("workspace_toggle", "en")
+    assert t("workspace_title", "en")
     ext_bg = (ROOT / "extension" / "background.js").read_text(encoding="utf-8")
     ext_ct = (ROOT / "extension" / "content.js").read_text(encoding="utf-8")
     assert 'DEFAULT_APP_URL = "https://bubu-hkbu.streamlit.app"' in ext_bg
@@ -57,12 +57,15 @@ def main() -> None:
     assert "const R = 200" in ext_ct
     assert "const CW = 280" in ext_ct
     assert "backdrop-filter" not in ext_ct
-    assert "_pending_pick" in (ROOT / "app.py").read_text(encoding="utf-8")
-    assert 'st.query_params["pick"] = str(pick)' not in (ROOT / "app.py").read_text(
-        encoding="utf-8"
-    )
-    assert "inject_chunk_recovery" in (ROOT / "app.py").read_text(encoding="utf-8")
-    assert "workspace_panel_open" in (ROOT / "app.py").read_text(encoding="utf-8")
+    app_src = (ROOT / "app.py").read_text(encoding="utf-8")
+    assert "_pending_pick" in app_src
+    assert 'st.query_params["pick"] = str(pick)' not in app_src
+    assert "inject_chunk_recovery" in app_src
+    assert 'st.expander("🗂️ " + t("workspace_title"' in app_src
+    assert "workspace_panel_open" not in app_src
+    assert "main_chat(lang)" in app_src
+    # Workspace must come after chat in main()
+    assert app_src.index("main_chat(lang)") < app_src.index('st.expander("🗂️ " + t("workspace_title"')
     ui_src = (ROOT / "core" / "ui.py").read_text(encoding="utf-8")
     assert "_bubu_chunk_guard_injected" in ui_src
     assert "components.html" not in ui_src
