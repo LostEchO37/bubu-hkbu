@@ -41,9 +41,15 @@ def inject_ui_phase(phase: str) -> None:
 
 
 def inject_chunk_recovery() -> None:
-    """One-shot soft reload when Streamlit JS chunks fail after Cloud redeploy."""
-    # components.html reliably runs script across Streamlit versions; st.html may strip JS
-    # or reject kwargs (width / unsafe_allow_javascript) on older Cloud pins.
+    """One-shot soft reload when Streamlit JS chunks fail after Cloud redeploy.
+
+    Runs at most once per browser session flag in session_state so we do not
+    mount a components iframe on every Streamlit rerun (that was a lag source).
+    """
+    if st.session_state.get("_bubu_chunk_guard_injected"):
+        return
+    st.session_state._bubu_chunk_guard_injected = True
+    # Prefer st.html + JS flag when available; avoid components iframe spam.
     script = """
 <script>
 (function () {
@@ -76,19 +82,14 @@ def inject_chunk_recovery() -> None:
   }, true);
   setTimeout(function () {
     try { sessionStorage.removeItem("bubu_chunk_reload"); } catch (e) {}
-  }, 15000);
+  }, 20000);
 })();
 </script>
 """
     try:
-        import streamlit.components.v1 as components
-
-        components.html(script, height=0, width=0)
+        safe_st_html(script, width="content")
     except Exception:
-        try:
-            safe_st_html(script, width="content")
-        except Exception:
-            pass
+        pass
 
 
 def inject_bu_theme(settings: AppSettings) -> None:

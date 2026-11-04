@@ -8,6 +8,20 @@ from core.i18n import Lang
 ENTRIES: list[dict[str, dict[Lang, str] | str]] = [
     {
         "date": "2026-11-04",
+        "tag": "v0.26",
+        "title": {
+            "zh-CN": "悬浮球美化 + 减卡顿",
+            "zh-TW": "懸浮球美化 + 減卡頓",
+            "en": "FAB polish + less lag",
+        },
+        "body": {
+            "zh-CN": "· 去掉残缺 EN 芯片，语言只在展开菜单里切换\n· Cloud 页不再挂悬浮球，减轻抢缓存卡顿\n· 恢复脚本每会话只注入一次",
+            "zh-TW": "· 去掉殘缺 EN 芯片，語言只在展開選單切換\n· Cloud 頁不再掛懸浮球，減輕搶快取卡頓\n· 恢復腳本每會話只注入一次",
+            "en": "· Removed clipped EN chip; language lives in the radial menu\n· No FAB on Cloud pages (less cache contention)\n· Chunk guard injects once per session",
+        },
+    },
+    {
+        "date": "2026-11-04",
         "tag": "v0.25",
         "title": {
             "zh-CN": "修复启动 TypeError",

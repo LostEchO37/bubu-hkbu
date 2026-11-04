@@ -200,8 +200,8 @@ def check_chat_and_hub_invariants() -> None:
     assert "st.button" not in mini and "bu-prompt" in mini
 
     md = changelog_markdown("en")
-    assert "v0.25" in md
-    assert ENTRIES[0]["tag"] == "v0.25"
+    assert "v0.26" in md
+    assert ENTRIES[0]["tag"] == "v0.26"
     assert (ROOT / "assets" / "bu_favicon.png").is_file()
     blob = " ".join(
         str(v) for e in ENTRIES for v in (e.get("body") or {}).values()
@@ -248,14 +248,17 @@ def check_extension_pack() -> None:
     assert "bubu-fab" in js
     assert "bubu-hkbu.streamlit.app" in bg
     assert "bubu_lang" in bg and "bubu-set-lang" in bg
-    assert "lang-chip" in js and "zh-TW" in js
+    assert "lang-sat" in js and "zh-TW" in js
+    assert "lang-chip" not in js
     assert "bubu_lang" in opt and "bubu-hkbu.streamlit.app" in opt
     with zipfile.ZipFile(io.BytesIO(z)) as zf:
         packed_bg = zf.read("bubu-fab-extension/background.js").decode("utf-8")
         packed_ct = zf.read("bubu-fab-extension/content.js").decode("utf-8")
     assert "bubu-hkbu.streamlit.app" in packed_bg
     assert "bubu-set-lang" in packed_bg
-    assert "lang-chip" in packed_ct
+    assert "lang-sat" in packed_ct
+    assert "lang-chip" not in packed_ct
+    assert "streamlit.app" in packed_ct
 
 
 def main() -> None:

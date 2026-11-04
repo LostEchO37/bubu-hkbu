@@ -48,13 +48,10 @@ function isStreamlitHost(url) {
   }
 }
 
-/** Avoid fighting Streamlit's own JS chunk downloads on Cloud pages. */
+/** Never inject on Streamlit Cloud — FAB lives on other sites and deep-links in. */
 async function injectFab(tabId, tabUrl) {
   try {
-    if (tabUrl && isStreamlitHost(tabUrl)) {
-      // Delay until the app has had time to pull TextInput/ChatInput chunks.
-      await new Promise((r) => setTimeout(r, 2500));
-    }
+    if (tabUrl && isStreamlitHost(tabUrl)) return;
     const [{ result: already }] = await chrome.scripting.executeScript({
       target: { tabId },
       func: () =>
@@ -208,13 +205,13 @@ function scheduleInject(tabId, tabUrl) {
   if (!canInject(tabUrl)) return;
   const prev = _injectSoon.get(tabId);
   if (prev) clearTimeout(prev);
-  const delay = isStreamlitHost(tabUrl) ? 2800 : 400;
+  if (isStreamlitHost(tabUrl)) return;
   _injectSoon.set(
     tabId,
     setTimeout(() => {
       _injectSoon.delete(tabId);
       injectFab(tabId, tabUrl);
-    }, delay)
+    }, 350)
   );
 }
 

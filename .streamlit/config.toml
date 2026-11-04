@@ -15,3 +15,9 @@ gatherUsageStats = false
 
 [client]
 toolbarMode = "minimal"
+# Show a clearer connection error instead of silent stale-chunk widgets after redeploy.
+showErrorDetails = "full"
+
+[runner]
+# Faster reruns when editing locally; harmless on Cloud.
+fastReruns = true
