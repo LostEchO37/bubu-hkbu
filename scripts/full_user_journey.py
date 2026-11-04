@@ -200,8 +200,8 @@ def check_chat_and_hub_invariants() -> None:
     assert "st.button" not in mini and "bu-prompt" in mini
 
     md = changelog_markdown("en")
-    assert "v0.27" in md
-    assert ENTRIES[0]["tag"] == "v0.27"
+    assert "v0.28" in md
+    assert ENTRIES[0]["tag"] == "v0.28"
     assert (ROOT / "assets" / "bu_favicon.png").is_file()
     blob = " ".join(
         str(v) for e in ENTRIES for v in (e.get("body") or {}).values()
@@ -246,15 +246,17 @@ def check_extension_pack() -> None:
     js = (ROOT / "extension" / "content.js").read_text(encoding="utf-8")
     opt = (ROOT / "extension" / "options.js").read_text(encoding="utf-8")
     assert "bubu-fab" in js
-    assert "bubu-hkbu.streamlit.app" in bg
+    assert "mdic9zba2hqxaqskyfihkn.streamlit.app" in bg
+    assert "waitTabComplete" in bg
     assert "bubu_lang" in bg and "bubu-set-lang" in bg
     assert "lang-sat" in js and "zh-TW" in js
     assert "lang-chip" not in js
-    assert "bubu_lang" in opt and "bubu-hkbu.streamlit.app" in opt
+    assert "bubu_lang" in opt and "mdic9zba2hqxaqskyfihkn.streamlit.app" in opt
     with zipfile.ZipFile(io.BytesIO(z)) as zf:
         packed_bg = zf.read("bubu-fab-extension/background.js").decode("utf-8")
         packed_ct = zf.read("bubu-fab-extension/content.js").decode("utf-8")
-    assert "bubu-hkbu.streamlit.app" in packed_bg
+    assert "mdic9zba2hqxaqskyfihkn.streamlit.app" in packed_bg
+    assert "waitTabComplete" in packed_bg
     assert "bubu-set-lang" in packed_bg
     assert "lang-sat" in packed_ct
     assert "lang-chip" not in packed_ct

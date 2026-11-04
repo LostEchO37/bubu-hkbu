@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "阿Bu · 悬浮球",
-  "version": "1.5.1",
-  "description": "其它网页右下角悬浮球；菜单只向左上展开避免遮挡；轻跳转。",
+  "version": "1.6.0",
+  "description": "悬浮球深链到稳定 Cloud 长链；冷启动先预热再带参数，避免一直转圈。",
   "action": {
     "default_title": "阿Bu 悬浮球",
     "default_popup": "popup.html",

@@ -1,4 +1,4 @@
-const DEFAULT_APP_URL = "https://bubu-hkbu.streamlit.app";
+const DEFAULT_APP_URL = "https://bubu-hkbu-mdic9zba2hqxaqskyfihkn.streamlit.app";
 const DEFAULT_LANG = "zh-CN";
 const LANGS = ["zh-CN", "zh-TW", "en"];
 
@@ -7,8 +7,14 @@ const langSel = document.getElementById("appLang");
 const status = document.getElementById("status");
 
 function normalizeAppUrl(raw) {
-  const s = String(raw || "").trim().replace(/\/$/, "");
+  let s = String(raw || "").trim().replace(/\/$/, "");
   if (!s || /localhost|127\.0\.0\.1/i.test(s)) return DEFAULT_APP_URL;
+  try {
+    const u = new URL(s);
+    if (u.hostname === "bubu-hkbu.streamlit.app") return DEFAULT_APP_URL;
+  } catch {
+    return DEFAULT_APP_URL;
+  }
   return s;
 }
 

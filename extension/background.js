@@ -1,10 +1,23 @@
-const DEFAULT_APP_URL = "https://bubu-hkbu.streamlit.app";
+// Canonical Cloud URL from README — short bubu-hkbu.streamlit.app can auth-loop when cold.
+const DEFAULT_APP_URL = "https://bubu-hkbu-mdic9zba2hqxaqskyfihkn.streamlit.app";
 const DEFAULT_LANG = "zh-CN";
 const LANGS = ["zh-CN", "zh-TW", "en"];
 
 function normalizeAppUrl(raw) {
-  const s = String(raw || "").trim().replace(/\/$/, "");
+  let s = String(raw || "").trim().replace(/\/$/, "");
   if (!s || /localhost|127\.0\.0\.1/i.test(s)) return DEFAULT_APP_URL;
+  // Migrate unfinished short subdomain / bare host that stalls on Cloud auth handshake.
+  try {
+    const u = new URL(s);
+    if (
+      u.hostname === "bubu-hkbu.streamlit.app" ||
+      u.hostname === "streamlit.app"
+    ) {
+      return DEFAULT_APP_URL;
+    }
+  } catch {
+    return DEFAULT_APP_URL;
+  }
   return s;
 }
 
@@ -91,11 +104,32 @@ async function resolveAuth(appOrigin) {
   return "";
 }
 
+function waitTabComplete(tabId, timeoutMs = 60000) {
+  return new Promise((resolve) => {
+    let done = false;
+    const finish = (ok) => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      chrome.tabs.onUpdated.removeListener(listener);
+      resolve(ok);
+    };
+    const timer = setTimeout(() => finish(false), timeoutMs);
+    function listener(id, info) {
+      if (id === tabId && info.status === "complete") finish(true);
+    }
+    chrome.tabs.onUpdated.addListener(listener);
+    chrome.tabs.get(tabId).then((tab) => {
+      if (tab.status === "complete") finish(true);
+    }).catch(() => finish(false));
+  });
+}
+
 async function openFab(action) {
   const base = await getAppUrl();
   const lang = await getLang();
+  const warm = new URL(base);
   const url = new URL(base);
-  // Keep query tiny — fewer Streamlit query-param churn / cache keys.
   const auth = await resolveAuth(url.origin);
   if (auth) url.searchParams.set("auth", auth);
   if (lang && lang !== "zh-CN") url.searchParams.set("lang", lang);
@@ -107,6 +141,7 @@ async function openFab(action) {
   }
 
   const target = url.toString();
+  const warmUrl = warm.toString();
   const tabs = await chrome.tabs.query({});
   const hit = tabs.find((t) => {
     try {
@@ -116,7 +151,7 @@ async function openFab(action) {
     }
   });
 
-  // Single tabs.update is faster than inject+assign+focus round-trips.
+  // Reuse a warm Cloud tab when possible (avoids cold auth handshake + spinner).
   if (hit?.id != null) {
     await chrome.tabs.update(hit.id, { url: target, active: true });
     if (hit.windowId != null) {
@@ -128,7 +163,18 @@ async function openFab(action) {
     }
     return;
   }
-  await chrome.tabs.create({ url: target, active: true });
+
+  // Cold start: open clean app URL first so Cloud can finish cookie/auth, then deep-link.
+  const tab = await chrome.tabs.create({ url: warmUrl, active: true });
+  if (tab?.id == null) return;
+  await waitTabComplete(tab.id, 60000);
+  // Small beat for Streamlit websocket after document complete.
+  await new Promise((r) => setTimeout(r, 1200));
+  try {
+    await chrome.tabs.update(tab.id, { url: target, active: true });
+  } catch {
+    /* tab closed */
+  }
 }
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
@@ -160,7 +206,6 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
           sendResponse({ ok: false, error: "此页面无法注入（系统页）" });
           return;
         }
-        // Force remount path for the popup button.
         try {
           await chrome.scripting.executeScript({
             target: { tabId: tab.id },
@@ -186,13 +231,12 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   return false;
 });
 
-// Debounced inject — Streamlit SPAs fire many complete events; don't stampede.
 const _injectSoon = new Map();
 function scheduleInject(tabId, tabUrl) {
   if (!canInject(tabUrl)) return;
+  if (isStreamlitHost(tabUrl)) return;
   const prev = _injectSoon.get(tabId);
   if (prev) clearTimeout(prev);
-  if (isStreamlitHost(tabUrl)) return;
   _injectSoon.set(
     tabId,
     setTimeout(() => {

@@ -8,6 +8,20 @@ from core.i18n import Lang
 ENTRIES: list[dict[str, dict[Lang, str] | str]] = [
     {
         "date": "2026-11-04",
+        "tag": "v0.28",
+        "title": {
+            "zh-CN": "修复进页一直转圈",
+            "zh-TW": "修復進頁一直轉圈",
+            "en": "Fix endless loading spinner",
+        },
+        "body": {
+            "zh-CN": "· 悬浮球改走稳定长链，避免短链冷启动卡在加载\n· 冷启动先打开干净页再带参数\n· 修好 pick 参数写回导致的重跑死循环",
+            "zh-TW": "· 懸浮球改走穩定長鏈，避免短鏈冷啟動卡在載入\n· 冷啟動先打開乾淨頁再帶參數\n· 修好 pick 參數寫回導致的重跑死循環",
+            "en": "· FAB uses the stable long Cloud URL\n· Cold start warms a clean page before deep-link params\n· Fixed pick query rewrite rerun loop",
+        },
+    },
+    {
+        "date": "2026-11-04",
         "tag": "v0.27",
         "title": {
             "zh-CN": "悬浮球防遮挡",

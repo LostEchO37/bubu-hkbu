@@ -40,14 +40,14 @@ def main() -> None:
     from core.changelog import changelog_markdown
 
     md = changelog_markdown("zh-CN")
-    assert "v0.1" in md and "v0.27" in md
+    assert "v0.1" in md and "v0.28" in md
     assert (ROOT / "assets" / "bu_favicon.png").is_file()
     assert t("chunk_reload_tip", "zh-CN")
     assert t("workspace_toggle", "en")
     ext_bg = (ROOT / "extension" / "background.js").read_text(encoding="utf-8")
     ext_ct = (ROOT / "extension" / "content.js").read_text(encoding="utf-8")
-    assert "bubu-hkbu.streamlit.app" in ext_bg
-    assert 'DEFAULT_APP_URL = "https://bubu-hkbu.streamlit.app"' in ext_bg
+    assert "mdic9zba2hqxaqskyfihkn.streamlit.app" in ext_bg
+    assert "waitTabComplete" in ext_bg
     assert "bubu_lang" in ext_bg and "bubu-set-lang" in ext_bg
     assert "isStreamlitHost" in ext_bg
     assert "if (tabUrl && isStreamlitHost(tabUrl)) return;" in ext_bg
@@ -55,7 +55,10 @@ def main() -> None:
     assert "lang-chip" not in ext_ct
     assert "streamlit.app" in ext_ct
     assert "at(100)" in ext_ct and "backdrop-filter" not in ext_ct
-    assert "tabs.update" in ext_bg
+    assert "_pending_pick" in (ROOT / "app.py").read_text(encoding="utf-8")
+    assert 'st.query_params["pick"] = str(pick)' not in (ROOT / "app.py").read_text(
+        encoding="utf-8"
+    )
     assert "inject_chunk_recovery" in (ROOT / "app.py").read_text(encoding="utf-8")
     assert "workspace_panel_open" in (ROOT / "app.py").read_text(encoding="utf-8")
     ui_src = (ROOT / "core" / "ui.py").read_text(encoding="utf-8")

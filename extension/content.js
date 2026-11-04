@@ -12,7 +12,7 @@
     /* continue */
   }
 
-  const DEFAULT_APP_URL = "https://bubu-hkbu.streamlit.app";
+  const DEFAULT_APP_URL = "https://bubu-hkbu-mdic9zba2hqxaqskyfihkn.streamlit.app";
   const LANGS = ["zh-CN", "zh-TW", "en"];
   const I18N = {
     "zh-CN": {

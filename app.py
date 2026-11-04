@@ -65,7 +65,7 @@ from core.today import pulse_html
 from core.ui import inject_bu_theme, inject_chunk_recovery, inject_ui_phase, render_login_header
 
 # Bump when chat UI flow changes — forces one-time hub reset for logged-in sessions.
-_UI_REVISION = 43
+_UI_REVISION = 44
 
 _FAVICON = Path(__file__).resolve().parent / "assets" / "bu_favicon.png"
 st.set_page_config(
@@ -91,10 +91,19 @@ def restore_lang_from_query() -> None:
     st.session_state._lang_user_set = True
 
 
+def _qp_one(value: object) -> str | None:
+    """Streamlit may return str or list for a query param."""
+    if value is None:
+        return None
+    if isinstance(value, (list, tuple)):
+        return str(value[0]) if value else None
+    return str(value)
+
+
 def ensure_lang_query_param(lang: Lang) -> None:
     """Keep lang= in the URL so hub/burst HTML links preserve UI + chatbot language."""
     try:
-        existing = st.query_params.get("lang")
+        existing = _qp_one(st.query_params.get("lang"))
         if existing == lang:
             return
         st.query_params["lang"] = lang
@@ -137,18 +146,12 @@ def reset_to_hub(lang: Lang, *, persist: bool = True, clear_burst: bool = True) 
     st.session_state.messages = default_welcome(lang)
     if clear_burst:
         st.session_state.agent_burst = False
-    # Keep signed auth + lang so HTML bubble <a href> reloads stay logged in / same language.
-    # Drop one-shot navigation flags only.
+    # Drop one-shot navigation flags only. Avoid rewriting auth/lang when unchanged —
+    # query_param writes force frontend URL sync and can strand the loading spinner.
     try:
-        auth = st.query_params.get("auth")
-        keep_lang = st.query_params.get("lang") or lang
-        for key in ("wake", "pick", "fab"):
+        for key in ("wake", "pick", "fab", "_bubu_r"):
             if key in st.query_params:
                 del st.query_params[key]
-        if auth:
-            st.query_params["auth"] = auth
-        if keep_lang:
-            st.query_params["lang"] = parse_lang(keep_lang)
     except Exception:
         pass
     if persist and st.session_state.get("user_id"):
@@ -178,13 +181,14 @@ def ensure_auth_query_param() -> str | None:
     if not uid:
         return None
     uid_i = int(uid)
-    existing = st.query_params.get("auth")
+    existing = _qp_one(st.query_params.get("auth"))
     # Reuse valid token — minting a new one every run would change the URL and loop-rerun.
     if existing and verify_auth_token(existing) == uid_i:
         return existing
     token = make_auth_token(uid_i)
     try:
-        st.query_params["auth"] = token
+        if existing != token:
+            st.query_params["auth"] = token
     except Exception:
         pass
     return token
@@ -192,22 +196,23 @@ def ensure_auth_query_param() -> str | None:
 
 def capture_nav_intents() -> None:
     """Read wake/pick/fab before hub reset can interfere; apply after session hydrate."""
-    if st.query_params.get("wake") == "1":
+    wake = _qp_one(st.query_params.get("wake"))
+    if wake == "1":
         st.session_state._wake_intent = True
         try:
             del st.query_params["wake"]
         except Exception:
             pass
-    pick = st.query_params.get("pick")
+    pick = _qp_one(st.query_params.get("pick"))
     if pick is not None:
         st.session_state._pick_intent = pick
         try:
             del st.query_params["pick"]
         except Exception:
             pass
-    fab = st.query_params.get("fab")
+    fab = _qp_one(st.query_params.get("fab"))
     if fab is not None:
-        st.session_state._fab_intent = str(fab).strip().lower()
+        st.session_state._fab_intent = fab.strip().lower()
         try:
             del st.query_params["fab"]
         except Exception:
@@ -219,9 +224,9 @@ def apply_nav_intents() -> None:
         st.session_state.agent_burst = True
     pick = st.session_state.pop("_pick_intent", None)
     if pick is not None:
-        # Leave hub so pick is processed as chat, not re-shown as hub flash.
+        # Keep pick in session only — writing it back to the URL caused an endless rerun loop.
         st.session_state.agent_burst = True
-        st.query_params["pick"] = str(pick)
+        st.session_state._pending_pick = pick
     fab = st.session_state.pop("_fab_intent", None)
     if not fab:
         return
@@ -1040,21 +1045,20 @@ def render_fab_feature_panel(lang: Lang) -> None:
 
 
 def consume_bubble_pick_query(prompts: list[str], *, plan_index: int | None) -> None:
-    pick = st.query_params.get("pick")
+    pick = st.session_state.pop("_pending_pick", None)
+    if pick is None:
+        pick = _qp_one(st.query_params.get("pick"))
+        if pick is not None:
+            try:
+                del st.query_params["pick"]
+            except Exception:
+                pass
     if pick is None:
         return
     try:
         idx = int(pick)
     except ValueError:
-        try:
-            del st.query_params["pick"]
-        except Exception:
-            pass
         return
-    try:
-        del st.query_params["pick"]
-    except Exception:
-        pass
     if plan_index is not None and idx == plan_index:
         st.session_state.pending_plan = True
     elif 0 <= idx < len(prompts):
