@@ -74,12 +74,13 @@ section[data-testid="stMain"]:has(.ui-phase-marker[data-phase="chat"]) [data-tes
   max-width: 86%;
   text-align: left;
   white-space: pre-wrap;
-  background: linear-gradient(145deg, rgba(255,255,255,0.88), rgba(220,240,248,0.72));
+  background: var(--cream, rgba(255,255,255,0.88));
   backdrop-filter: blur(14px);
   border-radius: 22px 22px 6px 22px;
   padding: 0.72rem 1.1rem;
   box-shadow: 0 12px 32px rgba(36, 110, 130, 0.11);
-  border: 1px solid rgba(255,255,255,0.7);
+  border: 1px solid var(--cream-border, rgba(255,255,255,0.7));
+  color: var(--text, #243d4a);
 }}
 /* Lead face sits left of the first line — not a floating empty bubble above */
 .chat-lead {{
@@ -90,12 +91,12 @@ section[data-testid="stMain"]:has(.ui-phase-marker[data-phase="chat"]) [data-tes
   height: 2.15rem;
   margin-top: 0.2rem;
   border-radius: 999px;
-  background: linear-gradient(145deg, #ffffff, #c8e9f4);
+  background: var(--cream, linear-gradient(145deg, #ffffff, #c8e9f4));
   box-shadow: 0 8px 20px rgba(47, 158, 184, 0.22);
-  border: 1px solid rgba(255,255,255,0.75);
+  border: 1px solid var(--cream-border, rgba(255,255,255,0.75));
   font-size: 0.58rem;
   font-weight: 700;
-  color: #1f738c;
+  color: var(--accent-title, #1f738c);
   letter-spacing: -0.04em;
   line-height: 1;
   user-select: none;
@@ -114,12 +115,12 @@ div[data-testid="stHorizontalBlock"]:has(.chat-lead)
   > div:last-child [data-testid="stMarkdownContainer"],
 div[data-testid="stHorizontalBlock"]:has(.chat-lead)
   > div:last-child [data-testid="stWriteStreamContainer"] {{
-  background: rgba(255,255,255,0.42);
+  background: var(--cream, rgba(255,255,255,0.42));
   backdrop-filter: blur(12px);
   border-radius: 6px 22px 22px 22px;
   padding: 0.75rem 1.1rem;
   box-shadow: 0 10px 28px rgba(36, 110, 130, 0.08);
-  border: 1px solid rgba(255,255,255,0.5);
+  border: 1px solid var(--cream-border, rgba(255,255,255,0.5));
   line-height: 1.65;
   color: var(--text, #243d4a);
 }}

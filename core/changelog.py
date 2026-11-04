@@ -8,6 +8,20 @@ from core.i18n import Lang
 ENTRIES: list[dict[str, dict[Lang, str] | str]] = [
     {
         "date": "2026-11-04",
+        "tag": "v0.19",
+        "title": {
+            "zh-CN": "深色底部输入区",
+            "zh-TW": "深色底部輸入區",
+            "en": "Dark chat footer",
+        },
+        "body": {
+            "zh-CN": "· 底部输入条跟随深色主题，不再露出浅色底板\n· 聊天气泡改用主题色，深色下更统一",
+            "zh-TW": "· 底部輸入條跟隨深色主題，不再露出淺色底板\n· 聊天氣泡改用主題色，深色下更統一",
+            "en": "· Chat footer follows dark theme instead of light Streamlit chrome\n· Chat bubbles use theme tokens for consistent dark mode",
+        },
+    },
+    {
+        "date": "2026-11-04",
         "tag": "v0.18",
         "title": {
             "zh-CN": "深色主题保持 + 日志可读",

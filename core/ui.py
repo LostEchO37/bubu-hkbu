@@ -30,7 +30,7 @@ def inject_bu_theme(settings: AppSettings) -> None:
         vars_css = """
   --sky: #3d8fab;
   --sky-deep: #5eb8d9;
-  --sky-bg: #1a2a33;
+  --sky-bg: #15242c;
   --cream: #243540;
   --cream-hover: #2c4150;
   --cream-border: #3d5565;
@@ -45,6 +45,9 @@ def inject_bu_theme(settings: AppSettings) -> None:
   --hero-bg: rgba(36, 53, 64, 0.72);
   --hero-border: rgba(126, 200, 227, 0.22);
   --grain: rgba(255,255,255,0.03);
+  --glow-a: rgba(94, 184, 217, 0.16);
+  --glow-b: rgba(47, 158, 184, 0.12);
+  --glow-c: rgba(30, 60, 72, 0.35);
 """
     else:
         vars_css = """
@@ -65,6 +68,9 @@ def inject_bu_theme(settings: AppSettings) -> None:
   --hero-bg: rgba(255, 255, 255, 0.5);
   --hero-border: rgba(255,255,255,0.58);
   --grain: rgba(20, 55, 68, 0.025);
+  --glow-a: rgba(255,232,200,0.45);
+  --glow-b: rgba(90,180,200,0.3);
+  --glow-c: rgba(255,255,255,0.32);
 """
 
     btn_bg = "#1b2c36" if is_dark else "rgba(255,255,255,0.86)"
@@ -89,11 +95,19 @@ def inject_bu_theme(settings: AppSettings) -> None:
 
 .stApp {{
   background: var(--app-bg) fixed;
+  background-color: var(--sky-bg) !important;
   color: var(--text);
   font-family: "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
     -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: var(--font-base);
   letter-spacing: 0.01em;
+}}
+.stApp [data-testid="stAppViewContainer"],
+.stApp [data-testid="stAppViewContainer"] > .main,
+.stApp section.main,
+.stApp .main .block-container {{
+  background: transparent !important;
+  background-color: transparent !important;
 }}
 .stApp::before {{
   content: "";
@@ -102,9 +116,9 @@ def inject_bu_theme(settings: AppSettings) -> None:
   pointer-events: none;
   z-index: 0;
   background:
-    radial-gradient(ellipse 62% 48% at 88% 6%, rgba(255,232,200,0.45), transparent 58%),
-    radial-gradient(ellipse 55% 42% at 10% 90%, rgba(90,180,200,0.3), transparent 55%),
-    radial-gradient(ellipse 42% 36% at 48% 42%, rgba(255,255,255,0.32), transparent 65%);
+    radial-gradient(ellipse 62% 48% at 88% 6%, var(--glow-a), transparent 58%),
+    radial-gradient(ellipse 55% 42% at 10% 90%, var(--glow-b), transparent 55%),
+    radial-gradient(ellipse 42% 36% at 48% 42%, var(--glow-c), transparent 65%);
   animation: bu-sky 18s ease-in-out infinite alternate;
 }}
 .stApp::after {{
@@ -128,6 +142,7 @@ def inject_bu_theme(settings: AppSettings) -> None:
   padding-bottom: 2rem;
   position: relative;
   z-index: 1;
+  background: transparent !important;
 }}
 
 .bu-workspace-head {{
@@ -320,13 +335,45 @@ header[data-testid="stHeader"] > div {{
   box-shadow: none !important;
 }}
 
+/* Chat footer — Streamlit theme.toml is light-only; paint bottom chrome ourselves */
+[data-testid="stBottomBlockContainer"],
+[data-testid="stBottom"],
+section[data-testid="stBottom"],
+.stApp [data-testid="stBottomBlockContainer"] {{
+  background: var(--sky-bg) !important;
+  background-color: var(--sky-bg) !important;
+  background-image: none !important;
+  border-top: 1px solid var(--cream-border) !important;
+  color: var(--text) !important;
+}}
+[data-testid="stBottomBlockContainer"] > div,
+[data-testid="stBottomBlockContainer"] [data-testid="stChatInput"],
+[data-testid="stBottom"] > div {{
+  background: transparent !important;
+  background-color: transparent !important;
+}}
+[data-testid="stAppViewContainer"] > .main,
+[data-testid="stAppViewContainer"] {{
+  background: transparent !important;
+}}
+.stApp [data-testid="stVerticalBlockBorderWrapper"] {{
+  background: transparent !important;
+}}
+
+[data-testid="stChatInput"] {{
+  background: transparent !important;
+  color: var(--field-text) !important;
+}}
 [data-testid="stChatInput"] > div {{
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
 }}
-[data-testid="stChatInput"] textarea {{
+[data-testid="stChatInput"] textarea,
+[data-testid="stChatInput"] [data-baseweb="base-input"],
+[data-testid="stChatInput"] [data-baseweb="textarea"] {{
   background: var(--field-bg) !important;
+  background-color: var(--field-bg) !important;
   backdrop-filter: blur(18px) !important;
   color: var(--field-text) !important;
   -webkit-text-fill-color: var(--field-text) !important;
@@ -337,9 +384,23 @@ header[data-testid="stHeader"] > div {{
   padding: 0.75rem 1.2rem !important;
   transition: box-shadow 0.2s ease, border-color 0.2s ease !important;
 }}
+[data-testid="stChatInput"] textarea::placeholder {{
+  color: var(--text-soft) !important;
+  -webkit-text-fill-color: var(--text-soft) !important;
+  opacity: 0.85 !important;
+}}
 [data-testid="stChatInput"] textarea:focus {{
   border-color: rgba(47, 158, 184, 0.55) !important;
   box-shadow: 0 16px 40px rgba(31, 115, 140, 0.18) !important;
+}}
+[data-testid="stChatInput"] button {{
+  background: linear-gradient(135deg, #1f738c, #2f9eb8) !important;
+  color: #f7fcff !important;
+  border: none !important;
+}}
+[data-testid="stChatInput"] button svg {{
+  fill: #f7fcff !important;
+  color: #f7fcff !important;
 }}
 
 /* Scope body text; avoid styling button or expander inner paragraphs. */
