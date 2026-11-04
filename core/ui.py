@@ -373,6 +373,44 @@ h1, h2, h3, label,
 .bu-workspace-head h3 {{ color: var(--accent-title) !important; }}
 .bu-workspace-head p {{ color: var(--text-soft) !important; }}
 
+/* Changelog / st.dialog — opaque surface so dark-mode text stays readable */
+div[data-testid="stModal"],
+div[data-testid="stDialog"],
+div[role="dialog"],
+section[data-testid="stModal"] {{
+  color: var(--text) !important;
+}}
+div[data-testid="stModal"] > div,
+div[data-testid="stDialog"] > div,
+div[role="dialog"] > div,
+section[data-testid="stModal"] > div {{
+  background: var(--exp-bg) !important;
+  background-color: var(--exp-bg) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--cream-border) !important;
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+}}
+div[data-testid="stModal"] [data-testid="stMarkdownContainer"],
+div[data-testid="stModal"] [data-testid="stMarkdownContainer"] p,
+div[data-testid="stModal"] [data-testid="stCaptionContainer"],
+div[data-testid="stModal"] [data-testid="stCaptionContainer"] *,
+div[role="dialog"] [data-testid="stMarkdownContainer"],
+div[role="dialog"] [data-testid="stMarkdownContainer"] p,
+div[role="dialog"] [data-testid="stCaptionContainer"],
+div[role="dialog"] [data-testid="stCaptionContainer"] * {{
+  color: var(--text) !important;
+  -webkit-text-fill-color: var(--text) !important;
+}}
+div[data-testid="stModal"] h1,
+div[data-testid="stModal"] h2,
+div[data-testid="stModal"] h3,
+div[role="dialog"] h1,
+div[role="dialog"] h2,
+div[role="dialog"] h3 {{
+  color: var(--accent-title) !important;
+}}
+
 #MainMenu, footer {{ visibility: hidden; }}
 
 @media (prefers-reduced-motion: reduce) {{

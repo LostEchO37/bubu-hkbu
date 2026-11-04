@@ -8,6 +8,20 @@ from core.i18n import Lang
 ENTRIES: list[dict[str, dict[Lang, str] | str]] = [
     {
         "date": "2026-11-04",
+        "tag": "v0.18",
+        "title": {
+            "zh-CN": "深色主题保持 + 日志可读",
+            "zh-TW": "深色主題保持 + 日誌可讀",
+            "en": "Keep dark theme + readable log",
+        },
+        "body": {
+            "zh-CN": "· 登录前选的深色/字号/语气登录后保留\n· 更新日志弹窗在深色模式下提高对比度",
+            "zh-TW": "· 登入前選的深色/字級/語氣登入後保留\n· 更新日誌彈窗在深色模式下提高對比度",
+            "en": "· Theme/font/tone chosen before login survive sign-in\n· Changelog modal contrast improved for dark mode",
+        },
+    },
+    {
+        "date": "2026-11-04",
         "tag": "v0.17",
         "title": {
             "zh-CN": "更新日志弹窗",

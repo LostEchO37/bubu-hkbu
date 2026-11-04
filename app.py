@@ -65,7 +65,7 @@ from core.today import pulse_html
 from core.ui import inject_bu_theme, inject_ui_phase, render_login_header
 
 # Bump when chat UI flow changes — forces one-time hub reset for logged-in sessions.
-_UI_REVISION = 33
+_UI_REVISION = 34
 
 st.set_page_config(
     page_title="阿Bu · HKBU Student Assistant",
@@ -293,19 +293,29 @@ def load_user_data_once(lang: Lang) -> None:
     uid = st.session_state.get("user_id")
     if not uid or st.session_state.get("_db_loaded"):
         return
-    user_chose = bool(st.session_state.get("_lang_user_set") or st.query_params.get("lang"))
+    # Keep preferences chosen on the login screen (theme/font/tone/lang) over stale DB defaults.
+    pre_login = st.session_state.get("app_settings")
+    settings_chose = bool(st.session_state.get("_settings_user_set"))
+    user_chose_lang = bool(st.session_state.get("_lang_user_set") or st.query_params.get("lang"))
     session_lang = parse_lang(st.session_state.get("ui_lang"), lang)
     data = load_session(uid)
     if data:
         prof_dict, _messages = data
         if prof_dict:
             st.session_state.profile = StudentProfile.from_dict(prof_dict)
-        st.session_state.app_settings = AppSettings.from_dict(
-            st.session_state.profile.settings
-        )
-        saved = parse_lang(st.session_state.app_settings.ui_lang)
-        if user_chose:
-            lang = session_lang
+        loaded = AppSettings.from_dict(st.session_state.profile.settings)
+        if settings_chose and isinstance(pre_login, AppSettings):
+            loaded = AppSettings(
+                font_size=pre_login.font_size,
+                theme=pre_login.theme,
+                personality=pre_login.personality,
+                ui_lang=pre_login.ui_lang,
+            )
+        st.session_state.app_settings = loaded
+        st.session_state.profile.settings = loaded.to_dict()
+        saved = parse_lang(loaded.ui_lang)
+        if user_chose_lang or settings_chose:
+            lang = session_lang if user_chose_lang else parse_lang(loaded.ui_lang)
             if st.session_state.app_settings.ui_lang != lang:
                 st.session_state.app_settings.ui_lang = lang  # type: ignore[assignment]
                 st.session_state.profile.settings = st.session_state.app_settings.to_dict()
@@ -313,6 +323,10 @@ def load_user_data_once(lang: Lang) -> None:
             lang = saved
             st.session_state.ui_lang = lang
     else:
+        if settings_chose and isinstance(pre_login, AppSettings):
+            st.session_state.app_settings = pre_login
+            if "profile" in st.session_state:
+                st.session_state.profile.settings = pre_login.to_dict()
         lang = session_lang
         st.session_state.ui_lang = lang
     ensure_lang_query_param(lang)
@@ -461,6 +475,7 @@ def sidebar_settings(lang: Lang) -> Lang:
                 ui_lang=new_lang,
             )
             st.session_state._lang_user_set = True
+            st.session_state._settings_user_set = True
             st.session_state.ui_lang = new_lang
             ensure_lang_query_param(new_lang)
             save_app_settings(new_settings)
@@ -609,6 +624,7 @@ def sidebar_chrome(lang: Lang) -> None:
                 "custom_notes_area",
                 "_settings_flash",
                 "settings_panel_open",
+                "_settings_user_set",
             ):
                 st.session_state.pop(key, None)
             for key in list(st.session_state.keys()):
