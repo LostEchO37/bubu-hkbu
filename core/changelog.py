@@ -8,6 +8,20 @@ from core.i18n import Lang
 ENTRIES: list[dict[str, dict[Lang, str] | str]] = [
     {
         "date": "2026-11-04",
+        "tag": "v0.17",
+        "title": {
+            "zh-CN": "更新日志弹窗",
+            "zh-TW": "更新日誌彈窗",
+            "en": "Changelog modal",
+        },
+        "body": {
+            "zh-CN": "· 更新日志改为独立弹窗，不再占版面\n· 入口移到左上，恢复 Fork / GitHub 快捷入口",
+            "zh-TW": "· 更新日誌改為獨立彈窗，不再佔版面\n· 入口移到左上，恢復 Fork / GitHub 快捷入口",
+            "en": "· Changelog opens in a modal dialog\n· Entry moved top-left; Fork/GitHub restored",
+        },
+    },
+    {
+        "date": "2026-11-04",
         "tag": "v0.16",
         "title": {
             "zh-CN": "更新日志可点击",
@@ -15,9 +29,9 @@ ENTRIES: list[dict[str, dict[Lang, str] | str]] = [
             "en": "Changelog clickable",
         },
         "body": {
-            "zh-CN": "· 隐藏右上角 Fork/GitHub 遮挡\n· 更新日志改为可展开面板，点击有反馈",
-            "zh-TW": "· 隱藏右上角 Fork/GitHub 遮擋\n· 更新日誌改為可展開面板，點擊有回饋",
-            "en": "· Hide overlapping Fork/GitHub chrome\n· Changelog uses an expander with clear open/close feedback",
+            "zh-CN": "· 曾临时处理右上角遮挡（后续已恢复 Fork）\n· 更新日志改为可展开反馈",
+            "zh-TW": "· 曾暫時處理右上角遮擋（後續已恢復 Fork）\n· 更新日誌改為可展開回饋",
+            "en": "· Temporary overlay workaround (Fork later restored)\n· Changelog open/close feedback",
         },
     },
     {
