@@ -64,7 +64,7 @@ from core.today import pulse_html
 from core.ui import inject_bu_theme, inject_ui_phase, render_login_header
 
 # Bump when chat UI flow changes — forces one-time hub reset for logged-in sessions.
-_UI_REVISION = 27
+_UI_REVISION = 28
 
 st.set_page_config(
     page_title="阿Bu · HKBU Student Assistant",
@@ -401,41 +401,48 @@ def sidebar_settings(lang: Lang) -> Lang:
         st.sidebar.caption(t("lang_sidebar_tip", lang))
     if on_streamlit_cloud():
         st.sidebar.caption(t("storage_cloud_note", lang))
-    with st.sidebar.expander(
+
+    # Toggle keeps open state across reruns (expander was snapping shut).
+    if "settings_panel_open" not in st.session_state:
+        st.session_state.settings_panel_open = on_login
+    settings_open = st.sidebar.toggle(
         "⚙️ " + t("settings_title", lang),
-        expanded=on_login,
-    ):
+        key="settings_panel_open",
+    )
+    if settings_open:
         active_tone = {
             "playful": t("personality_playful", lang),
             "balanced": t("personality_balanced", lang),
             "calm": t("personality_calm", lang),
         }.get(settings.personality, t("personality_playful", lang))
-        st.caption(t("tone_active", lang, tone=active_tone))
-        chosen_lang = st.selectbox(
+        st.sidebar.caption(t("tone_active", lang, tone=active_tone))
+        chosen_lang = st.sidebar.selectbox(
             t("lang_label", lang),
             codes,
             format_func=lambda c: lang_labels.get(c, c),
             key="settings_lang",
         )
-        font_label = st.selectbox(
+        font_label = st.sidebar.selectbox(
             t("settings_font", lang),
             font_labels,
             key=font_key,
         )
-        theme_choice = st.radio(
+        theme_choice = st.sidebar.radio(
             t("settings_theme", lang),
             ["light", "dark"],
             format_func=lambda v: t("theme_light", lang) if v == "light" else t("theme_dark", lang),
             horizontal=True,
             key=theme_key,
         )
-        pers_label = st.selectbox(
+        pers_label = st.sidebar.selectbox(
             t("settings_personality", lang),
             pers_labels,
             key=pers_key,
         )
 
-        if st.button(t("settings_apply", lang), use_container_width=True, key="settings_apply_btn"):
+        if st.sidebar.button(
+            t("settings_apply", lang), use_container_width=True, key="settings_apply_btn"
+        ):
             safe_theme = theme_choice if theme_choice in ("light", "dark") else "light"
             try:
                 safe_font = font_codes[font_labels.index(font_label)]
@@ -465,7 +472,6 @@ def sidebar_settings(lang: Lang) -> Lang:
             theme_name = (
                 t("theme_light", new_lang) if safe_theme == "light" else t("theme_dark", new_lang)
             )
-            # Must not pass kwarg name "lang" — it collides with t(key, lang, **fmt).
             st.session_state._settings_flash = t(
                 "settings_applied",
                 new_lang,
@@ -581,6 +587,7 @@ def sidebar_chrome(lang: Lang) -> None:
                 "settings_pers",
                 "custom_notes_area",
                 "_settings_flash",
+                "settings_panel_open",
             ):
                 st.session_state.pop(key, None)
             for key in list(st.session_state.keys()):
@@ -609,18 +616,19 @@ def render_workspace_panel(lang: Lang) -> None:
         unsafe_allow_html=True,
     )
 
-    with st.expander(t("sidebar_profile", lang), expanded=True):
-        p.name = st.text_input(t("name", lang), value=p.name, key="ws_name")
-        p.student_id = st.text_input(t("student_id", lang), value=p.student_id, key="ws_sid")
-        p.programme = st.text_input(t("programme", lang), value=p.programme, key="ws_prog")
-        if st.session_state.get("user_id") and st.button(
-            t("save_profile", lang), use_container_width=True, key="save_profile_btn"
-        ):
-            persist_user_data()
-            st.success(t("profile_saved", lang))
+    st.subheader(t("sidebar_profile", lang))
+    p.name = st.text_input(t("name", lang), value=p.name, key="ws_name")
+    p.student_id = st.text_input(t("student_id", lang), value=p.student_id, key="ws_sid")
+    p.programme = st.text_input(t("programme", lang), value=p.programme, key="ws_prog")
+    if st.session_state.get("user_id") and st.button(
+        t("save_profile", lang), use_container_width=True, key="save_profile_btn"
+    ):
+        persist_user_data()
+        st.success(t("profile_saved", lang))
 
-    with st.expander(t("timetable", lang), expanded=bool(p.timetable)):
-        st.caption(t("tt_image_tip", lang))
+    st.subheader(t("timetable", lang))
+    st.caption(t("tt_image_tip", lang))
+    with st.container():
         tt_img = st.file_uploader(
             t("upload_tt_image", lang),
             type=["png", "jpg", "jpeg", "webp"],
@@ -1160,11 +1168,9 @@ def main() -> None:
     lang = sidebar_settings(lang)
     sidebar_chrome(lang)
 
-    # Slim left rail; profile / timetable / mail live on the right.
-    chat_col, tools_col = st.columns([1.55, 1], gap="large")
-    with chat_col:
-        main_chat(lang)
-    with tools_col:
+    # Full-width chat; workspace is one independent dropdown (avoids column reflow glitches).
+    main_chat(lang)
+    with st.expander("🗂️ " + t("workspace_title", lang), expanded=False):
         render_workspace_panel(lang)
 
 

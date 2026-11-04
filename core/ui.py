@@ -67,7 +67,12 @@ def inject_bu_theme(settings: AppSettings) -> None:
   --grain: rgba(20, 55, 68, 0.025);
 """
 
-    st.html(
+    # Prefer markdown for global CSS — more reliable than st.html against Streamlit specificity.
+    btn_bg = "#1b2c36" if is_dark else "rgba(255,255,255,0.86)"
+    btn_fg = "#e8f6fb" if is_dark else "#1f4554"
+    exp_bg = "#243540" if is_dark else "#f7fbfd"
+    exp_fg = "#e8f6fb" if is_dark else "#1f4554"
+    st.markdown(
         f"""
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -77,6 +82,10 @@ def inject_bu_theme(settings: AppSettings) -> None:
 {vars_css}
   --font-base: {fs};
   --font-hero: {hero};
+  --btn-bg: {btn_bg};
+  --btn-fg: {btn_fg};
+  --exp-bg: {exp_bg};
+  --exp-fg: {exp_fg};
 }}
 
 .stApp {{
@@ -231,78 +240,74 @@ header[data-testid="stHeader"] > div {{
   to {{ opacity: 1; transform: translateY(0); }}
 }}
 
-/* Buttons — both rails. Never inherit light --text onto light button chrome. */
-.stButton > button,
-.stDownloadButton > button {{
+/* Buttons — high specificity so Streamlit light chrome cannot win in dark mode */
+.stApp .stButton > button,
+.stApp .stDownloadButton > button,
+.stApp button[data-testid="baseButton-secondary"],
+.stApp button[data-testid="baseButton-primary"] {{
   border-radius: 999px !important;
   border: 1px solid var(--field-border) !important;
-  background: var(--field-bg) !important;
-  color: var(--field-text) !important;
+  background: var(--btn-bg) !important;
+  background-color: var(--btn-bg) !important;
+  color: var(--btn-fg) !important;
   font-weight: 600 !important;
   font-size: var(--font-base) !important;
   box-shadow: 0 8px 20px rgba(31, 115, 140, 0.12) !important;
 }}
-.stButton > button p,
-.stButton > button span,
-.stDownloadButton > button p,
-.stDownloadButton > button span {{
-  color: var(--field-text) !important;
-  -webkit-text-fill-color: var(--field-text) !important;
+.stApp .stButton > button *,
+.stApp .stDownloadButton > button *,
+.stApp button[data-testid="baseButton-secondary"] *,
+.stApp button[data-testid="baseButton-primary"] * {{
+  color: var(--btn-fg) !important;
+  -webkit-text-fill-color: var(--btn-fg) !important;
 }}
-.stButton > button:hover,
-.stDownloadButton > button:hover {{
-  transform: translateY(-1px) !important;
-  box-shadow: 0 12px 26px rgba(31, 115, 140, 0.16) !important;
-}}
-.stButton > button[kind="primary"],
-.stDownloadButton > button[kind="primary"] {{
+.stApp .stButton > button[kind="primary"],
+.stApp .stDownloadButton > button[kind="primary"],
+.stApp button[data-testid="baseButton-primary"] {{
   background: linear-gradient(135deg, #1f738c, #2f9eb8) !important;
+  background-color: #2f9eb8 !important;
   color: #f7fcff !important;
   border: none !important;
 }}
-.stButton > button[kind="primary"] p,
-.stButton > button[kind="primary"] span,
-.stDownloadButton > button[kind="primary"] p,
-.stDownloadButton > button[kind="primary"] span {{
+.stApp .stButton > button[kind="primary"] *,
+.stApp .stDownloadButton > button[kind="primary"] *,
+.stApp button[data-testid="baseButton-primary"] * {{
   color: #f7fcff !important;
   -webkit-text-fill-color: #f7fcff !important;
 }}
 
-/* Expander headers — were light bars with light text in dark mode */
-[data-testid="stExpander"] {{
-  background: transparent !important;
+/* Expander headers */
+.stApp [data-testid="stExpander"] details,
+.stApp .streamlit-expanderContent,
+.stApp .streamlit-expanderHeader {{
+  background: var(--exp-bg) !important;
+  background-color: var(--exp-bg) !important;
+  border-color: var(--cream-border) !important;
+  color: var(--exp-fg) !important;
+  border-radius: 14px !important;
 }}
-[data-testid="stExpander"] details {{
-  background: var(--cream) !important;
-  border: 1px solid var(--cream-border) !important;
-  border-radius: 16px !important;
-}}
-[data-testid="stExpander"] summary,
-[data-testid="stExpander"] summary span,
-[data-testid="stExpander"] summary p,
-[data-testid="stExpander"] summary svg {{
-  color: var(--text) !important;
-  fill: var(--text) !important;
-}}
-[data-testid="stExpander"] [data-testid="stExpanderDetails"] {{
-  background: transparent !important;
-  color: var(--text) !important;
+.stApp [data-testid="stExpander"] summary,
+.stApp [data-testid="stExpander"] summary *,
+.stApp .streamlit-expanderHeader,
+.stApp .streamlit-expanderHeader * {{
+  color: var(--exp-fg) !important;
+  -webkit-text-fill-color: var(--exp-fg) !important;
+  fill: var(--exp-fg) !important;
 }}
 
-/* File uploader browse control */
-[data-testid="stFileUploader"] section,
-[data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] {{
-  background: var(--field-bg) !important;
+/* File uploader */
+.stApp [data-testid="stFileUploader"] section,
+.stApp [data-testid="stFileUploaderDropzone"] {{
+  background: var(--btn-bg) !important;
   border-color: var(--field-border) !important;
-  color: var(--field-text) !important;
+  color: var(--btn-fg) !important;
 }}
-[data-testid="stFileUploader"] button {{
+.stApp [data-testid="stFileUploader"] button {{
   background: linear-gradient(135deg, #1f738c, #2f9eb8) !important;
   color: #f7fcff !important;
   border: none !important;
 }}
-[data-testid="stFileUploader"] button p,
-[data-testid="stFileUploader"] button span {{
+.stApp [data-testid="stFileUploader"] button * {{
   color: #f7fcff !important;
   -webkit-text-fill-color: #f7fcff !important;
 }}
@@ -373,7 +378,7 @@ h1, h2, h3, label,
 }}
 </style>
         """,
-        width="content",
+        unsafe_allow_html=True,
     )
 
 
