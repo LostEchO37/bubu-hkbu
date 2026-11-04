@@ -34,6 +34,13 @@ def main() -> None:
     from core.i18n import t
     from core.profile import StudentProfile
 
+    # Keep in sync with app._UI_REVISION — mismatch forces DB reload → reset_to_hub.
+    ui_revision = 21
+    for line in (ROOT_DIR / "app.py").read_text(encoding="utf-8").splitlines():
+        if line.startswith("_UI_REVISION"):
+            ui_revision = int(line.split("=", 1)[1].strip())
+            break
+
     init_db()
     ok, _ = register_user("__bubble_test__", "bubbletest99", "Test")
     uid, err = login_user("__bubble_test__", "bubbletest99")
@@ -44,58 +51,44 @@ def main() -> None:
     lang = "zh-CN"
     welcome = t("welcome", lang)
 
+    def _seed(at: AppTest, *, burst: bool) -> None:
+        at.session_state["user_id"] = uid
+        at.session_state["account_username"] = "__bubble_test__"
+        at.session_state["display_name"] = "Test"
+        at.session_state["profile"] = StudentProfile()
+        at.session_state["messages"] = [{"role": "assistant", "content": welcome}]
+        at.session_state["agent_burst"] = burst
+        at.session_state["_db_loaded"] = True
+        at.session_state["_ui_revision"] = ui_revision
+        at.session_state["app_settings"] = AppSettings()
+
+    def _html_blob(at: AppTest) -> str:
+        return "\n".join(getattr(el, "value", "") or "" for el in at.html)
+
     # --- Hub phase ---
     at = AppTest.from_file(str(ROOT_DIR / "app.py"), default_timeout=90)
-    at.session_state["user_id"] = uid
-    at.session_state["account_username"] = "__bubble_test__"
-    at.session_state["display_name"] = "Test"
-    at.session_state["profile"] = StudentProfile()
-    at.session_state["messages"] = [{"role": "assistant", "content": welcome}]
-    at.session_state["agent_burst"] = False
-    at.session_state["_db_loaded"] = True
-    at.session_state["_ui_revision"] = 11
-    at.session_state["app_settings"] = AppSettings()
+    _seed(at, burst=False)
     at.run(timeout=90)
     assert not at.exception, f"hub error: {at.exception}"
 
-    html_blob = "\n".join(getattr(el, "value", "") or str(el) for el in at.html)
-    # Fallback: scrape markdown/html bodies from element tree
-    if "bu-blob" not in html_blob:
-        # Streamlit AppTest exposes .html elements with .value
-        parts = []
-        for el in at.html:
-            parts.append(getattr(el, "value", "") or "")
-        html_blob = "\n".join(parts)
-
-    assert "bu-cta" in html_blob or any(
-        "bu-cta" in (getattr(el, "value", "") or "") for el in at.html
-    ), "hub HTML missing CTA"
+    html_blob = _html_blob(at)
+    assert "bu-cta" in html_blob, "hub HTML missing CTA"
     assert not any(b.key == "hub_blob_tap" for b in at.button), "hub must not use st.button"
-    assert "wake" in html_blob or any(
-        "wake" in (getattr(el, "value", "") or "") for el in at.html
-    )
+    assert "wake" in html_blob
 
     # --- Burst phase ---
     at2 = AppTest.from_file(str(ROOT_DIR / "app.py"), default_timeout=90)
-    at2.session_state["user_id"] = uid
-    at2.session_state["account_username"] = "__bubble_test__"
-    at2.session_state["display_name"] = "Test"
-    at2.session_state["profile"] = StudentProfile()
-    at2.session_state["messages"] = [{"role": "assistant", "content": welcome}]
-    at2.session_state["agent_burst"] = True
-    at2.session_state["_db_loaded"] = True
-    at2.session_state["_ui_revision"] = 11
-    at2.session_state["app_settings"] = AppSettings()
+    _seed(at2, burst=True)
     at2.run(timeout=90)
     assert not at2.exception, f"burst error: {at2.exception}"
 
-    burst_html = "\n".join(getattr(el, "value", "") or "" for el in at2.html)
+    burst_html = _html_blob(at2)
     assert "bu-prompt" in burst_html, "burst missing prompt cards"
     assert "bu-card-in" in burst_html, "stagger animation missing"
     assert "pick=0" in burst_html and "pick=4" in burst_html
     assert not any(getattr(b, "key", "") and str(b.key).startswith("daughter_") for b in at2.button)
 
-    print(json.dumps({"ok": True, "hub": "bu-cta", "burst": "bu-prompt x5", "register_ok": ok}))
+    print(json.dumps({"ok": True, "hub": "bu-cta", "burst": "bu-prompt x5", "register_ok": ok, "ui_revision": ui_revision}))
 
 
 if __name__ == "__main__":

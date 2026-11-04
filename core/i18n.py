@@ -416,9 +416,14 @@ MESSAGES: dict[str, dict[Lang, str]] = {
         "en": "Log in / Sign up",
     },
     "login_hint": {
-        "zh-CN": "用学号或邮箱注册，课表和任务会保存在云端（本机数据库），换设备登录即可同步。",
-        "zh-TW": "用學號或電郵註冊，課表和任務會保存，換裝置登入即可同步。",
-        "en": "Sign up with student ID or email — your timetable syncs when you log in elsewhere.",
+        "zh-CN": "用学号或邮箱注册。数据保存在本应用的本地数据库；同一运行环境内换设备登录可同步。",
+        "zh-TW": "用學號或電郵註冊。資料保存在本應用的本機資料庫；同一運行環境內換裝置登入可同步。",
+        "en": "Sign up with student ID or email. Data is stored in this app’s local database and syncs within the same deployment.",
+    },
+    "storage_cloud_note": {
+        "zh-CN": "提示：Streamlit Cloud 重启 / 休眠后，账号与课表可能被清空（演示环境，非永久云盘）。重要资料请自行备份。",
+        "zh-TW": "提示：Streamlit Cloud 重啟 / 休眠後，帳號與課表可能被清空（示範環境，非永久雲端）。重要資料請自行備份。",
+        "en": "Note: On Streamlit Cloud, reboot/sleep may wipe accounts and timetables (demo storage, not permanent cloud). Back up anything important.",
     },
     "tab_login": {"zh-CN": "登录", "zh-TW": "登入", "en": "Log in"},
     "tab_register": {"zh-CN": "注册", "zh-TW": "註冊", "en": "Sign up"},

@@ -64,7 +64,7 @@ from core.today import pulse_html
 from core.ui import inject_bu_theme, inject_ui_phase, render_login_header
 
 # Bump when chat UI flow changes — forces one-time hub reset for logged-in sessions.
-_UI_REVISION = 20
+_UI_REVISION = 21
 
 st.set_page_config(
     page_title="阿Bu · HKBU Student Assistant",
@@ -78,6 +78,19 @@ def get_lang() -> Lang:
     if "ui_lang" not in st.session_state:
         st.session_state.ui_lang = "zh-CN"
     return st.session_state.ui_lang  # type: ignore[return-value]
+
+
+def on_streamlit_cloud() -> bool:
+    """Community Cloud mounts the repo under /mount/src."""
+    return Path("/mount/src").is_dir() or bool(
+        os.environ.get("STREAMLIT_SHARING_MODE")
+        or os.environ.get("STREAMLIT_RUNTIME_ENVIRONMENT")
+    )
+
+
+def render_storage_notice(lang: Lang) -> None:
+    if on_streamlit_cloud():
+        st.info(t("storage_cloud_note", lang))
 
 
 def reset_to_hub(lang: Lang, *, persist: bool = True, clear_burst: bool = True) -> None:
@@ -264,6 +277,8 @@ def init_state(lang: Lang) -> None:
 
 def sidebar_settings(lang: Lang) -> Lang:
     settings = get_app_settings()
+    if on_streamlit_cloud():
+        st.sidebar.caption(t("storage_cloud_note", lang))
     with st.sidebar.expander("⚙️ " + t("settings_title", lang), expanded=False):
         labels = [label for label, _ in LANG_OPTIONS]
         codes: list[Lang] = [code for _, code in LANG_OPTIONS]  # type: ignore[misc]
@@ -333,6 +348,7 @@ def render_plugin_download(lang: Lang, *, key: str) -> None:
 
 def login_screen(lang: Lang) -> None:
     render_login_header(t("login_title", lang), t("login_hint", lang))
+    render_storage_notice(lang)
     with st.expander(t("plugin_section", lang), expanded=False):
         render_plugin_download(lang, key="plugin_dl_login")
     tab_in, tab_up = st.tabs([t("tab_login", lang), t("tab_register", lang)])
