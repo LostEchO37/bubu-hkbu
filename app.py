@@ -55,7 +55,6 @@ from core.mail_vision import draft_reply_from_email_image, format_draft_for_chat
 from core.extension_pack import extension_zip_bytes
 from core.home_agent import (
     begin_ai_stream,
-    render_agent_bubble,
     render_chat_thread,
     render_mini_prompt_bubbles,
 )
@@ -67,19 +66,71 @@ from core.ui import (
     inject_chunk_recovery,
     inject_ui_phase,
     render_login_header,
+    safe_st_html,
 )
 
 # Bump when chat UI flow changes — forces one-time hub reset for logged-in sessions.
-_UI_REVISION = 54
+_UI_REVISION = 55
 
 _FAVICON = Path(__file__).resolve().parent / "assets" / "bu_favicon.png"
 st.set_page_config(
     page_title="阿Bu · HKBU Student Assistant",
     page_icon=str(_FAVICON) if _FAVICON.is_file() else "🫧",
     layout="wide",
-    # Collapsed first paint is faster on phones / other devices.
-    initial_sidebar_state="collapsed",
+    # Desktop skeleton: fixed left nav (UI-01). Narrow screens still use Streamlit drawer.
+    initial_sidebar_state="expanded",
 )
+
+_NAV_PAGES = ("chat", "workspace", "tasks")
+
+
+def ensure_nav_page() -> str:
+    page = st.session_state.get("nav_page", "chat")
+    if page not in _NAV_PAGES:
+        page = "chat"
+        st.session_state.nav_page = page
+    return page
+
+
+def set_nav_page(page: str) -> None:
+    if page in _NAV_PAGES:
+        st.session_state.nav_page = page
+
+
+def plain_account_label(name: str) -> str:
+    """Avoid mailto auto-link on emails (UI-12)."""
+    raw = (name or "").strip() or "—"
+    return raw.replace("@", "@\u200b")
+
+
+def scroll_latest_assistant_into_view() -> None:
+    """UI-07: after a reply, bring the latest message into the upper viewport."""
+    script = """
+<script>
+(function () {
+  function go() {
+    try {
+      var root = window.parent && window.parent.document ? window.parent.document : document;
+      var msgs = root.querySelectorAll('[data-testid="stChatMessage"], .chat-line');
+      if (!msgs || !msgs.length) return;
+      var el = msgs[msgs.length - 1];
+      el.scrollIntoView({ block: "center", behavior: "smooth" });
+    } catch (e) {}
+  }
+  setTimeout(go, 120);
+  setTimeout(go, 480);
+})();
+</script>
+"""
+    try:
+        safe_st_html(script, width="content")
+    except Exception:
+        pass
+
+
+def friendly_vision_error(lang: Lang, *, kind: str = "tt") -> str:
+    """User-facing vision failure — never surface env/model names (UI-12)."""
+    return t("email_vision_fail" if kind == "mail" else "vision_fail", lang)
 
 
 def get_lang() -> Lang:
@@ -140,11 +191,6 @@ def on_streamlit_cloud() -> bool:
         os.environ.get("STREAMLIT_SHARING_MODE")
         or os.environ.get("STREAMLIT_RUNTIME_ENVIRONMENT")
     )
-
-
-def render_storage_notice(lang: Lang) -> None:
-    if on_streamlit_cloud():
-        st.info(t("storage_cloud_note", lang))
 
 
 def reset_to_hub(lang: Lang, *, persist: bool = True, clear_burst: bool = True) -> None:
@@ -382,15 +428,10 @@ def _purge_stale_settings_keys(lang: Lang) -> None:
                 st.session_state.pop(key, None)
 
 
-def sidebar_settings(lang: Lang) -> Lang:
-    """Draft settings in the sidebar; commit only via Apply.
-
-    Font/tone options are the translated label strings for the *applied* language,
-    with widget keys scoped by lang — so English leftovers cannot stick after 切换.
-    """
+def _settings_widget_state(lang: Lang) -> tuple[list[Lang], dict[str, str], list[str], list[str], str, str, list[str], list[str], str]:
+    """Prepare settings widget keys for the current language."""
     settings = get_app_settings()
     _purge_stale_settings_keys(lang)
-
     codes: list[Lang] = [code for _, code in LANG_OPTIONS]  # type: ignore[misc]
     lang_labels = {code: label for label, code in LANG_OPTIONS}
     if st.session_state.get("settings_lang") not in codes:
@@ -419,96 +460,142 @@ def sidebar_settings(lang: Lang) -> Lang:
     if st.session_state.get(pers_key) not in pers_labels:
         cur_p = settings.personality if settings.personality in pers_codes else "playful"
         st.session_state[pers_key] = pers_labels[pers_codes.index(cur_p)]
-
-    on_login = not bool(st.session_state.get("user_id"))
-    flash = st.session_state.pop("_settings_flash", None)
-    if flash:
-        st.sidebar.success(flash)
-    if on_login:
-        st.sidebar.caption(t("lang_sidebar_tip", lang))
-    if on_streamlit_cloud():
-        st.sidebar.caption(t("storage_cloud_note", lang))
-
-    # Keep settings closed by default — auto-open on login mounted select/radio
-    # widgets that starved login text_input JS chunks (blank skeleton inputs).
-    if "settings_panel_open" not in st.session_state:
-        st.session_state.settings_panel_open = False
-    settings_open = st.sidebar.toggle(
-        "⚙️ " + t("settings_title", lang),
-        key="settings_panel_open",
+    return (
+        codes,
+        lang_labels,
+        font_codes,
+        font_labels,
+        font_key,
+        theme_key,
+        pers_codes,
+        pers_labels,
+        pers_key,
     )
-    if settings_open:
-        active_tone = {
-            "playful": t("personality_playful", lang),
-            "balanced": t("personality_balanced", lang),
-            "calm": t("personality_calm", lang),
-        }.get(settings.personality, t("personality_playful", lang))
-        st.sidebar.caption(t("tone_active", lang, tone=active_tone))
-        chosen_lang = st.sidebar.selectbox(
-            t("lang_label", lang),
-            codes,
-            format_func=lambda c: lang_labels.get(c, c),
-            key="settings_lang",
-        )
-        font_label = st.sidebar.selectbox(
-            t("settings_font", lang),
-            font_labels,
-            key=font_key,
-        )
-        theme_choice = st.sidebar.radio(
-            t("settings_theme", lang),
-            ["light", "dark"],
-            format_func=lambda v: t("theme_light", lang) if v == "light" else t("theme_dark", lang),
-            horizontal=True,
-            key=theme_key,
-        )
-        pers_label = st.sidebar.selectbox(
-            t("settings_personality", lang),
-            pers_labels,
-            key=pers_key,
-        )
 
-        if st.sidebar.button(
-            t("settings_apply", lang), use_container_width=True, key="settings_apply_btn"
-        ):
-            safe_theme = theme_choice if theme_choice in ("light", "dark") else "light"
-            try:
-                safe_font = font_codes[font_labels.index(font_label)]
-            except ValueError:
-                safe_font = "medium"
-            try:
-                safe_pers = pers_codes[pers_labels.index(pers_label)]
-            except ValueError:
-                safe_pers = "playful"
-            new_lang = chosen_lang if chosen_lang in codes else lang
-            new_settings = AppSettings(
-                font_size=safe_font,  # type: ignore[arg-type]
-                theme=safe_theme,  # type: ignore[arg-type]
-                personality=safe_pers,  # type: ignore[arg-type]
-                ui_lang=new_lang,
-            )
-            st.session_state._lang_user_set = True
-            st.session_state._settings_user_set = True
-            st.session_state.ui_lang = new_lang
-            ensure_lang_query_param(new_lang)
-            save_app_settings(new_settings)
-            sync_welcome_language(new_lang)
-            tone_name = {
-                "playful": t("personality_playful", new_lang),
-                "balanced": t("personality_balanced", new_lang),
-                "calm": t("personality_calm", new_lang),
-            }[safe_pers]
-            theme_name = (
-                t("theme_light", new_lang) if safe_theme == "light" else t("theme_dark", new_lang)
-            )
-            st.session_state._settings_flash = t(
-                "settings_applied",
-                new_lang,
-                lang_label=lang_labels.get(new_lang, new_lang),
-                tone=tone_name,
-                theme=theme_name,
-            )
-            st.rerun()
+
+def _apply_settings_from_widgets(
+    lang: Lang,
+    *,
+    chosen_lang: Lang,
+    font_label: str,
+    theme_choice: str,
+    pers_label: str,
+    font_codes: list[str],
+    font_labels: list[str],
+    pers_codes: list[str],
+    pers_labels: list[str],
+    lang_labels: dict[str, str],
+) -> None:
+    safe_theme = theme_choice if theme_choice in ("light", "dark") else "light"
+    try:
+        safe_font = font_codes[font_labels.index(font_label)]
+    except ValueError:
+        safe_font = "medium"
+    try:
+        safe_pers = pers_codes[pers_labels.index(pers_label)]
+    except ValueError:
+        safe_pers = "playful"
+    new_lang = chosen_lang if chosen_lang in lang_labels or chosen_lang in ("zh-CN", "zh-TW", "en") else lang
+    new_settings = AppSettings(
+        font_size=safe_font,  # type: ignore[arg-type]
+        theme=safe_theme,  # type: ignore[arg-type]
+        personality=safe_pers,  # type: ignore[arg-type]
+        ui_lang=new_lang,
+    )
+    st.session_state._lang_user_set = True
+    st.session_state._settings_user_set = True
+    st.session_state.ui_lang = new_lang
+    ensure_lang_query_param(new_lang)
+    save_app_settings(new_settings)
+    sync_welcome_language(new_lang)
+    tone_name = {
+        "playful": t("personality_playful", new_lang),
+        "balanced": t("personality_balanced", new_lang),
+        "calm": t("personality_calm", new_lang),
+    }[safe_pers]
+    theme_name = t("theme_light", new_lang) if safe_theme == "light" else t("theme_dark", new_lang)
+    st.session_state._settings_flash = t(
+        "settings_applied",
+        new_lang,
+        lang_label=lang_labels.get(new_lang, new_lang),
+        tone=tone_name,
+        theme=theme_name,
+    )
+
+
+def render_settings_form(lang: Lang, *, key_prefix: str = "dlg") -> Lang:
+    """Settings body used in dialogs (UI-03 / UI-13)."""
+    (
+        codes,
+        lang_labels,
+        font_codes,
+        font_labels,
+        font_key,
+        theme_key,
+        pers_codes,
+        pers_labels,
+        pers_key,
+    ) = _settings_widget_state(lang)
+    settings = get_app_settings()
+    active_tone = {
+        "playful": t("personality_playful", lang),
+        "balanced": t("personality_balanced", lang),
+        "calm": t("personality_calm", lang),
+    }.get(settings.personality, t("personality_playful", lang))
+    st.caption(t("tone_active", lang, tone=active_tone))
+    chosen_lang = st.selectbox(
+        t("lang_label", lang),
+        codes,
+        format_func=lambda c: lang_labels.get(c, c),
+        key=f"{key_prefix}_settings_lang",
+    )
+    # Keep legacy key in sync for apply path
+    st.session_state.settings_lang = chosen_lang
+    font_label = st.selectbox(
+        t("settings_font", lang),
+        font_labels,
+        key=f"{key_prefix}_{font_key}",
+    )
+    st.session_state[font_key] = font_label
+    theme_choice = st.radio(
+        t("settings_theme", lang),
+        ["light", "dark"],
+        format_func=lambda v: t("theme_light", lang) if v == "light" else t("theme_dark", lang),
+        horizontal=True,
+        key=f"{key_prefix}_{theme_key}",
+    )
+    st.session_state[theme_key] = theme_choice
+    pers_label = st.selectbox(
+        t("settings_personality", lang),
+        pers_labels,
+        key=f"{key_prefix}_{pers_key}",
+    )
+    st.session_state[pers_key] = pers_label
+    if st.button(t("settings_apply", lang), type="primary", use_container_width=True, key=f"{key_prefix}_apply"):
+        _apply_settings_from_widgets(
+            lang,
+            chosen_lang=chosen_lang,  # type: ignore[arg-type]
+            font_label=font_label,
+            theme_choice=theme_choice,
+            pers_label=pers_label,
+            font_codes=font_codes,
+            font_labels=font_labels,
+            pers_codes=pers_codes,
+            pers_labels=pers_labels,
+            lang_labels=lang_labels,
+        )
+        st.rerun()
+
+    st.markdown("---")
+    st.caption(t("help_section", lang))
+    with st.expander(t("help_tips_title", lang), expanded=False):
+        st.caption(t("sharing_public_tip", lang))
+        st.caption(t("cold_start_tip", lang))
+        st.caption(t("chunk_reload_tip", lang))
+    if on_streamlit_cloud():
+        st.caption(t("storage_cloud_note", lang))
+    st.caption(t("plugin_section", lang))
+    render_plugin_download(lang, key=f"{key_prefix}_plugin")
     ensure_lang_query_param(get_lang())
     return get_lang()
 
@@ -535,25 +622,64 @@ def _changelog_dialog(lang: Lang) -> None:
     st.markdown(changelog_markdown(lang))
 
 
-def render_changelog_corner(lang: Lang) -> None:
-    """Changelog opens in a modal — button sits top-left so Fork/GitHub stay free."""
-    st.markdown('<div class="bu-changelog-bar">', unsafe_allow_html=True)
-    left, _right = st.columns([1.55, 4])
-    with left:
-        if st.button(
-            "📋 " + t("changelog_title", lang),
-            use_container_width=True,
-            key="changelog_modal_btn",
-        ):
-            _changelog_dialog(lang)
-    st.markdown("</div>", unsafe_allow_html=True)
+@st.dialog("⚙️ Settings")
+def _settings_dialog(lang: Lang) -> None:
+    render_settings_form(lang, key_prefix="setdlg")
+
+
+def do_logout(lang: Lang) -> None:
+    keep_lang = parse_lang(st.session_state.get("ui_lang"), lang)
+    for key in (
+        "user_id",
+        "display_name",
+        "account_username",
+        "_db_loaded",
+        "profile",
+        "messages",
+        "app_settings",
+        "agent_burst",
+        "_wake_intent",
+        "_pick_intent",
+        "_fab_intent",
+        "fab_panel",
+        "mail_draft",
+        "_ui_revision",
+        "settings_theme_idx",
+        "settings_lang_idx",
+        "settings_font_idx",
+        "settings_pers_idx",
+        "settings_theme",
+        "settings_lang",
+        "settings_font",
+        "settings_pers",
+        "custom_notes_area",
+        "_settings_flash",
+        "settings_panel_open",
+        "_settings_user_set",
+        "nav_page",
+        "ws_seg",
+        "_scroll_chat",
+    ):
+        st.session_state.pop(key, None)
+    for key in list(st.session_state.keys()):
+        if str(key).startswith("_set_font_") or str(key).startswith("_set_theme_") or str(
+            key
+        ).startswith("_set_pers_"):
+            st.session_state.pop(key, None)
+    try:
+        st.query_params.clear()
+        st.query_params["lang"] = keep_lang
+    except Exception:
+        pass
+    st.session_state.ui_lang = keep_lang
+    st.session_state._lang_user_set = True
+    st.rerun()
 
 
 def login_screen(lang: Lang) -> None:
+    """UI-08: single centered card — title, hint, auth, soft storage note, text links."""
+    st.markdown('<div class="bu-login-shell" aria-hidden="true"></div>', unsafe_allow_html=True)
     render_login_header(t("login_title", lang), t("login_hint", lang))
-    render_storage_notice(lang)
-    # Radio (not tabs): Streamlit tabs mount BOTH panes → too many text_inputs
-    # on first paint → blank skeleton fields on slow Cloud/mobile.
     mode = st.radio(
         t("login_title", lang),
         [t("tab_login", lang), t("tab_register", lang)],
@@ -573,12 +699,13 @@ def login_screen(lang: Lang) -> None:
                 st.session_state.display_name = name
                 st.session_state.account_username = u.strip().lower()
                 st.session_state._db_loaded = False
+                st.session_state.nav_page = "chat"
                 st.rerun()
     else:
         u2 = st.text_input(t("username", lang), key="reg_user")
         p2 = st.text_input(t("password", lang), type="password", key="reg_pass")
         dn = st.text_input(t("display_name", lang), key="reg_name")
-        if st.button(t("btn_register", lang), use_container_width=True):
+        if st.button(t("btn_register", lang), type="primary", use_container_width=True):
             ok, code = register_user(u2, p2, dn)
             if not ok:
                 err = {
@@ -593,98 +720,139 @@ def login_screen(lang: Lang) -> None:
                 st.session_state.display_name = name or dn or u2
                 st.session_state.account_username = u2.strip().lower()
                 st.session_state._db_loaded = False
+                st.session_state.nav_page = "chat"
                 st.success(t("register_ok", lang))
                 st.rerun()
-    if st.toggle("🧩 " + t("plugin_section", lang), key="plugin_panel_login", value=False):
-        render_plugin_download(lang, key="plugin_dl_login")
+    if on_streamlit_cloud():
+        st.caption(t("storage_cloud_note", lang))
+    b1, b2, b3 = st.columns(3)
+    with b1:
+        if st.button(t("changelog_title", lang), use_container_width=True, key="login_changelog"):
+            _changelog_dialog(lang)
+    with b2:
+        if st.button(t("nav_settings", lang), use_container_width=True, key="login_settings"):
+            _settings_dialog(lang)
+    with b3:
+        if st.button(t("help_section", lang), use_container_width=True, key="login_help"):
+            _settings_dialog(lang)
 
 
-def sidebar_chrome(lang: Lang) -> None:
-    """Slim left rail: account, Today pulse, new chat / logout."""
-    p: StudentProfile = st.session_state.profile
-    if not st.session_state.get("user_id"):
-        return
-    st.sidebar.success(
-        t("logged_as", lang, name=st.session_state.get("display_name", ""))
+def render_app_sidebar(lang: Lang) -> Lang:
+    """UI-03: brand → nav → today pulse → account / logout / settings."""
+    flash = st.session_state.pop("_settings_flash", None)
+    if flash:
+        st.sidebar.caption(flash)
+
+    st.sidebar.markdown(
+        f'<div class="bu-nav-brand">{html.escape(bot_nick(lang))}</div>',
+        unsafe_allow_html=True,
     )
-    st.sidebar.caption(f"{bot_nick(lang)} · {PROJECT_CREDIT}")
-    st.sidebar.markdown(pulse_html(p, lang), unsafe_allow_html=True)
+
+    ensure_nav_page()
+    page_ids = list(_NAV_PAGES)
+    page_labels = [t("nav_chat", lang), t("nav_workspace", lang), t("nav_tasks", lang)]
+    current = st.session_state.get("nav_page", "chat")
+    try:
+        idx = page_ids.index(current)
+    except ValueError:
+        idx = 0
+    choice = st.sidebar.radio(
+        "nav",
+        page_labels,
+        index=idx,
+        label_visibility="collapsed",
+        key="nav_page_radio",
+    )
+    st.session_state.nav_page = page_ids[page_labels.index(choice)]
+
+    if st.session_state.get("user_id") and "profile" in st.session_state:
+        st.sidebar.markdown(
+            pulse_html(st.session_state.profile, lang),
+            unsafe_allow_html=True,
+        )
+
+    account = st.session_state.get("account_username") or st.session_state.get("display_name") or ""
+    st.sidebar.markdown(
+        f'<div class="bu-account-plain">{html.escape(t("logged_as", lang, name=plain_account_label(str(account))))}</div>',
+        unsafe_allow_html=True,
+    )
     c1, c2 = st.sidebar.columns(2)
     with c1:
         if st.button(t("new_chat", lang), use_container_width=True, key="btn_new_chat"):
             reset_to_hub(lang, persist=True)
+            set_nav_page("chat")
             st.rerun()
     with c2:
         if st.button(t("logout", lang), use_container_width=True, key="btn_logout"):
-            keep_lang = parse_lang(st.session_state.get("ui_lang"), lang)
-            for key in (
-                "user_id",
-                "display_name",
-                "account_username",
-                "_db_loaded",
-                "profile",
-                "messages",
-                "app_settings",
-                "agent_burst",
-                "_wake_intent",
-                "_pick_intent",
-                "_fab_intent",
-                "fab_panel",
-                "mail_draft",
-                "_ui_revision",
-                "settings_theme_idx",
-                "settings_lang_idx",
-                "settings_font_idx",
-                "settings_pers_idx",
-                "settings_theme",
-                "settings_lang",
-                "settings_font",
-                "settings_pers",
-                "custom_notes_area",
-                "_settings_flash",
-                "settings_panel_open",
-                "_settings_user_set",
-            ):
-                st.session_state.pop(key, None)
-            for key in list(st.session_state.keys()):
-                if str(key).startswith("_set_font_") or str(key).startswith("_set_theme_") or str(
-                    key
-                ).startswith("_set_pers_"):
-                    st.session_state.pop(key, None)
-            try:
-                st.query_params.clear()
-                st.query_params["lang"] = keep_lang
-            except Exception:
-                pass
-            st.session_state.ui_lang = keep_lang
-            st.session_state._lang_user_set = True
-            st.rerun()
-    if st.sidebar.toggle("🧩 " + t("plugin_section", lang), key="plugin_panel_sidebar", value=False):
-        render_plugin_download(lang, key="plugin_dl_sidebar")
+            do_logout(lang)
+    if st.sidebar.button(t("nav_settings", lang), use_container_width=True, key="btn_open_settings"):
+        _settings_dialog(lang)
+    st.sidebar.markdown(
+        f'<div class="bu-nav-credit">{html.escape(PROJECT_CREDIT)}</div>',
+        unsafe_allow_html=True,
+    )
+    ensure_lang_query_param(get_lang())
+    return get_lang()
+
+
+def _append_assistant_note(note: str) -> None:
+    msgs = list(st.session_state.get("messages") or [])
+    welcomes = all_welcome_bodies()
+    msgs = [
+        m
+        for m in msgs
+        if not (m.get("role") == "assistant" and m.get("content") in welcomes)
+    ]
+    msgs.append({"role": "assistant", "content": note})
+    st.session_state.messages = msgs
+    st.session_state.agent_burst = True
+    set_nav_page("chat")
+    st.session_state._scroll_chat = True
 
 
 def render_workspace_panel(lang: Lang) -> None:
-    """Profile / timetable / tasks / mail / notes — shown on the right of chat."""
+    """UI-06: workspace page with one segment at a time (no chat in the middle)."""
     p: StudentProfile = st.session_state.profile
     st.markdown(
         f'<div class="bu-workspace-head"><h3>{html.escape(t("workspace_title", lang))}</h3>'
         f'<p>{html.escape(t("workspace_hint", lang))}</p></div>',
         unsafe_allow_html=True,
     )
+    seg_ids = ["profile", "timetable", "mail", "notes"]
+    seg_labels = [
+        t("ws_seg_profile", lang),
+        t("ws_seg_timetable", lang),
+        t("ws_seg_mail", lang),
+        t("ws_seg_notes", lang),
+    ]
+    if st.session_state.get("ws_seg") not in seg_labels:
+        st.session_state.ws_seg = seg_labels[0]
+    seg = st.radio(
+        "ws_seg",
+        seg_labels,
+        horizontal=True,
+        label_visibility="collapsed",
+        key="ws_seg",
+    )
+    seg_id = seg_ids[seg_labels.index(seg)]
 
-    st.subheader(t("sidebar_profile", lang))
-    p.name = st.text_input(t("name", lang), value=p.name, key="ws_name")
-    p.student_id = st.text_input(t("student_id", lang), value=p.student_id, key="ws_sid")
-    p.programme = st.text_input(t("programme", lang), value=p.programme, key="ws_prog")
-    if st.session_state.get("user_id") and st.button(
-        t("save_profile", lang), use_container_width=True, key="save_profile_btn"
-    ):
-        persist_user_data()
-        st.success(t("profile_saved", lang))
+    if seg_id == "profile":
+        p.name = st.text_input(t("name", lang), value=p.name, key="ws_name")
+        p.student_id = st.text_input(t("student_id", lang), value=p.student_id, key="ws_sid")
+        p.programme = st.text_input(t("programme", lang), value=p.programme, key="ws_prog")
+        if st.session_state.get("user_id") and st.button(
+            t("save_profile", lang), type="primary", use_container_width=True, key="save_profile_btn"
+        ):
+            persist_user_data()
+            st.success(t("profile_saved", lang))
+        return
 
-    st.subheader(t("timetable", lang))
-    st.caption(t("tt_image_tip", lang))
-    with st.container():
+    if seg_id == "timetable":
+        st.caption(t("tt_image_tip", lang))
+        st.markdown(
+            f'<div class="bu-upload-box"><p>{html.escape(t("upload_box_hint", lang))}</p></div>',
+            unsafe_allow_html=True,
+        )
         tt_img = st.file_uploader(
             t("upload_tt_image", lang),
             type=["png", "jpg", "jpeg", "webp"],
@@ -697,17 +865,7 @@ def render_workspace_panel(lang: Lang) -> None:
                 st.session_state._tt_scanned_sig = file_sig
             persist_user_data()
             st.success(t("imported_slots", lang, n=len(slots)))
-            note = t("tt_scan_ok_chat", lang, n=len(slots))
-            msgs = list(st.session_state.get("messages") or [])
-            welcomes = all_welcome_bodies()
-            msgs = [
-                m
-                for m in msgs
-                if not (m.get("role") == "assistant" and m.get("content") in welcomes)
-            ]
-            msgs.append({"role": "assistant", "content": note})
-            st.session_state.messages = msgs
-            st.session_state.agent_burst = True
+            _append_assistant_note(t("tt_scan_ok_chat", lang, n=len(slots)))
 
         def _run_tt_scan(*, mark_sig: str | None = None) -> None:
             if not tt_img:
@@ -723,18 +881,18 @@ def render_workspace_panel(lang: Lang) -> None:
                     else:
                         if mark_sig:
                             st.session_state._tt_scanned_sig = mark_sig
-                        st.warning(t("vision_fail", lang))
-                except Exception as exc:
+                        st.warning(friendly_vision_error(lang, kind="tt"))
+                except Exception:
                     if mark_sig:
                         st.session_state._tt_scanned_sig = mark_sig
-                    st.error(f"{t('vision_fail', lang)}\n{exc}")
+                    st.error(friendly_vision_error(lang, kind="tt"))
 
         if tt_img is not None:
             file_sig = f"{tt_img.name}:{tt_img.size}:{getattr(tt_img, 'file_id', '')}"
             if st.session_state.get("_tt_scanned_sig") != file_sig:
                 _run_tt_scan(mark_sig=file_sig)
 
-        if st.button(t("scan_tt", lang), use_container_width=True, key="ws_scan_tt"):
+        if st.button(t("scan_tt", lang), type="primary", use_container_width=True, key="ws_scan_tt"):
             mark = None
             if tt_img is not None:
                 mark = f"{tt_img.name}:{tt_img.size}:{getattr(tt_img, 'file_id', '')}"
@@ -745,21 +903,14 @@ def render_workspace_panel(lang: Lang) -> None:
             st.markdown(analyze_timetable(p))
             st.caption(t("tt_ready_hint", lang))
             st.caption(t("tt_gaps_caption", lang))
+        return
 
-    with st.expander(t("tasks", lang), expanded=False):
-        new_task = st.text_input(t("new_task", lang), key="ws_new_task")
-        new_due = st.text_input(t("new_due", lang), key="ws_new_due")
-        if st.button(t("add_task", lang), use_container_width=True, key="ws_add_task"):
-            if new_task.strip():
-                p.tasks.append(TaskItem(title=new_task.strip(), due=new_due.strip()))
-                st.success(t("task_added", lang))
-                persist_user_data()
-        if p.tasks:
-            for task in p.tasks[-12:]:
-                st.caption(f"[{task.due or '—'}] {task.title}")
-
-    with st.expander(t("email_section", lang), expanded=False):
+    if seg_id == "mail":
         st.caption(t("email_hint", lang))
+        st.markdown(
+            f'<div class="bu-upload-box"><p>{html.escape(t("upload_box_hint", lang))}</p></div>',
+            unsafe_allow_html=True,
+        )
         mail_img = st.file_uploader(
             t("upload_email_shot", lang),
             type=["png", "jpg", "jpeg", "webp"],
@@ -813,26 +964,18 @@ def render_workspace_panel(lang: Lang) -> None:
                                     source="email",
                                 )
                             )
-                    note = format_draft_for_chat(result, lang)
-                    msgs = list(st.session_state.get("messages") or [])
-                    welcomes = all_welcome_bodies()
-                    msgs = [
-                        m
-                        for m in msgs
-                        if not (m.get("role") == "assistant" and m.get("content") in welcomes)
-                    ]
-                    msgs.append({"role": "assistant", "content": note})
-                    st.session_state.messages = msgs
-                    st.session_state.agent_burst = True
+                    _append_assistant_note(format_draft_for_chat(result, lang))
                     persist_user_data()
                     st.success(t("email_ok", lang))
                     st.rerun()
-                except Exception as exc:
+                except Exception:
                     if mark_sig:
                         st.session_state._mail_scanned_sig = mark_sig
-                    st.error(f"{t('email_vision_fail', lang)}\n{exc}")
+                    st.error(friendly_vision_error(lang, kind="mail"))
 
-        if st.button(t("scan_email_reply", lang), use_container_width=True, key="scan_mail_btn"):
+        if st.button(
+            t("scan_email_reply", lang), type="primary", use_container_width=True, key="scan_mail_btn"
+        ):
             mark = None
             if mail_img is not None:
                 mark = f"{mail_img.name}:{mail_img.size}:{getattr(mail_img, 'file_id', '')}"
@@ -854,23 +997,64 @@ def render_workspace_panel(lang: Lang) -> None:
                 height=140,
                 key="mail_reply_body_view",
             )
+        return
 
-    has_notes = bool((p.custom_notes or "").strip())
-    with st.expander(t("more_options", lang), expanded=has_notes):
-        st.caption(t("notes_hint", lang))
-        if "custom_notes_area" not in st.session_state:
-            st.session_state.custom_notes_area = p.custom_notes or ""
-        notes_val = st.text_area(
-            t("notes", lang),
-            height=110,
-            key="custom_notes_area",
-            placeholder=t("notes_empty", lang),
-        )
-        p.custom_notes = notes_val
-        if st.button(t("save_notes", lang), use_container_width=True, key="save_notes_btn"):
-            if st.session_state.get("user_id"):
+    # notes
+    st.caption(t("notes_hint", lang))
+    if "custom_notes_area" not in st.session_state:
+        st.session_state.custom_notes_area = p.custom_notes or ""
+    notes_val = st.text_area(
+        t("notes", lang),
+        height=160,
+        key="custom_notes_area",
+        placeholder=t("notes_empty", lang),
+    )
+    p.custom_notes = notes_val
+    if st.button(t("save_notes", lang), type="primary", use_container_width=True, key="save_notes_btn"):
+        if st.session_state.get("user_id"):
+            persist_user_data()
+        st.success(t("notes_saved", lang))
+
+
+def render_tasks_page(lang: Lang) -> None:
+    """UI-06 / UI-11: task page with add row + deletable list; sidebar pulse stays in sync."""
+    p: StudentProfile = st.session_state.profile
+    st.markdown(
+        f'<div class="bu-workspace-head"><h3>{html.escape(t("nav_tasks", lang))}</h3></div>',
+        unsafe_allow_html=True,
+    )
+    c1, c2, c3 = st.columns([3, 2, 1])
+    with c1:
+        new_task = st.text_input(t("new_task", lang), key="tasks_page_new_task", label_visibility="collapsed", placeholder=t("new_task", lang))
+    with c2:
+        new_due = st.text_input(t("new_due", lang), key="tasks_page_new_due", label_visibility="collapsed", placeholder=t("new_due", lang))
+    with c3:
+        add_clicked = st.button(t("add_task", lang), type="primary", use_container_width=True, key="tasks_page_add")
+    if add_clicked:
+        if new_task.strip():
+            p.tasks.append(TaskItem(title=new_task.strip(), due=new_due.strip()))
+            persist_user_data()
+            st.success(t("task_added", lang))
+            st.rerun()
+        else:
+            st.warning(t("new_task", lang))
+
+    if not p.tasks:
+        st.caption(t("today_no_tasks", lang))
+        if st.button(t("tasks_empty_cta", lang), use_container_width=True, key="tasks_empty_focus"):
+            st.rerun()
+        return
+
+    for i, task in enumerate(list(p.tasks)):
+        left, right = st.columns([5, 1])
+        with left:
+            due = task.due or "—"
+            st.markdown(f"**{html.escape(due)}** · {html.escape(task.title)}")
+        with right:
+            if st.button(t("delete_task", lang), key=f"del_task_{i}", use_container_width=True):
+                del p.tasks[i]
                 persist_user_data()
-            st.success(t("notes_saved", lang))
+                st.rerun()
 
 
 def run_plan_week(lang: Lang, p: StudentProfile, settings: AppSettings) -> None:
@@ -952,11 +1136,13 @@ def render_fab_feature_panel(lang: Lang) -> None:
                             st.session_state.fab_panel = None
                             persist_user_data()
                             st.success(t("imported_slots", lang, n=len(slots)))
+                            set_nav_page("chat")
+                            st.session_state._scroll_chat = True
                             st.rerun()
                         else:
-                            st.warning(t("vision_fail", lang))
-                    except Exception as exc:
-                        st.error(f"{t('vision_fail', lang)}\n{exc}")
+                            st.warning(friendly_vision_error(lang, kind="tt"))
+                    except Exception:
+                        st.error(friendly_vision_error(lang, kind="tt"))
         return
 
     if panel == "mail":
@@ -1024,9 +1210,11 @@ def render_fab_feature_panel(lang: Lang) -> None:
                         st.session_state.fab_panel = None
                         persist_user_data()
                         st.success(t("email_ok", lang))
+                        set_nav_page("chat")
+                        st.session_state._scroll_chat = True
                         st.rerun()
-                    except Exception as exc:
-                        st.error(f"{t('email_vision_fail', lang)}\n{exc}")
+                    except Exception:
+                        st.error(friendly_vision_error(lang, kind="mail"))
         draft = st.session_state.get("mail_draft")
         if draft is not None:
             if draft.reply_subject:
@@ -1043,18 +1231,10 @@ def render_fab_feature_panel(lang: Lang) -> None:
             )
         return
 
-    # task
-    new_task = st.text_input(t("new_task", lang), key="fab_new_task")
-    new_due = st.text_input(t("new_due", lang), key="fab_new_due")
-    if st.button(t("add_task", lang), use_container_width=True, key="fab_add_task"):
-        if new_task.strip():
-            p.tasks.append(TaskItem(title=new_task.strip(), due=new_due.strip()))
-            persist_user_data()
-            st.success(t("task_added", lang))
-            st.session_state.fab_panel = None
-            st.rerun()
-        else:
-            st.warning(t("new_task", lang))
+    # task — deep-link from extension lands on tasks page tooling
+    set_nav_page("tasks")
+    st.session_state.fab_panel = None
+    st.rerun()
 
 
 def consume_bubble_pick_query(prompts: list[str], *, plan_index: int | None) -> None:
@@ -1079,12 +1259,11 @@ def consume_bubble_pick_query(prompts: list[str], *, plan_index: int | None) -> 
 
 
 def main_chat(lang: Lang) -> None:
+    """UI-05: stage is conversation + bottom input only."""
     p: StudentProfile = st.session_state.profile
     settings = get_app_settings()
     messages = st.session_state.messages
     pristine = not chat_has_user_turn(messages)
-    agent_burst = st.session_state.get("agent_burst", False)
-    show_agent_hub = pristine and not agent_burst
     prompts = [t("q1", lang), t("q2", lang), t("q3", lang), t("q4", lang)]
     plan_index = len(prompts)
     auth_token = ensure_auth_query_param()
@@ -1101,32 +1280,18 @@ def main_chat(lang: Lang) -> None:
         render_fab_feature_panel(lang)
         return
 
-    # Recompute after pick may have set pending and after wake intent applied
     pristine = not chat_has_user_turn(st.session_state.messages)
-    agent_burst = st.session_state.get("agent_burst", False)
-    show_agent_hub = pristine and not agent_burst
+    inject_ui_phase("chat")
 
-    def _wake_hub() -> None:
-        st.session_state.agent_burst = True
-        st.rerun()
-
-    if show_agent_hub:
-        inject_ui_phase("hub")
-        render_agent_bubble(
-            t("agent_bubble_hint", lang),
-            on_wake=_wake_hub,
-            auth_token=auth_token,
-            ui_lang=lang,
-            brand=t("hub_brand", lang),
-            title_line1=t("hub_title_1", lang),
-            title_line2=t("hub_title_2", lang),
-            cta=t("hub_cta", lang),
-            credit=t("hub_credit", lang),
+    if pristine and not st.session_state.get("agent_burst"):
+        st.markdown(
+            f'<div class="bu-chat-guide">'
+            f'<p class="bu-chat-guide-name">{html.escape(bot_nick(lang))}</p>'
+            f'<p class="bu-chat-guide-hint">{html.escape(t("chat_empty_guide", lang))}</p>'
+            f"</div>",
+            unsafe_allow_html=True,
         )
-        if st.toggle("🧩 " + t("plugin_section", lang), key="plugin_panel_hub", value=False):
-            render_plugin_download(lang, key="plugin_dl_hub")
-    elif pristine and agent_burst:
-        inject_ui_phase("burst")
+    elif pristine and st.session_state.get("agent_burst"):
         render_mini_prompt_bubbles(
             prompts,
             plan_label=t("plan_week", lang),
@@ -1135,24 +1300,26 @@ def main_chat(lang: Lang) -> None:
             ui_lang=lang,
         )
     else:
-        inject_ui_phase("chat")
         render_chat_thread(messages)
 
+    if st.session_state.pop("_scroll_chat", None):
+        scroll_latest_assistant_into_view()
+
     pending = st.session_state.pop("pending_prompt", None)
-    # Always mount chat_input (incl. hub/mobile) — hiding it made phones unable to type.
     user_input = st.chat_input(t("chat_placeholder", lang))
     if pending:
         user_input = pending
 
     if user_input:
         st.session_state.agent_burst = True
+        set_nav_page("chat")
         history = [
             {"role": m["role"], "content": m["content"]}
             for m in messages
             if m["role"] in ("user", "assistant")
         ]
         st.session_state.messages.append({"role": "user", "content": user_input})
-        if not (pristine and agent_burst):
+        if not pristine:
             render_chat_thread(st.session_state.messages[:-1])
         st.markdown(
             f'<div class="chat-line user"><span class="chat-pill">{html.escape(user_input)}</span></div>',
@@ -1188,17 +1355,16 @@ def main_chat(lang: Lang) -> None:
         ]
         st.session_state.messages.append({"role": "assistant", "content": reply})
         persist_user_data()
+        st.session_state._scroll_chat = True
         st.rerun()
 
 
 def main() -> None:
     load_server_secrets()
     init_db()
-    # Restore lang before auth — bubble links carry ?lang= across full reloads.
     restore_lang_from_query()
     lang = get_lang()
 
-    # Bubble <a href> causes full reload → new session. Restore user, then nav intents.
     restore_auth_from_query()
     capture_nav_intents()
 
@@ -1206,13 +1372,7 @@ def main() -> None:
         ensure_lang_query_param(lang)
         inject_chunk_recovery()
         inject_bu_theme(get_app_settings())
-        lang = sidebar_settings(lang)
-        render_changelog_corner(lang)
-        # Minimal chrome on first paint so login inputs can load their JS chunks.
-        with st.expander("ℹ️ " + t("help_tips_title", lang), expanded=False):
-            st.caption(t("sharing_public_tip", lang))
-            st.caption(t("cold_start_tip", lang))
-            st.caption(t("chunk_reload_tip", lang))
+        # Login: no dual-rail chrome — card only (UI-08).
         login_screen(lang)
         return
 
@@ -1232,22 +1392,30 @@ def main() -> None:
     ensure_lang_query_param(lang)
     inject_chunk_recovery()
     inject_bu_theme(get_app_settings())
-    lang = sidebar_settings(lang)
-    sidebar_chrome(lang)
-    render_changelog_corner(lang)
+    lang = render_app_sidebar(lang)
 
-    # Chat first with minimal widgets. Workspace tools (uploaders/inputs) mount
-    # ONLY when opened — mounting them every run starved chat_input JS chunks.
-    main_chat(lang)
-    if "workspace_panel_open" not in st.session_state:
-        st.session_state.workspace_panel_open = False
-    ws_open = st.toggle(
-        "🗂️ " + t("workspace_toggle", lang),
-        key="workspace_panel_open",
-    )
-    if ws_open:
+    # Route fab deep-links to the right page before stage render.
+    fab = st.session_state.get("fab_panel")
+    if fab == "task":
+        set_nav_page("tasks")
+        st.session_state.fab_panel = None
+    elif fab == "tt":
+        set_nav_page("workspace")
+        st.session_state.ws_seg = t("ws_seg_timetable", lang)
+        # keep fab panel for one-shot OR clear and use workspace — use workspace seg
+        st.session_state.fab_panel = None
+    elif fab == "mail":
+        set_nav_page("workspace")
+        st.session_state.ws_seg = t("ws_seg_mail", lang)
+        st.session_state.fab_panel = None
+
+    page = ensure_nav_page()
+    if page == "workspace":
         render_workspace_panel(lang)
-    st.caption(t("chunk_reload_tip", lang))
+    elif page == "tasks":
+        render_tasks_page(lang)
+    else:
+        main_chat(lang)
 
 
 if __name__ == "__main__":

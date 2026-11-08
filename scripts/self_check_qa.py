@@ -61,18 +61,23 @@ def main() -> None:
     assert "_pending_pick" in app_src
     assert 'st.query_params["pick"] = str(pick)' not in app_src
     assert "inject_chunk_recovery" in app_src
-    assert "workspace_panel_open" in app_src
+    assert "nav_page" in app_src
+    assert "render_app_sidebar" in app_src
+    assert "render_tasks_page" in app_src
+    assert "render_workspace_panel" in app_src
+    assert "bu-login-shell" in app_src
     assert "dock_workspace_below_chat_input" not in app_src
     assert "data-bu-workspace-dock" not in app_src
     assert "main_chat(lang)" in app_src
-    # Lazy workspace must come after chat (and only mount when toggled open)
-    assert app_src.index("main_chat(lang)") < app_src.index("workspace_panel_open")
-    assert "if ws_open:" in app_src or "if open_ws:" in app_src or "if ws_open" in app_src
+    # Pages are exclusive — workspace/tasks not stacked under chat
+    assert "workspace_panel_open" not in app_src
+    assert 'page == "workspace"' in app_src and 'page == "tasks"' in app_src
     ui_src = (ROOT / "core" / "ui.py").read_text(encoding="utf-8")
     assert "_bubu_chunk_guard_injected" in ui_src
     assert "dock_workspace_below_chat_input" not in ui_src
     assert "Failed to fetch dynamically imported module" in ui_src
-    assert "--field-border: #8fb6c6" in ui_src
+    assert "#F4F7F8" in ui_src and "#2F9EB8" in ui_src
+    assert "max-width: 760px" in ui_src
     assert "fonts.googleapis.com" not in ui_src
     assert "feTurbulence" not in ui_src
     assert "components.html" not in ui_src
@@ -82,11 +87,17 @@ def main() -> None:
     assert "fonts.googleapis.com" not in ha_src
     assert t("cold_start_tip", "zh-CN")
     assert t("sharing_public_tip", "zh-CN")
+    assert t("nav_chat", "en") and t("chat_empty_guide", "zh-CN")
+    assert t("tasks_empty_cta", "en") and t("delete_task", "zh-TW")
+    assert t("countdown_in_one_day", "en")
     assert "hub_wake_btn" in ha_src
     assert 'data-phase="hub"]) [data-testid="stBottomBlockContainer"]' not in ha_src
     assert 'st.chat_input(t("chat_placeholder", lang))' in app_src
     assert "chat_ready = not show_agent_hub" not in app_src
     assert "bubu_chunk_ts" in ui_src
+    assert "chunk_reload_tip" in app_src  # still available in settings help
+    # Deploy tips must not sit in the logged-in main stage path
+    assert "st.caption(t(\"chunk_reload_tip\"" not in app_src.split("def main_chat")[1].split("def main")[0]
     req = (ROOT / "requirements.txt").read_text(encoding="utf-8")
     assert "streamlit>=" in req
     assert "safe_st_html" in ui_src

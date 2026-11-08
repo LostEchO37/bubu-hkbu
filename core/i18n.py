@@ -109,9 +109,9 @@ MESSAGES: dict[str, dict[Lang, str]] = {
         "en": "Reading screenshot & drafting reply…",
     },
     "email_vision_fail": {
-        "zh-CN": "邮件截图识别失败。请换更清晰的截图再试（尽量含主题与正文）。",
-        "zh-TW": "郵件截圖識別失敗。請換更清晰的截圖再試。",
-        "en": "Could not read that email screenshot. Try a clearer crop with subject + body.",
+        "zh-CN": "没能读清这封邮件截图。请换一张更清晰的 PNG、JPG 或 WEBP 再试。",
+        "zh-TW": "未能讀清這封郵件截圖。請換一張更清晰的 PNG、JPG 或 WEBP 再試。",
+        "en": "Couldn’t read that email screenshot. Try a clearer PNG, JPG, or WEBP.",
     },
     "email_reply_subject": {"zh-CN": "回复主题", "zh-TW": "回覆主題", "en": "Reply subject"},
     "email_reply_body": {"zh-CN": "回复正文（可复制）", "zh-TW": "回覆正文（可複製）", "en": "Reply body (copy)"},
@@ -368,9 +368,43 @@ MESSAGES: dict[str, dict[Lang, str]] = {
         "en": "Free today: {gaps}",
     },
     "today_no_tasks": {
-        "zh-CN": "暂无任务 — 侧栏可以加一条。",
-        "zh-TW": "暫無任務 — 側欄可以加一條。",
-        "en": "No tasks yet — add one in the sidebar.",
+        "zh-CN": "还没有任务",
+        "zh-TW": "還沒有任務",
+        "en": "No tasks yet",
+    },
+    "tasks_empty_cta": {
+        "zh-CN": "添加任务",
+        "zh-TW": "新增任務",
+        "en": "Add a task",
+    },
+    "tasks_more": {
+        "zh-CN": "还有 {n} 条",
+        "zh-TW": "還有 {n} 條",
+        "en": "{n} more",
+    },
+    "nav_chat": {"zh-CN": "聊天", "zh-TW": "聊天", "en": "Chat"},
+    "nav_workspace": {"zh-CN": "资料", "zh-TW": "資料", "en": "Workspace"},
+    "nav_tasks": {"zh-CN": "任务", "zh-TW": "任務", "en": "Tasks"},
+    "nav_settings": {"zh-CN": "设置", "zh-TW": "設定", "en": "Settings"},
+    "help_section": {
+        "zh-CN": "遇到问题",
+        "zh-TW": "遇到問題",
+        "en": "Having trouble",
+    },
+    "chat_empty_guide": {
+        "zh-CN": "问我课表、空档、作业或复习安排。",
+        "zh-TW": "問我課表、空檔、作業或複習安排。",
+        "en": "Ask about timetable, free slots, homework, or study plans.",
+    },
+    "ws_seg_profile": {"zh-CN": "个人资料", "zh-TW": "個人資料", "en": "Profile"},
+    "ws_seg_timetable": {"zh-CN": "课表", "zh-TW": "課表", "en": "Timetable"},
+    "ws_seg_mail": {"zh-CN": "邮件", "zh-TW": "郵件", "en": "Mail"},
+    "ws_seg_notes": {"zh-CN": "备注", "zh-TW": "備註", "en": "Notes"},
+    "delete_task": {"zh-CN": "删除", "zh-TW": "刪除", "en": "Delete"},
+    "upload_box_hint": {
+        "zh-CN": "PNG、JPG、WEBP，最大 12MB",
+        "zh-TW": "PNG、JPG、WEBP，最大 12MB",
+        "en": "PNG, JPG, WEBP — max 12MB",
     },
     "countdown_none": {
         "zh-CN": "近期校历节点已过完",
@@ -400,7 +434,12 @@ MESSAGES: dict[str, dict[Lang, str]] = {
     "countdown_in_days": {
         "zh-CN": "{label} · 还有 {n} 天（{dates}）",
         "zh-TW": "{label} · 仲有 {n} 日（{dates}）",
-        "en": "{label} · {n} day(s) left ({dates})",
+        "en": "{label} · {n} days left ({dates})",
+    },
+    "countdown_in_one_day": {
+        "zh-CN": "{label} · 还有 1 天（{dates}）",
+        "zh-TW": "{label} · 仲有 1 日（{dates}）",
+        "en": "{label} · 1 day left ({dates})",
     },
     "countdown_ongoing": {
         "zh-CN": "{label} · 进行中（{dates}）",
@@ -567,9 +606,9 @@ MESSAGES: dict[str, dict[Lang, str]] = {
         "en": "Uploads auto-scan (or tap the button). Chat cannot receive images.",
     },
     "vision_fail": {
-        "zh-CN": "课表解析失败（多为模型输出不完整）。请再点一次「AI 识别课表」；仍失败再检查 OPENAI_VISION_MODEL 是否支持识图。",
-        "zh-TW": "課表解析失敗（多為模型輸出不完整）。請再試一次識別；仍失敗請檢查識圖模型設定。",
-        "en": "Timetable parse failed (often truncated model JSON). Try scan again, or check OPENAI_VISION_MODEL.",
+        "zh-CN": "没能读清这张课表。请换一张更清晰的 PNG、JPG 或 WEBP 再试。",
+        "zh-TW": "未能讀清這張課表。請換一張更清晰的 PNG、JPG 或 WEBP 再試。",
+        "en": "Couldn’t read that timetable. Try a clearer PNG, JPG, or WEBP.",
     },
     "tt_scan_ok_chat": {
         "zh-CN": "课表已录入（{n} 节）～ 可以直接问我空档、冲突或复习安排，不用再往对话框里塞截图。",

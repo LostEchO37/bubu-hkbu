@@ -118,56 +118,52 @@ def inject_bu_theme(settings: AppSettings) -> None:
     is_dark = settings.theme == "dark"
 
     if is_dark:
+        # UI-09 dark surface tokens
         vars_css = """
-  --sky: #3d8fab;
-  --sky-deep: #5eb8d9;
-  --sky-bg: #15242c;
-  --cream: #243540;
-  --cream-hover: #2c4150;
-  --cream-border: #3d5565;
-  --text: #e6f3f8;
-  --text-soft: #a8c5d4;
-  --field-bg: #1b2c36;
-  --field-text: #e6f3f8;
-  --field-border: #3d5565;
-  --app-bg: linear-gradient(165deg, #1c303a 0%, #15242c 42%, #101c22 100%);
-  --sidebar-bg: linear-gradient(180deg, #162832 0%, #1e3440 100%);
-  --accent-title: #7ec8e3;
-  --hero-bg: rgba(36, 53, 64, 0.72);
-  --hero-border: rgba(126, 200, 227, 0.22);
-  --grain: rgba(255,255,255,0.03);
-  --glow-a: rgba(94, 184, 217, 0.16);
-  --glow-b: rgba(47, 158, 184, 0.12);
-  --glow-c: rgba(30, 60, 72, 0.35);
+  --sky: #2F9EB8;
+  --sky-deep: #2F9EB8;
+  --sky-bg: #12181C;
+  --cream: #1C262C;
+  --cream-hover: #243038;
+  --cream-border: #2C3C46;
+  --text: #E7EEF2;
+  --text-soft: #A9B8C2;
+  --field-bg: #1C262C;
+  --field-text: #E7EEF2;
+  --field-border: #2C3C46;
+  --app-bg: #12181C;
+  --sidebar-bg: #12181C;
+  --card-bg: #1C262C;
+  --accent-title: #2F9EB8;
+  --hero-bg: #1C262C;
+  --hero-border: #2C3C46;
 """
     else:
+        # UI-01 / UI-02 quiet light surfaces
         vars_css = """
-  --sky: #6ebfd8;
-  --sky-deep: #2f9eb8;
-  --sky-bg: #cfeaf3;
-  --cream: #f7fbfd;
-  --cream-hover: #eef7fa;
-  --cream-border: #d2e6ee;
-  --text: #1f4554;
-  --text-soft: #4a6878;
-  --field-bg: #ffffff;
-  --field-text: #1f4554;
-  --field-border: #8fb6c6;
-  --app-bg: linear-gradient(168deg, #eef8fb 0%, #d8f0f7 36%, #bce4f0 70%, #a6d8e8 100%);
-  --sidebar-bg: linear-gradient(180deg, #d8eef6 0%, #c2e3ef 100%);
-  --accent-title: #1f738c;
-  --hero-bg: rgba(255, 255, 255, 0.5);
-  --hero-border: rgba(255,255,255,0.58);
-  --grain: rgba(20, 55, 68, 0.025);
-  --glow-a: rgba(255,232,200,0.45);
-  --glow-b: rgba(90,180,200,0.3);
-  --glow-c: rgba(255,255,255,0.32);
+  --sky: #2F9EB8;
+  --sky-deep: #2F9EB8;
+  --sky-bg: #F4F7F8;
+  --cream: #FFFFFF;
+  --cream-hover: #F4F7F8;
+  --cream-border: #E3EEF2;
+  --text: #1C2B33;
+  --text-soft: #5C6F7A;
+  --field-bg: #FFFFFF;
+  --field-text: #1C2B33;
+  --field-border: #E3EEF2;
+  --app-bg: #F4F7F8;
+  --sidebar-bg: #FFFFFF;
+  --card-bg: #FFFFFF;
+  --accent-title: #1C2B33;
+  --hero-bg: #FFFFFF;
+  --hero-border: #E3EEF2;
 """
 
-    btn_bg = "#1b2c36" if is_dark else "rgba(255,255,255,0.86)"
-    btn_fg = "#e8f6fb" if is_dark else "#1f4554"
-    exp_bg = "#243540" if is_dark else "#f7fbfd"
-    exp_fg = "#e8f6fb" if is_dark else "#1f4554"
+    btn_bg = "#2F9EB8" if not is_dark else "#2F9EB8"
+    btn_fg = "#FFFFFF"
+    exp_bg = "#1C262C" if is_dark else "#FFFFFF"
+    exp_fg = "#E7EEF2" if is_dark else "#1C2B33"
     # Prefer markdown for CSS (lighter than st.html). No per-rerun JS here —
     # timers/DOM moves were fighting chat_input chunk loads on weak networks.
     st.markdown(
@@ -187,62 +183,155 @@ def inject_bu_theme(settings: AppSettings) -> None:
 }}
 
 .stApp {{
-  background: var(--app-bg) fixed;
+  background: var(--app-bg) !important;
   background-color: var(--sky-bg) !important;
   color: var(--text);
   font-family: var(--font-ui);
-  font-size: var(--font-base);
+  font-size: 14px;
+  line-height: 1.5;
   letter-spacing: 0.01em;
 }}
 .stApp [data-testid="stAppViewContainer"],
 .stApp [data-testid="stAppViewContainer"] > .main,
-.stApp section.main,
+.stApp section.main {{
+  background: var(--sky-bg) !important;
+  background-color: var(--sky-bg) !important;
+}}
 .stApp .main .block-container {{
   background: transparent !important;
-  background-color: transparent !important;
+  max-width: 760px !important;
+  padding-top: 1.25rem !important;
+  padding-left: 24px !important;
+  padding-right: 24px !important;
+  padding-bottom: 2rem !important;
 }}
-.stApp::before {{
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  background:
-    radial-gradient(ellipse 62% 48% at 88% 6%, var(--glow-a), transparent 58%),
-    radial-gradient(ellipse 55% 42% at 10% 90%, var(--glow-b), transparent 55%),
-    radial-gradient(ellipse 42% 36% at 48% 42%, var(--glow-c), transparent 65%);
+/* Login: single centered card (UI-08) — hide dual-rail */
+.stApp:has(.bu-login-shell) section[data-testid="stSidebar"],
+.stApp:has(.bu-login-shell) [data-testid="stSidebarCollapsedControl"],
+.stApp:has(.bu-login-shell) [data-testid="collapsedControl"] {{
+  display: none !important;
 }}
-
-.block-container {{
-  max-width: 1180px;
-  padding-top: 1.75rem;
-  padding-bottom: 2rem;
-  position: relative;
-  z-index: 1;
+.stApp:has(.bu-login-shell) .main .block-container {{
+  max-width: 420px !important;
+  padding-top: 8vh !important;
+  background: var(--card-bg) !important;
+  border: 1px solid var(--cream-border) !important;
+  border-radius: 12px !important;
+  padding-left: 20px !important;
+  padding-right: 20px !important;
+  padding-bottom: 20px !important;
+  box-shadow: none !important;
+}}
+.bu-login-shell {{
+  display: none;
+}}
+.bu-login-shell .bu-hero {{
   background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 0 0.75rem !important;
+  margin: 0 !important;
+}}
+.bu-login-shell .bu-hero h2 {{
+  font-size: 22px !important;
+  font-weight: 600 !important;
+  color: var(--text) !important;
+}}
+.bu-login-shell .bu-hero p {{
+  font-size: 14px !important;
+  color: var(--text-soft) !important;
+}}
+section[data-testid="stSidebar"] {{
+  background: var(--sidebar-bg) !important;
+  border-right: 1px solid var(--cream-border) !important;
+  box-shadow: none !important;
+}}
+section[data-testid="stSidebar"] > div:first-child {{
+  width: 272px !important;
+}}
+.bu-nav-brand {{
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0.25rem 0 0.75rem;
+}}
+.bu-nav-credit {{
+  font-size: 12px;
+  color: var(--text-soft);
+  margin-top: 0.75rem;
+}}
+.bu-account-plain {{
+  font-size: 13px;
+  color: var(--text);
+  margin: 0.35rem 0;
+  overflow-wrap: anywhere;
+}}
+@media (max-width: 768px) {{
+  .stApp .main .block-container {{
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }}
+  section[data-testid="stSidebar"] > div:first-child {{
+    width: min(100vw, 100%) !important;
+  }}
 }}
 
 .bu-workspace-head {{
-  margin: 0 0 0.85rem;
-  padding: 0.85rem 1rem;
-  border-radius: 18px;
-  background: var(--hero-bg, rgba(255,255,255,0.55));
-  border: 1px solid var(--hero-border, rgba(255,255,255,0.6));
-  box-shadow: 0 10px 28px rgba(31, 115, 140, 0.08);
+  margin: 0 0 1rem;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }}
 .bu-workspace-head h3 {{
   margin: 0;
   font-family: var(--font-ui);
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--accent-title);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text);
   letter-spacing: -0.01em;
 }}
 .bu-workspace-head p {{
   margin: 0.35rem 0 0;
   color: var(--text-soft);
-  font-size: 0.86rem;
-  line-height: 1.45;
+  font-size: 14px;
+  line-height: 1.5;
+}}
+.bu-chat-guide {{
+  margin: 2.5rem auto 1.5rem;
+  text-align: center;
+  max-width: 28rem;
+}}
+.bu-chat-guide .bu-chat-guide-name {{
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text);
+}}
+.bu-chat-guide .bu-chat-guide-hint {{
+  margin: 0.5rem 0 0;
+  font-size: 14px;
+  color: var(--text-soft);
+  line-height: 1.5;
+}}
+.bu-card {{
+  background: var(--card-bg);
+  border: 1px solid var(--cream-border);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin: 0 0 16px;
+}}
+.bu-upload-box {{
+  border: 1.5px dashed var(--cream-border);
+  border-radius: 12px;
+  padding: 16px;
+  background: var(--card-bg);
+  margin: 0 0 12px;
+}}
+.bu-upload-box p {{
+  margin: 0 0 0.35rem;
+  color: var(--text-soft);
+  font-size: 12px;
 }}
 
 header[data-testid="stHeader"] {{
@@ -252,23 +341,17 @@ header[data-testid="stHeader"] {{
 header[data-testid="stHeader"] > div {{
   pointer-events: auto;
 }}
-.bu-changelog-bar {{
-  margin: 0 0 0.55rem;
-}}
-
-[data-testid="stTabs"] [data-baseweb="tab-list"] {{
-  gap: 0.5rem;
-  background: transparent;
-}}
 
 [data-testid="stSidebar"] {{
-  background: var(--sidebar-bg);
-  border-right: none !important;
-  box-shadow: 6px 0 28px rgba(31, 115, 140, 0.08);
+  background: var(--sidebar-bg) !important;
+  border-right: 1px solid var(--cream-border) !important;
+  box-shadow: none !important;
   overflow-x: hidden !important;
   color: var(--text);
 }}
-/* Do NOT force color on every descendant — that made select text invisible in dark mode. */
+[data-testid="stSidebar"] [data-testid="stSidebarContent"] {{
+  padding: 16px 12px 20px !important;
+}}
 [data-testid="stSidebar"] label,
 [data-testid="stSidebar"] p,
 [data-testid="stSidebar"] span,
@@ -287,9 +370,8 @@ header[data-testid="stHeader"] > div {{
   overflow-wrap: anywhere;
   word-break: break-word;
   white-space: normal !important;
+  font-size: 12px !important;
 }}
-
-/* Selects / radios readable in both themes */
 [data-testid="stSidebar"] [data-baseweb="select"] > div,
 [data-testid="stSidebar"] [data-baseweb="base-input"],
 [data-testid="stSidebar"] div[data-baseweb="select"] {{
@@ -302,72 +384,79 @@ header[data-testid="stHeader"] > div {{
   color: var(--field-text) !important;
   -webkit-text-fill-color: var(--field-text) !important;
 }}
-[data-testid="stSidebar"] [role="radiogroup"] label,
-[data-testid="stSidebar"] [role="radiogroup"] p,
-[data-testid="stSidebar"] [role="radiogroup"] span {{
-  color: var(--text) !important;
+/* Nav radio: accent only on selected (UI-02 / UI-03) */
+[data-testid="stSidebar"] [role="radiogroup"] label {{
+  border-radius: 10px !important;
+  padding: 0.35rem 0.55rem !important;
+}}
+[data-testid="stSidebar"] [role="radiogroup"] label[data-checked="true"],
+[data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) {{
+  background: color-mix(in srgb, var(--sky) 14%, transparent) !important;
+}}
+[data-testid="stSidebar"] [role="radiogroup"] label[data-checked="true"] p,
+[data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) p,
+[data-testid="stSidebar"] [role="radiogroup"] label[data-checked="true"] span,
+[data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) span {{
+  color: var(--sky) !important;
+  font-weight: 600 !important;
 }}
 
 .bu-hero {{
-  background: var(--hero-bg);
-  backdrop-filter: blur(18px);
-  border: 1px solid var(--hero-border);
-  border-radius: 24px;
-  padding: 1.5rem 1.65rem;
-  margin-bottom: 1rem;
-  box-shadow: 0 18px 44px rgba(31, 115, 140, 0.11);
-  animation: bu-panel-in 0.5s cubic-bezier(.22,.9,.28,1) both;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0 0 0.75rem;
+  margin-bottom: 0.5rem;
+  box-shadow: none;
 }}
 .bu-hero h1, .bu-hero h2 {{
-  margin: 0.35rem 0 0;
+  margin: 0;
   font-family: var(--font-ui);
-  font-size: var(--font-hero);
-  font-weight: 700;
-  color: var(--accent-title);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text);
   line-height: 1.35;
   letter-spacing: -0.01em;
 }}
-.bu-hero p {{ margin: 0.55rem 0 0; color: var(--text-soft); line-height: 1.55; }}
-.bu-hero.bu-login {{ margin-top: 0.25rem; }}
-@keyframes bu-panel-in {{
-  from {{ opacity: 0; transform: translateY(10px); }}
-  to {{ opacity: 1; transform: translateY(0); }}
-}}
+.bu-hero p {{ margin: 0.45rem 0 0; color: var(--text-soft); font-size: 14px; line-height: 1.5; }}
+.bu-hero.bu-login {{ margin-top: 0; }}
 
-/* Buttons — high specificity so Streamlit light chrome cannot win in dark mode */
+/* Buttons — one primary accent; height 40px / radius 10px (UI-13) */
 .stApp .stButton > button,
 .stApp .stDownloadButton > button,
 .stApp button[data-testid="baseButton-secondary"],
 .stApp button[data-testid="baseButton-primary"] {{
-  border-radius: 999px !important;
+  border-radius: 10px !important;
+  min-height: 40px !important;
+  height: 40px !important;
   border: 1px solid var(--field-border) !important;
-  background: var(--btn-bg) !important;
-  background-color: var(--btn-bg) !important;
-  color: var(--btn-fg) !important;
+  background: var(--card-bg) !important;
+  background-color: var(--card-bg) !important;
+  color: var(--text) !important;
   font-weight: 600 !important;
-  font-size: var(--font-base) !important;
-  box-shadow: 0 8px 20px rgba(31, 115, 140, 0.12) !important;
+  font-size: 14px !important;
+  box-shadow: none !important;
 }}
 .stApp .stButton > button *,
 .stApp .stDownloadButton > button *,
 .stApp button[data-testid="baseButton-secondary"] *,
 .stApp button[data-testid="baseButton-primary"] * {{
-  color: var(--btn-fg) !important;
-  -webkit-text-fill-color: var(--btn-fg) !important;
+  color: inherit !important;
+  -webkit-text-fill-color: currentColor !important;
 }}
 .stApp .stButton > button[kind="primary"],
 .stApp .stDownloadButton > button[kind="primary"],
 .stApp button[data-testid="baseButton-primary"] {{
-  background: linear-gradient(135deg, #1f738c, #2f9eb8) !important;
-  background-color: #2f9eb8 !important;
-  color: #f7fcff !important;
+  background: #2F9EB8 !important;
+  background-color: #2F9EB8 !important;
+  color: #FFFFFF !important;
   border: none !important;
 }}
 .stApp .stButton > button[kind="primary"] *,
 .stApp .stDownloadButton > button[kind="primary"] *,
 .stApp button[data-testid="baseButton-primary"] * {{
-  color: #f7fcff !important;
-  -webkit-text-fill-color: #f7fcff !important;
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
 }}
 
 /* Expander headers — cover nested/open/closed + Streamlit light chrome */
@@ -442,13 +531,19 @@ header[data-testid="stHeader"] > div {{
   background: transparent !important;
   background-color: transparent !important;
 }}
+.stApp [data-testid="stFileUploaderDropzone"] {{
+  border: 1.5px dashed var(--cream-border) !important;
+  border-radius: 12px !important;
+}}
 .stApp [data-testid="stFileUploader"] button,
 .stApp [data-testid="stFileUploaderDropzone"] button {{
-  background: linear-gradient(135deg, #1f738c, #2f9eb8) !important;
-  background-color: #2f9eb8 !important;
-  background-image: linear-gradient(135deg, #1f738c, #2f9eb8) !important;
-  color: #f7fcff !important;
+  background: #2F9EB8 !important;
+  background-color: #2F9EB8 !important;
+  background-image: none !important;
+  color: #FFFFFF !important;
   border: none !important;
+  border-radius: 10px !important;
+  min-height: 40px !important;
   box-shadow: none !important;
 }}
 .stApp [data-testid="stFileUploader"] button *,
@@ -459,14 +554,14 @@ header[data-testid="stHeader"] > div {{
   background: transparent !important;
   background-color: transparent !important;
   background-image: none !important;
-  color: #f7fcff !important;
-  -webkit-text-fill-color: #f7fcff !important;
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
   box-shadow: none !important;
   border: none !important;
 }}
 .stApp [data-testid="stFileUploader"] button svg {{
-  fill: #f7fcff !important;
-  color: #f7fcff !important;
+  fill: #FFFFFF !important;
+  color: #FFFFFF !important;
   background: transparent !important;
 }}
 
@@ -495,10 +590,13 @@ section[data-testid="stBottom"],
 }}
 [data-testid="stAppViewContainer"] > .main,
 [data-testid="stAppViewContainer"] {{
-  background: transparent !important;
+  background: var(--sky-bg) !important;
 }}
 .stApp [data-testid="stVerticalBlockBorderWrapper"] {{
   background: transparent !important;
+}}
+[data-testid="stBottomBlockContainer"] {{
+  padding-bottom: 12px !important;
 }}
 
 [data-testid="stChatInput"] {{
@@ -515,15 +613,14 @@ section[data-testid="stBottom"],
 [data-testid="stChatInput"] [data-baseweb="textarea"] {{
   background: var(--field-bg) !important;
   background-color: var(--field-bg) !important;
-  backdrop-filter: blur(18px) !important;
   color: var(--field-text) !important;
   -webkit-text-fill-color: var(--field-text) !important;
-  font-size: var(--font-base) !important;
+  font-size: 14px !important;
   border: 1px solid var(--field-border) !important;
-  border-radius: 999px !important;
-  box-shadow: 0 14px 36px rgba(31, 115, 140, 0.13) !important;
-  padding: 0.75rem 1.2rem !important;
-  transition: box-shadow 0.2s ease, border-color 0.2s ease !important;
+  border-radius: 24px !important;
+  min-height: 48px !important;
+  box-shadow: none !important;
+  padding: 0.7rem 1.1rem !important;
 }}
 [data-testid="stChatInput"] textarea::placeholder {{
   color: var(--text-soft) !important;
@@ -531,17 +628,17 @@ section[data-testid="stBottom"],
   opacity: 0.85 !important;
 }}
 [data-testid="stChatInput"] textarea:focus {{
-  border-color: rgba(47, 158, 184, 0.55) !important;
-  box-shadow: 0 16px 40px rgba(31, 115, 140, 0.18) !important;
+  border-color: #2F9EB8 !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, #2F9EB8 25%, transparent) !important;
 }}
 [data-testid="stChatInput"] button {{
-  background: linear-gradient(135deg, #1f738c, #2f9eb8) !important;
-  color: #f7fcff !important;
+  background: #2F9EB8 !important;
+  color: #FFFFFF !important;
   border: none !important;
 }}
 [data-testid="stChatInput"] button svg {{
-  fill: #f7fcff !important;
-  color: #f7fcff !important;
+  fill: #FFFFFF !important;
+  color: #FFFFFF !important;
 }}
 
 /* Scope body text; avoid styling button or expander inner paragraphs. */
@@ -565,11 +662,11 @@ h1, h2, h3, label,
 [data-testid="stSelectbox"] [data-baseweb="select"] > div {{
   background: var(--field-bg) !important;
   background-color: var(--field-bg) !important;
-  border: 1.5px solid var(--field-border) !important;
+  border: 1px solid var(--field-border) !important;
   border-color: var(--field-border) !important;
-  border-radius: 14px !important;
+  border-radius: 10px !important;
   color: var(--field-text) !important;
-  box-shadow: 0 2px 12px rgba(31, 115, 140, 0.1) !important;
+  box-shadow: none !important;
 }}
 [data-testid="stTextInput"] input,
 [data-testid="stTextArea"] textarea,
@@ -578,7 +675,7 @@ h1, h2, h3, label,
   background: transparent !important;
   background-color: transparent !important;
   border: none !important;
-  border-radius: 14px !important;
+  border-radius: 10px !important;
   color: var(--field-text) !important;
   -webkit-text-fill-color: var(--field-text) !important;
   box-shadow: none !important;
@@ -587,8 +684,8 @@ h1, h2, h3, label,
 [data-testid="stTextArea"] [data-baseweb="base-input"]:focus-within,
 [data-testid="stDateInput"] [data-baseweb="base-input"]:focus-within,
 [data-testid="stSelectbox"] [data-baseweb="select"] > div:focus-within {{
-  border-color: rgba(47, 158, 184, 0.75) !important;
-  box-shadow: 0 8px 22px rgba(31, 115, 140, 0.16) !important;
+  border-color: #2F9EB8 !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, #2F9EB8 25%, transparent) !important;
 }}
 [data-testid="stTextInput"] input:focus,
 [data-testid="stTextArea"] textarea:focus,
@@ -665,15 +762,10 @@ header[data-testid="stHeader"] a[title*="Favorite" i] {{
   display: none !important;
 }}
 
-@media (prefers-reduced-motion: reduce) {{
-  .stApp::before, .bu-hero {{ animation: none !important; }}
-}}
-@media (max-width: 900px) {{
-  .stApp::before {{ opacity: 0.7; }}
-  .bu-hero {{ backdrop-filter: none !important; }}
-  [data-testid="stChatInput"] textarea,
-  [data-testid="stChatInput"] [data-baseweb="textarea"] {{
-    backdrop-filter: none !important;
+@media (max-width: 768px) {{
+  /* UI-10: drawer covers stage; main keeps 16px gutters (set above) */
+  section[data-testid="stSidebar"] {{
+    z-index: 1000002 !important;
   }}
 }}
 </style>

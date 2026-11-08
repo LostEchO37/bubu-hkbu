@@ -8,6 +8,20 @@ from core.i18n import Lang
 ENTRIES: list[dict[str, dict[Lang, str] | str]] = [
     {
         "date": "2026-11-04",
+        "tag": "v1.0.4",
+        "title": {
+            "zh-CN": "安静应用壳 · 聊天/资料/任务分页",
+            "zh-TW": "安靜應用殼 · 聊天/資料/任務分頁",
+            "en": "Quiet app shell · chat / workspace / tasks",
+        },
+        "body": {
+            "zh-CN": "· 固定侧栏导航 + 浅灰主舞台，去掉大面积渐变\n· 聊天、资料、任务各占一页；设置收进对话框\n· 登录页只留一张卡片；任务可删除且与侧栏摘要同步\n· 深色变量覆盖侧栏卡片；排障说明离开主阅读流",
+            "zh-TW": "· 固定側欄導航 + 淺灰主舞台，去掉大面積漸變\n· 聊天、資料、任務各占一頁；設定收進對話框\n· 登入頁只留一張卡片；任務可刪除且與側欄摘要同步\n· 深色變數覆蓋側欄卡片；排障說明離開主閱讀流",
+            "en": "· Fixed nav + quiet stage; no big gradients\n· Chat, workspace, and tasks are separate pages; settings in a dialog\n· Login is one card; tasks deletable and synced with the sidebar\n· Dark tokens cover sidebar cards; deploy tips leave the main flow",
+        },
+    },
+    {
+        "date": "2026-11-04",
         "tag": "v1.0.3",
         "title": {
             "zh-CN": "登录页输入框空白修复",

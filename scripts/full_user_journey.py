@@ -47,19 +47,22 @@ def check_theme_css() -> None:
         inject_bu_theme(AppSettings(theme="dark"))
         assert st.markdown.called
         css = "".join(str(c.args[0]) for c in st.markdown.call_args_list if c.args)
-        assert "--sky-bg: #15242c" in css or "--sky-bg:#15242c" in css.replace(" ", "")
+        # UI-09 dark surface tokens
+        assert "#12181C" in css and "#1C262C" in css and "#2C3C46" in css
         assert "[data-testid=\"stExpander\"]" in css
         assert "stBottomBlockContainer" in css
         assert "stFileUploaderDropzone" in css
         # Must NOT paint every dropzone child with dark btn-bg (black Upload rectangle).
         assert "stFileUploaderDropzone\"] *" not in css
         assert "button *" in css and "background: transparent" in css
-        assert "linear-gradient(135deg, #1f738c, #2f9eb8)" in css
+        assert "#2F9EB8" in css
 
         st.markdown.reset_mock()
         inject_bu_theme(AppSettings(theme="light"))
         css_l = "".join(str(c.args[0]) for c in st.markdown.call_args_list if c.args)
-        assert "--sky-bg: #cfeaf3" in css_l or "#cfeaf3" in css_l
+        # UI-01 / UI-02 quiet light surfaces
+        assert "#F4F7F8" in css_l and "#E3EEF2" in css_l
+        assert "max-width: 760px" in css_l
 
 
 def check_login_theme_survives_hydrate() -> None:
@@ -202,7 +205,9 @@ def check_chat_and_hub_invariants() -> None:
 
     md = changelog_markdown("en")
     assert "v0.30" in md
-    assert ENTRIES[0]["tag"] == "v1.0.3"
+    assert ENTRIES[0]["tag"] == "v1.0.4"
+    app_src = (ROOT / "app.py").read_text(encoding="utf-8")
+    assert "render_app_sidebar" in app_src and "nav_page" in app_src
     assert (ROOT / "assets" / "bu_favicon.png").is_file()
     blob = " ".join(
         str(v) for e in ENTRIES for v in (e.get("body") or {}).values()

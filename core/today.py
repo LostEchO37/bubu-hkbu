@@ -311,162 +311,111 @@ def format_countdown(lang: Lang, *, today: date | None = None) -> tuple[str, str
     )
     if ev["ongoing"]:
         detail = t("countdown_ongoing", lang, label=label, dates=date_range)
+    elif int(ev["days"]) == 1:
+        detail = t("countdown_in_one_day", lang, label=label, dates=date_range)
     else:
         detail = t("countdown_in_days", lang, n=ev["days"], label=label, dates=date_range)
     return label, detail
 
 
 def pulse_html(profile: StudentProfile, lang: Lang, *, now: datetime | None = None) -> str:
-    """Compact sidebar card: today + countdown + reminders."""
+    """Compact sidebar summary: date, next thing, up to 3 tasks (UI-03 / UI-11)."""
     now = now or datetime.now()
     day = weekday_code(now)
     day_label = t(f"day_{day.lower()}", lang)
-    slots = slots_on_day(profile, day)
     nxt, delta = next_class(profile, now=now)
-    gaps = today_free_gaps(profile, now=now)
-    reminders = detect_reminders(profile, lang=lang)
-    cd_label, cd_detail = format_countdown(lang, today=now.date())
-    tasks = upcoming_tasks(profile, lang=lang)
+    _, cd_detail = format_countdown(lang, today=now.date())
+    tasks = upcoming_tasks(profile, limit=3, lang=lang)
+    extra = max(0, len([x for x in profile.tasks if (x.title or "").strip()]) - len(tasks))
 
-    # Today body
-    if not profile.timetable:
-        today_body = f'<p class="bu-pulse-muted">{html.escape(t("today_no_tt", lang))}</p>'
-    elif not slots:
-        today_body = f'<p class="bu-pulse-muted">{html.escape(t("today_free_day", lang))}</p>'
-    else:
-        parts = []
-        if nxt is not None and delta is not None:
-            if delta > 0:
-                next_line = t(
-                    "today_next_in",
-                    lang,
-                    n=delta,
-                    code=nxt.course_code or "·",
-                    time=nxt.start_time,
-                    loc=nxt.location or "TBA",
-                )
-            elif delta == 0:
-                next_line = t(
-                    "today_next_now",
-                    lang,
-                    code=nxt.course_code or "·",
-                    time=nxt.start_time,
-                    loc=nxt.location or "TBA",
-                )
-            else:
-                next_line = t(
-                    "today_in_class",
-                    lang,
-                    code=nxt.course_code or "·",
-                    end=nxt.end_time,
-                    loc=nxt.location or "TBA",
-                )
-            parts.append(f'<p class="bu-pulse-next">{html.escape(next_line)}</p>')
+    if nxt is not None and delta is not None:
+        if delta > 0:
+            next_line = t(
+                "today_next_in",
+                lang,
+                n=delta,
+                code=nxt.course_code or "·",
+                time=nxt.start_time,
+                loc=nxt.location or "TBA",
+            )
+        elif delta == 0:
+            next_line = t(
+                "today_next_now",
+                lang,
+                code=nxt.course_code or "·",
+                time=nxt.start_time,
+                loc=nxt.location or "TBA",
+            )
         else:
-            parts.append(
-                f'<p class="bu-pulse-muted">{html.escape(t("today_done", lang))}</p>'
+            next_line = t(
+                "today_in_class",
+                lang,
+                code=nxt.course_code or "·",
+                end=nxt.end_time,
+                loc=nxt.location or "TBA",
             )
-        lis = []
-        for s in slots:
-            lis.append(
-                "<li>"
-                + html.escape(
-                    f"{s.start_time}–{s.end_time} {s.course_code} @ {s.location or 'TBA'}"
-                )
-                + "</li>"
-            )
-        parts.append(f'<ul class="bu-pulse-list">{"".join(lis)}</ul>')
-        if gaps:
-            gtxt = " · ".join(f"{a}–{b}" for a, b in gaps[:3])
-            parts.append(
-                f'<p class="bu-pulse-gaps">{html.escape(t("today_gaps", lang, gaps=gtxt))}</p>'
-            )
-        today_body = "".join(parts)
+    elif cd_detail:
+        next_line = cd_detail
+    elif not profile.timetable:
+        next_line = t("today_no_tt", lang)
+    else:
+        next_line = t("today_done", lang)
 
-    task_html = ""
     if tasks:
         items = "".join(f"<li>{html.escape(x)}</li>" for x in tasks)
-        task_html = f'<ul class="bu-pulse-list tight">{items}</ul>'
+        more = (
+            f'<p class="bu-pulse-muted">{html.escape(t("tasks_more", lang, n=extra))}</p>'
+            if extra
+            else ""
+        )
+        task_html = f'<ul class="bu-pulse-list tight">{items}</ul>{more}'
     else:
         task_html = f'<p class="bu-pulse-muted">{html.escape(t("today_no_tasks", lang))}</p>'
-
-    rem_html = ""
-    if reminders:
-        items = "".join(
-            f'<li class="bu-pulse-{r.kind}">{html.escape(r.text)}</li>' for r in reminders
-        )
-        rem_html = f'<ul class="bu-pulse-list">{items}</ul>'
-    else:
-        rem_html = f'<p class="bu-pulse-muted">{html.escape(t("remind_none", lang))}</p>'
-
-    cd_block = f'<p class="bu-pulse-cd">{html.escape(cd_detail or cd_label)}</p>'
 
     return f"""
 <style>
 .bu-pulse {{
-  font-family: "Noto Sans SC", "PingFang SC", sans-serif;
-  margin: 0.25rem 0 0.85rem;
-  padding: 0.85rem 0.9rem;
-  border-radius: 16px;
-  background: rgba(255,255,255,0.5);
-  border: 1px solid rgba(255,255,255,0.7);
-  box-shadow: 0 10px 24px rgba(31, 115, 140, 0.1);
-  color: #1f4554;
+  margin: 0.35rem 0 0.75rem;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  background: var(--card-bg, #ffffff);
+  border: 1px solid var(--cream-border, #E3EEF2);
+  color: var(--text, #1C2B33);
   max-width: 100%;
   overflow-wrap: anywhere;
   word-break: break-word;
+  font-size: 13px;
+  line-height: 1.45;
 }}
 .bu-pulse h4 {{
   margin: 0 0 0.35rem;
-  font-size: 0.78rem;
-  letter-spacing: 0.08em;
+  font-size: 12px;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #3a7a8f;
-  font-weight: 700;
+  color: var(--text-soft, #5C6F7A);
+  font-weight: 600;
 }}
-.bu-pulse + .bu-pulse, .bu-pulse .bu-pulse-sec {{ margin-top: 0.85rem; }}
-.bu-pulse-sec {{ padding-top: 0.7rem; border-top: 1px solid rgba(31,115,140,0.12); }}
 .bu-pulse-next {{
-  margin: 0 0 0.45rem;
-  font-weight: 700;
-  font-size: 0.92rem;
-  color: #176a82;
+  margin: 0 0 0.55rem;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text, #1C2B33);
   line-height: 1.4;
 }}
-.bu-pulse-cd {{
-  margin: 0;
-  font-weight: 700;
-  font-size: 0.95rem;
-  line-height: 1.45;
-  color: #1f4554;
-}}
-.bu-pulse-muted {{ margin: 0; font-size: 0.82rem; color: #5a7a88; line-height: 1.4; }}
-.bu-pulse-gaps {{ margin: 0.4rem 0 0; font-size: 0.8rem; color: #3a7a8f; }}
+.bu-pulse-muted {{ margin: 0.25rem 0 0; font-size: 12px; color: var(--text-soft, #5C6F7A); }}
 .bu-pulse-list {{
-  margin: 0.25rem 0 0;
-  padding-left: 1.05rem;
-  font-size: 0.8rem;
-  line-height: 1.45;
+  margin: 0.2rem 0 0;
+  padding-left: 1rem;
+  font-size: 12px;
+  color: var(--text, #1C2B33);
 }}
-.bu-pulse-list.tight {{ font-size: 0.78rem; }}
-.bu-pulse-rush {{ color: #b45a1a; }}
-.bu-pulse-overlap {{ color: #a12d3a; font-weight: 650; }}
+.bu-pulse-list.tight {{ font-size: 12px; }}
 </style>
 <div class="bu-pulse">
   <h4>{html.escape(t("pulse_today", lang))} · {html.escape(day_label)}</h4>
-  {today_body}
-  <div class="bu-pulse-sec">
-    <h4>{html.escape(t("pulse_countdown", lang))}</h4>
-    {cd_block}
-  </div>
-  <div class="bu-pulse-sec">
-    <h4>{html.escape(t("pulse_tasks", lang))}</h4>
-    {task_html}
-  </div>
-  <div class="bu-pulse-sec">
-    <h4>{html.escape(t("pulse_remind", lang))}</h4>
-    {rem_html}
-  </div>
+  <p class="bu-pulse-next">{html.escape(next_line)}</p>
+  <h4>{html.escape(t("pulse_tasks", lang))}</h4>
+  {task_html}
 </div>
 """.strip()
 
