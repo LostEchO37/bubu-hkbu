@@ -26,6 +26,7 @@ def main() -> None:
         "core.identity",
         "core.knowledge",
         "core.live_facts",
+        "core.moodle_ics",
     ]
     for m in mods:
         importlib.import_module(m)
@@ -175,9 +176,33 @@ def main() -> None:
     assert any("Observatory" in c for c in weather_bundle.citations)
     wx = fetch_weather("zh-CN")
     assert isinstance(wx.ok, bool)
-    assert official_links("en") and "hko.gov.hk" in official_links("en")[0][1]
+    links = official_links("en")
+    assert links and any("buelearning.hkbu.edu.hk" in u for _, u in links)
+    assert any("hko.gov.hk" in u for _, u in links)
     assert t("rag_sources_title", "en") and t("link_hko", "zh-TW")
     assert (ROOT / "data" / "knowledge" / "official_links_zh.md").is_file()
+
+    from core.moodle_ics import merge_moodle_tasks, parse_ics_tasks
+
+    sample_ics = """BEGIN:VCALENDAR
+BEGIN:VEVENT
+SUMMARY:COMP1005 Essay
+DTSTART;VALUE=DATE:20261120
+URL:https://buelearning.hkbu.edu.hk/mod/assign/view.php?id=1
+DESCRIPTION:Course short name: COMP1005
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Quiz 2
+DTSTART:20261125T235900
+END:VEVENT
+END:VCALENDAR
+"""
+    moodle_tasks = parse_ics_tasks(sample_ics)
+    assert len(moodle_tasks) == 2 and moodle_tasks[0].due == "2026-11-20"
+    assert moodle_tasks[0].source == "moodle" and "buelearning" in (moodle_tasks[0].url or "")
+    merged, n_add = merge_moodle_tasks([], moodle_tasks)
+    assert n_add == 2 and len(merged) == 2
+    assert t("moodle_section", "zh-CN") and t("link_moodle", "en")
 
     from scripts.smoke_ui_flow import main as smoke
     from scripts.full_user_journey import main as journey

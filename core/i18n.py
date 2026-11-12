@@ -451,6 +451,66 @@ MESSAGES: dict[str, dict[Lang, str]] = {
     "ws_seg_mail": {"zh-CN": "邮件", "zh-TW": "郵件", "en": "Mail"},
     "ws_seg_notes": {"zh-CN": "备注", "zh-TW": "備註", "en": "Notes"},
     "delete_task": {"zh-CN": "删除", "zh-TW": "刪除", "en": "Delete"},
+    "moodle_section": {
+        "zh-CN": "从 Moodle 导入作业",
+        "zh-TW": "從 Moodle 匯入作業",
+        "en": "Import from Moodle",
+    },
+    "moodle_hint": {
+        "zh-CN": "阿Bu 不能代你登录 Moodle。请在 bueLearning 日历导出 .ics，再上传到这里——只导入截止日期，不保存密码。",
+        "zh-TW": "阿Bu 不能代你登入 Moodle。請在 bueLearning 日曆匯出 .ics，再上傳到這裡——只匯入截止日期，不保存密碼。",
+        "en": "BuBu can’t sign into Moodle for you. Export an .ics from the bueLearning calendar and upload it here — deadlines only, no passwords stored.",
+    },
+    "moodle_steps": {
+        "zh-CN": "1. 打开 Moodle → 日历\n2. 导出日历 → 选择与课程相关的事件、近期及未来\n3. 下载 .ics 后在下方上传\n4. 不要把带 authtoken 的日历 URL 粘贴到本应用（有泄露风险）",
+        "zh-TW": "1. 打開 Moodle → 日曆\n2. 匯出日曆 → 選擇與課程相關的事件、近期及未來\n3. 下載 .ics 後在下方上傳\n4. 不要把帶 authtoken 的日曆 URL 貼到本應用（有外洩風險）",
+        "en": "1. Open Moodle → Calendar\n2. Export calendar → course-related events, recent & upcoming\n3. Download the .ics and upload below\n4. Don’t paste calendar URLs that contain an authtoken (leak risk)",
+    },
+    "moodle_upload": {
+        "zh-CN": "上传 Moodle 日历 (.ics)",
+        "zh-TW": "上傳 Moodle 日曆 (.ics)",
+        "en": "Upload Moodle calendar (.ics)",
+    },
+    "moodle_import": {
+        "zh-CN": "导入到任务",
+        "zh-TW": "匯入到任務",
+        "en": "Import into tasks",
+    },
+    "moodle_imported": {
+        "zh-CN": "已从 Moodle 导入 {n} 条（同名同日的会跳过）",
+        "zh-TW": "已從 Moodle 匯入 {n} 條（同名同日的會跳過）",
+        "en": "Imported {n} from Moodle (same title+due skipped)",
+    },
+    "moodle_none": {
+        "zh-CN": "这个 .ics 里没读到事件。请确认导出了「与课程相关」的事件。",
+        "zh-TW": "這個 .ics 裡沒讀到事件。請確認匯出了「與課程相關」的事件。",
+        "en": "No events found in that .ics. Export course-related events and try again.",
+    },
+    "moodle_open": {
+        "zh-CN": "打开 Moodle",
+        "zh-TW": "打開 Moodle",
+        "en": "Open Moodle",
+    },
+    "moodle_open_item": {
+        "zh-CN": "在 Moodle 打开",
+        "zh-TW": "在 Moodle 打開",
+        "en": "Open in Moodle",
+    },
+    "moodle_badge": {
+        "zh-CN": "Moodle",
+        "zh-TW": "Moodle",
+        "en": "Moodle",
+    },
+    "moodle_replace": {
+        "zh-CN": "用本次导入替换旧的 Moodle 任务",
+        "zh-TW": "用本次匯入取代舊的 Moodle 任務",
+        "en": "Replace previous Moodle tasks with this import",
+    },
+    "link_moodle": {
+        "zh-CN": "浸大 Moodle",
+        "zh-TW": "浸大 Moodle",
+        "en": "HKBU Moodle",
+    },
     "upload_box_hint": {
         "zh-CN": "PNG、JPG、WEBP，最大 12MB",
         "zh-TW": "PNG、JPG、WEBP，最大 12MB",

@@ -8,6 +8,20 @@ from core.i18n import Lang
 ENTRIES: list[dict[str, dict[Lang, str] | str]] = [
     {
         "date": "2026-11-12",
+        "tag": "v1.0.7",
+        "title": {
+            "zh-CN": "Moodle 日历导入作业截止",
+            "zh-TW": "Moodle 日曆匯入作業截止",
+            "en": "Import Moodle calendar deadlines",
+        },
+        "body": {
+            "zh-CN": "· 任务页可上传 bueLearning 导出的 .ics，导入作业/测验截止日\n· 不登录 Moodle、不保存密码；有链接时可一键打开\n· 官方快捷链加入浸大 Moodle",
+            "zh-TW": "· 任務頁可上傳 bueLearning 匯出的 .ics，匯入作業/測驗截止日\n· 不登入 Moodle、不保存密碼；有連結時可一鍵打開\n· 官方快捷鏈加入浸大 Moodle",
+            "en": "· Tasks page accepts bueLearning .ics exports for assignment/quiz dues\n· No Moodle login or passwords; open activity links when present\n· Official shortcuts include HKBU Moodle",
+        },
+    },
+    {
+        "date": "2026-11-12",
         "tag": "v1.0.6",
         "title": {
             "zh-CN": "修复 Cloud 启动 ImportError",

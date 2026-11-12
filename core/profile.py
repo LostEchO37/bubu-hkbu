@@ -29,6 +29,7 @@ class TaskItem:
     course: str = ""
     notes: str = ""
     source: str = "manual"
+    url: str = ""  # optional deep link (e.g. Moodle activity)
 
 
 @dataclass
@@ -69,7 +70,17 @@ class StudentProfile:
             student_id=data.get("student_id", ""),
             programme=data.get("programme", ""),
             timetable=[CourseSlot(**c) for c in data.get("timetable", [])],
-            tasks=[TaskItem(**t) for t in data.get("tasks", [])],
+            tasks=[
+                TaskItem(
+                    **{
+                        k: v
+                        for k, v in t.items()
+                        if k in {"title", "due", "course", "notes", "source", "url"}
+                    }
+                )
+                for t in data.get("tasks", [])
+                if isinstance(t, dict) and (t.get("title") or "").strip()
+            ],
             emails=[EmailSnippet(**e) for e in data.get("emails", [])],
             custom_notes=data.get("custom_notes", ""),
             settings=data.get("settings") or {},

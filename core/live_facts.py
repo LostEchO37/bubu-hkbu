@@ -235,9 +235,11 @@ def fetch_weather(lang: Lang = "zh-CN", *, force: bool = False) -> WeatherSnapsh
 
 def official_links(lang: Lang) -> list[tuple[str, str]]:
     """Label + URL pairs for sidebar / empty-state."""
+    from core.moodle_ics import MOODLE_HOME
+
     return [
+        (t("link_moodle", lang), MOODLE_HOME),
         (t("link_hko", lang), HKO_HOME),
-        (t("link_hko_data", lang), "https://www.hko.gov.hk/en/abouthko/opendata_intro.htm"),
         (t("link_ar_calendar", lang), AR_CALENDAR),
         (t("link_hkbu_home", lang), "https://www.hkbu.edu.hk/"),
     ]

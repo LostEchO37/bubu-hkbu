@@ -95,7 +95,7 @@ from core.ui import (
 )
 
 # Bump when chat UI flow changes — forces one-time hub reset for logged-in sessions.
-_UI_REVISION = 57
+_UI_REVISION = 58
 
 _FAVICON = Path(__file__).resolve().parent / "assets" / "bu_favicon.png"
 st.set_page_config(
@@ -1042,22 +1042,78 @@ def render_workspace_panel(lang: Lang) -> None:
 
 
 def render_tasks_page(lang: Lang) -> None:
-    """UI-06 / UI-11: task page with add row + deletable list; sidebar pulse stays in sync."""
+    """UI-06 / UI-11: task page + Moodle .ics import (no SSO / no authtoken storage)."""
+    from core.moodle_ics import (
+        MOODLE_CALENDAR,
+        MOODLE_HOME,
+        merge_moodle_tasks,
+        parse_ics_tasks,
+    )
+
     p: StudentProfile = st.session_state.profile
     st.markdown(
         f'<div class="bu-workspace-head"><h3>{html.escape(t("nav_tasks", lang))}</h3></div>',
         unsafe_allow_html=True,
     )
+    st.markdown(
+        f'<p style="margin:0 0 0.75rem;font-size:13px">'
+        f'<a href="{html.escape(MOODLE_HOME)}" target="_blank" rel="noopener noreferrer">'
+        f'{html.escape(t("moodle_open", lang))}</a>'
+        f' · '
+        f'<a href="{html.escape(MOODLE_CALENDAR)}" target="_blank" rel="noopener noreferrer">'
+        f'Calendar</a></p>',
+        unsafe_allow_html=True,
+    )
+
+    with st.expander(t("moodle_section", lang), expanded=not p.tasks):
+        st.caption(t("moodle_hint", lang))
+        st.markdown(t("moodle_steps", lang))
+        ics_file = st.file_uploader(
+            t("moodle_upload", lang),
+            type=["ics"],
+            key="moodle_ics_upload",
+        )
+        replace_moodle = st.checkbox(
+            t("moodle_replace", lang), value=True, key="moodle_replace_prev"
+        )
+        if st.button(t("moodle_import", lang), type="primary", use_container_width=True, key="moodle_import_btn"):
+            if not ics_file:
+                st.warning(t("moodle_upload", lang))
+            else:
+                incoming = parse_ics_tasks(ics_file.getvalue())
+                if not incoming:
+                    st.warning(t("moodle_none", lang))
+                else:
+                    merged, added = merge_moodle_tasks(
+                        p.tasks, incoming, replace_moodle=replace_moodle
+                    )
+                    p.tasks = merged
+                    persist_user_data()
+                    st.success(t("moodle_imported", lang, n=added))
+                    st.rerun()
+
     c1, c2, c3 = st.columns([3, 2, 1])
     with c1:
-        new_task = st.text_input(t("new_task", lang), key="tasks_page_new_task", label_visibility="collapsed", placeholder=t("new_task", lang))
+        new_task = st.text_input(
+            t("new_task", lang),
+            key="tasks_page_new_task",
+            label_visibility="collapsed",
+            placeholder=t("new_task", lang),
+        )
     with c2:
-        new_due = st.text_input(t("new_due", lang), key="tasks_page_new_due", label_visibility="collapsed", placeholder=t("new_due", lang))
+        new_due = st.text_input(
+            t("new_due", lang),
+            key="tasks_page_new_due",
+            label_visibility="collapsed",
+            placeholder=t("new_due", lang),
+        )
     with c3:
-        add_clicked = st.button(t("add_task", lang), type="primary", use_container_width=True, key="tasks_page_add")
+        add_clicked = st.button(
+            t("add_task", lang), type="primary", use_container_width=True, key="tasks_page_add"
+        )
     if add_clicked:
         if new_task.strip():
-            p.tasks.append(TaskItem(title=new_task.strip(), due=new_due.strip()))
+            p.tasks.append(TaskItem(title=new_task.strip(), due=new_due.strip(), source="manual"))
             persist_user_data()
             st.success(t("task_added", lang))
             st.rerun()
@@ -1066,15 +1122,24 @@ def render_tasks_page(lang: Lang) -> None:
 
     if not p.tasks:
         st.caption(t("today_no_tasks", lang))
-        if st.button(t("tasks_empty_cta", lang), use_container_width=True, key="tasks_empty_focus"):
-            st.rerun()
         return
 
     for i, task in enumerate(list(p.tasks)):
-        left, right = st.columns([5, 1])
+        left, mid, right = st.columns([4.2, 1.4, 1])
         with left:
             due = task.due or "—"
-            st.markdown(f"**{html.escape(due)}** · {html.escape(task.title)}")
+            badge = f" · `{t('moodle_badge', lang)}`" if (task.source or "") == "moodle" else ""
+            course = f" · {task.course}" if task.course else ""
+            st.markdown(
+                f"**{html.escape(due)}** · {html.escape(task.title)}{html.escape(course)}{badge}"
+            )
+        with mid:
+            if (task.url or "").startswith("http"):
+                st.link_button(
+                    t("moodle_open_item", lang),
+                    task.url,
+                    use_container_width=True,
+                )
         with right:
             if st.button(t("delete_task", lang), key=f"del_task_{i}", use_container_width=True):
                 del p.tasks[i]
