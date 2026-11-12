@@ -24,6 +24,8 @@ def main() -> None:
         "core.timetable_vision",
         "core.mail_vision",
         "core.identity",
+        "core.knowledge",
+        "core.live_facts",
     ]
     for m in mods:
         importlib.import_module(m)
@@ -161,6 +163,21 @@ def main() -> None:
     assert gaps and gaps[0][0] == "13:20"
     assert any(r.kind == "rush" for r in detect_reminders(p))
     assert "bu-pulse" in pulse_html(p, "zh-CN", now=now)
+
+    from core.knowledge import retrieve, search_knowledge
+    from core.live_facts import fetch_weather, official_links
+
+    cal_hits = search_knowledge("第一学期考试周什么时候", top_k=4)
+    assert cal_hits, "calendar RAG should return chunks"
+    weather_bundle = retrieve("今天天气怎么样会下雨吗", top_k=4, lang="zh-CN")
+    assert weather_bundle.live_facts and "天文台" in weather_bundle.live_facts
+    assert weather_bundle.include_live_weather
+    assert any("Observatory" in c for c in weather_bundle.citations)
+    wx = fetch_weather("zh-CN")
+    assert isinstance(wx.ok, bool)
+    assert official_links("en") and "hko.gov.hk" in official_links("en")[0][1]
+    assert t("rag_sources_title", "en") and t("link_hko", "zh-TW")
+    assert (ROOT / "data" / "knowledge" / "official_links_zh.md").is_file()
 
     from scripts.smoke_ui_flow import main as smoke
     from scripts.full_user_journey import main as journey

@@ -319,7 +319,9 @@ def format_countdown(lang: Lang, *, today: date | None = None) -> tuple[str, str
 
 
 def pulse_html(profile: StudentProfile, lang: Lang, *, now: datetime | None = None) -> str:
-    """Compact sidebar summary: date, next thing, up to 3 tasks (UI-03 / UI-11)."""
+    """Compact sidebar summary: date, weather, next thing, up to 3 tasks."""
+    from core.live_facts import HKO_HOME, AR_CALENDAR, fetch_weather
+
     now = now or datetime.now()
     day = weekday_code(now)
     day_label = t(f"day_{day.lower()}", lang)
@@ -327,6 +329,8 @@ def pulse_html(profile: StudentProfile, lang: Lang, *, now: datetime | None = No
     _, cd_detail = format_countdown(lang, today=now.date())
     tasks = upcoming_tasks(profile, limit=3, lang=lang)
     extra = max(0, len([x for x in profile.tasks if (x.title or "").strip()]) - len(tasks))
+    weather = fetch_weather(lang)
+    weather_line = weather.one_line(lang)
 
     if nxt is not None and delta is not None:
         if delta > 0:
@@ -372,6 +376,16 @@ def pulse_html(profile: StudentProfile, lang: Lang, *, now: datetime | None = No
     else:
         task_html = f'<p class="bu-pulse-muted">{html.escape(t("today_no_tasks", lang))}</p>'
 
+    links = (
+        f'<p class="bu-pulse-links">'
+        f'<a href="{html.escape(HKO_HOME)}" target="_blank" rel="noopener noreferrer">'
+        f'{html.escape(t("link_hko", lang))}</a>'
+        f' · '
+        f'<a href="{html.escape(AR_CALENDAR)}" target="_blank" rel="noopener noreferrer">'
+        f'{html.escape(t("link_ar_calendar", lang))}</a>'
+        f"</p>"
+    )
+
     return f"""
 <style>
 .bu-pulse {{
@@ -402,6 +416,12 @@ def pulse_html(profile: StudentProfile, lang: Lang, *, now: datetime | None = No
   color: var(--text, #1C2B33);
   line-height: 1.4;
 }}
+.bu-pulse-weather {{
+  margin: 0 0 0.55rem;
+  font-size: 12px;
+  color: var(--text, #1C2B33);
+  line-height: 1.4;
+}}
 .bu-pulse-muted {{ margin: 0.25rem 0 0; font-size: 12px; color: var(--text-soft, #5C6F7A); }}
 .bu-pulse-list {{
   margin: 0.2rem 0 0;
@@ -410,12 +430,23 @@ def pulse_html(profile: StudentProfile, lang: Lang, *, now: datetime | None = No
   color: var(--text, #1C2B33);
 }}
 .bu-pulse-list.tight {{ font-size: 12px; }}
+.bu-pulse-links {{
+  margin: 0.55rem 0 0;
+  font-size: 12px;
+}}
+.bu-pulse-links a {{
+  color: var(--sky, #2F9EB8);
+  text-decoration: none;
+}}
+.bu-pulse-links a:hover {{ text-decoration: underline; }}
 </style>
 <div class="bu-pulse">
   <h4>{html.escape(t("pulse_today", lang))} · {html.escape(day_label)}</h4>
+  <p class="bu-pulse-weather">{html.escape(weather_line)}</p>
   <p class="bu-pulse-next">{html.escape(next_line)}</p>
   <h4>{html.escape(t("pulse_tasks", lang))}</h4>
   {task_html}
+  {links}
 </div>
 """.strip()
 

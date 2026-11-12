@@ -1,10 +1,11 @@
-"""Keyword retrieval + query expansion for HKBU knowledge files."""
+"""Retrieval-augmented generation over HKBU knowledge files (BM25-lite + expansions)."""
 
 from __future__ import annotations
 
 import functools
+import math
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 KNOWLEDGE_DIR = Path(__file__).resolve().parent.parent / "data" / "knowledge"
@@ -19,6 +20,10 @@ QUERY_EXPANSIONS: dict[str, list[str]] = {
     "辅导": ["counselling", "cdc", "3411 7435"],
     "实验室": ["lab", "laboratory", "FSC801", "opening hours", "computer"],
     "课表": ["timetable", "class", "course"],
+    "天气": ["weather", "气温", "降雨", "台风", "天文台", "hko", "humidity", "warning"],
+    "下雨": ["rain", "rainfall", "暴雨", "weather", "天文台"],
+    "台风": ["tropical cyclone", "typhoon", "警告", "天文台", "weather"],
+    "放假": ["holiday", "public holiday", "校历", "calendar"],
 }
 
 PINNED_FOR_CALENDAR = [
@@ -26,12 +31,42 @@ PINNED_FOR_CALENDAR = [
     "academic_calendar_2026_27.md",
 ]
 
+_WEATHER_KEYS = (
+    "天气",
+    "气温",
+    "下雨",
+    "降雨",
+    "台风",
+    "暴雨",
+    "酷热",
+    "寒冷",
+    "湿度",
+    "天文台",
+    "weather",
+    "rain",
+    "typhoon",
+    "hko",
+    "forecast",
+    "warning",
+    "umbrella",
+)
+
 
 @dataclass
 class Chunk:
     source: str
     text: str
     score: float
+
+
+@dataclass
+class RetrievalBundle:
+    """One RAG turn: ranked chunks + optional live facts + citation labels."""
+
+    chunks: list[Chunk] = field(default_factory=list)
+    live_facts: str = ""
+    citations: list[str] = field(default_factory=list)
+    include_live_weather: bool = False
 
 
 def _tokenize(text: str) -> set[str]:
@@ -97,6 +132,18 @@ def _indexed_chunks() -> tuple[tuple[str, str, frozenset[str]], ...]:
     return tuple(rows)
 
 
+@functools.lru_cache(maxsize=1)
+def _idf_table() -> dict[str, float]:
+    """Document-frequency IDF over knowledge chunks (BM25-lite)."""
+    rows = _indexed_chunks()
+    n = max(len(rows), 1)
+    df: dict[str, int] = {}
+    for _src, _text, tokens in rows:
+        for tok in tokens:
+            df[tok] = df.get(tok, 0) + 1
+    return {tok: math.log(1.0 + (n - freq + 0.5) / (freq + 0.5)) for tok, freq in df.items()}
+
+
 @functools.lru_cache(maxsize=8)
 def _cached_file(name: str) -> str | None:
     return _load_file(name)
@@ -108,18 +155,46 @@ def _is_calendar_query(query: str) -> bool:
     return any(k in query or k in q for k in keys)
 
 
+def is_weather_query(query: str) -> bool:
+    q = query.lower()
+    return any(k in query or k in q for k in _WEATHER_KEYS)
+
+
+def _bm25_score(q_tokens: set[str], doc_tokens: frozenset[str], *, avgdl: float) -> float:
+    """BM25-lite without term frequency counts beyond presence (sparse FAQ chunks)."""
+    if not q_tokens or not doc_tokens:
+        return 0.0
+    idf = _idf_table()
+    dl = max(len(doc_tokens), 1)
+    k1, b = 1.4, 0.75
+    score = 0.0
+    for tok in q_tokens:
+        if tok not in doc_tokens:
+            continue
+        # binary tf=1 for short FAQ chunks
+        tf = 1.0
+        idf_w = idf.get(tok, 1.2)
+        denom = tf + k1 * (1.0 - b + b * dl / max(avgdl, 1.0))
+        score += idf_w * (tf * (k1 + 1.0) / denom)
+    # Prefer denser overlap
+    overlap = len(q_tokens & doc_tokens)
+    score += 0.15 * overlap
+    return score
+
+
 def search_knowledge(query: str, top_k: int = 6) -> list[Chunk]:
     q_tokens = _expand_query(query)
     if not q_tokens:
         return []
 
+    rows = _indexed_chunks()
+    avgdl = sum(len(toks) for _s, _t, toks in rows) / max(len(rows), 1)
     scored: list[Chunk] = []
     seen: set[tuple[str, str]] = set()
-    for source, piece, tokens in _indexed_chunks():
-        overlap = len(q_tokens & tokens)
-        if overlap <= 0:
+    for source, piece, tokens in rows:
+        score = _bm25_score(q_tokens, tokens, avgdl=avgdl)
+        if score <= 0:
             continue
-        score = overlap / (len(q_tokens) ** 0.5)
         key = (source, piece[:80])
         if key not in seen:
             seen.add(key)
@@ -141,6 +216,33 @@ def search_knowledge(query: str, top_k: int = 6) -> list[Chunk]:
     return chunks
 
 
+def retrieve(query: str, *, top_k: int = 6, lang: str = "zh-CN") -> RetrievalBundle:
+    """Full RAG step: KB search + live HKO facts when relevant (or lightly always)."""
+    from core.live_facts import live_facts_for_llm
+
+    chunks = search_knowledge(query, top_k=top_k)
+    want_weather = is_weather_query(query)
+    # Always attach a compact live block so homepage-aligned facts stay fresh;
+    # weather-heavy questions get the full block emphasized via citations.
+    live = live_facts_for_llm(lang)  # type: ignore[arg-type]
+    citations = [c.source for c in chunks]
+    # unique preserve order
+    seen: set[str] = set()
+    uniq: list[str] = []
+    for name in citations:
+        if name not in seen:
+            seen.add(name)
+            uniq.append(name)
+    if want_weather or chunks:
+        uniq.append("Hong Kong Observatory (live)")
+    return RetrievalBundle(
+        chunks=chunks,
+        live_facts=live,
+        citations=uniq,
+        include_live_weather=True,
+    )
+
+
 @functools.lru_cache(maxsize=1)
 def mandatory_bootstrap() -> str:
     """Always send current-year calendar + campus FAQ (small files)."""
@@ -148,6 +250,7 @@ def mandatory_bootstrap() -> str:
     for name in (
         "academic_calendar_2026_27_zh.md",
         "hkbu_campus_faq_zh.md",
+        "official_links_zh.md",
     ):
         body = _cached_file(name)
         if body:
@@ -160,5 +263,21 @@ def format_knowledge_context(chunks: list[Chunk]) -> str:
         return ""
     parts = []
     for i, c in enumerate(chunks, 1):
-        parts.append(f"[{i}] ({c.source})\n{c.text}")
+        parts.append(f"[{i}] ({c.source}, score={c.score:.2f})\n{c.text}")
     return "\n\n---\n\n".join(parts)
+
+
+def format_retrieval_block(bundle: RetrievalBundle) -> str:
+    kb = format_knowledge_context(bundle.chunks)
+    parts = [
+        "## 检索补充（RAG）",
+        kb or "（无额外知识库片段）",
+        "",
+        bundle.live_facts or "",
+    ]
+    if bundle.citations:
+        parts.append("")
+        parts.append("## 本轮依据来源")
+        for name in bundle.citations[:8]:
+            parts.append(f"- {name}")
+    return "\n".join(parts)

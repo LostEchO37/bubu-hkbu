@@ -7,6 +7,20 @@ from core.i18n import Lang
 # Newest first. One entry per public push; wording avoids private ops details.
 ENTRIES: list[dict[str, dict[Lang, str] | str]] = [
     {
+        "date": "2026-11-12",
+        "tag": "v1.0.5",
+        "title": {
+            "zh-CN": "RAG 检索加强 + 天文台实时天气",
+            "zh-TW": "RAG 檢索加強 + 天文台即時天氣",
+            "en": "Stronger RAG + live HKO weather",
+        },
+        "body": {
+            "zh-CN": "· 知识库改为 BM25-lite 检索，回答后可展开本轮依据\n· 接入香港天文台开放数据（气温/预报/警告），侧栏与聊天首页同步显示\n· 对话会注入实时天气与官方链接；校历仍以教务处为准",
+            "zh-TW": "· 知識庫改為 BM25-lite 檢索，回答後可展開本輪依據\n· 接入香港天文台開放數據（氣溫/預報/警告），側欄與聊天首頁同步顯示\n· 對話會注入即時天氣與官方連結；校曆仍以教務處為準",
+            "en": "· BM25-lite knowledge retrieval with expandable source citations\n· Live HKO open data (temp / forecast / warnings) on sidebar and chat home\n· Chat context includes live weather + official links; AR calendar stays authoritative",
+        },
+    },
+    {
         "date": "2026-11-04",
         "tag": "v1.0.4",
         "title": {

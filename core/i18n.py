@@ -392,9 +392,59 @@ MESSAGES: dict[str, dict[Lang, str]] = {
         "en": "Having trouble",
     },
     "chat_empty_guide": {
-        "zh-CN": "问我课表、空档、作业或复习安排。",
-        "zh-TW": "問我課表、空檔、作業或複習安排。",
-        "en": "Ask about timetable, free slots, homework, or study plans.",
+        "zh-CN": "问我课表、空档、作业、天气或复习安排。",
+        "zh-TW": "問我課表、空檔、作業、天氣或複習安排。",
+        "en": "Ask about timetable, free slots, homework, weather, or study plans.",
+    },
+    "weather_unavailable": {
+        "zh-CN": "天气暂不可用（稍后自动重试）",
+        "zh-TW": "天氣暫不可用（稍後自動重試）",
+        "en": "Weather temporarily unavailable",
+    },
+    "weather_place_fallback": {
+        "zh-CN": "香港",
+        "zh-TW": "香港",
+        "en": "Hong Kong",
+    },
+    "weather_humidity": {
+        "zh-CN": "湿度 {n}%",
+        "zh-TW": "濕度 {n}%",
+        "en": "Humidity {n}%",
+    },
+    "weather_warning_on": {
+        "zh-CN": "有生效警告",
+        "zh-TW": "有生效警告",
+        "en": "Warning in force",
+    },
+    "link_hko": {
+        "zh-CN": "香港天文台",
+        "zh-TW": "香港天文台",
+        "en": "HK Observatory",
+    },
+    "link_hko_data": {
+        "zh-CN": "天文台开放数据",
+        "zh-TW": "天文台開放數據",
+        "en": "HKO Open Data",
+    },
+    "link_ar_calendar": {
+        "zh-CN": "浸大校历",
+        "zh-TW": "浸大校曆",
+        "en": "HKBU Calendar",
+    },
+    "link_hkbu_home": {
+        "zh-CN": "浸大主页",
+        "zh-TW": "浸大主頁",
+        "en": "HKBU Home",
+    },
+    "rag_sources_title": {
+        "zh-CN": "本轮依据（RAG）",
+        "zh-TW": "本輪依據（RAG）",
+        "en": "Sources this turn (RAG)",
+    },
+    "home_facts_title": {
+        "zh-CN": "今日资讯",
+        "zh-TW": "今日資訊",
+        "en": "Today’s facts",
     },
     "ws_seg_profile": {"zh-CN": "个人资料", "zh-TW": "個人資料", "en": "Profile"},
     "ws_seg_timetable": {"zh-CN": "课表", "zh-TW": "課表", "en": "Timetable"},

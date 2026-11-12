@@ -9,16 +9,26 @@ from openai import OpenAI
 
 from core.app_settings import Personality, temperature_for
 from core.i18n import LLM_LANG_HINT, Lang
-from core.knowledge import format_knowledge_context, mandatory_bootstrap, search_knowledge
+from core.knowledge import (
+    RetrievalBundle,
+    format_retrieval_block,
+    mandatory_bootstrap,
+    retrieve,
+)
 from core.persona import get_persona
 from core.profile import StudentProfile, mandatory_profile_context
 from core.today import pulse_context_for_llm
 
+# Last RAG bundle for the UI (citations expander). Not thread-safe across users
+# on a multi-tenant server, but Streamlit Cloud is one process per session script.
+_LAST_RETRIEVAL: RetrievalBundle | None = None
+
 SYSTEM_PROMPT = """你是「阿Bu」（英文可称 BuBu）——浸大同学助手，学长/学姐型 AI 搭档（见下方人设）。
 
 能力：
-1. 用已加载的浸大资料 + 用户个人资料（课表、任务、今日快览）回答问题、做规划。
-2. 校历、校园服务、CS 设施等以「浸大固定资料」为准。
+1. 用 RAG 检索到的浸大资料 + 用户个人资料（课表、任务、今日快览）回答问题、做规划。
+2. 校历、校园服务、CS 设施等以「浸大固定资料」与「检索补充」为准。
+3. 天气、警告以注入的「实时天气（香港天文台开放数据）」为准，并可提示官网链接。
 
 硬性规则：
 - **每轮对话都已注入「当前对话用户」完整资料**；用户问身份、课表、任务时必须直接引用，禁止说「我不知道你是谁 / 没加载课表」。
@@ -28,10 +38,16 @@ SYSTEM_PROMPT = """你是「阿Bu」（英文可称 BuBu）——浸大同学助
 - **浸大时间习惯**：上课 xx:30，下课 xx:20，课间通常 10 分钟。
 - **赶场/冲突提醒**若已列出，回答规划时要主动避开或提醒。
 - **浸大 2026–27 校历已在固定资料中**；有考试周日期就必须直说，禁止声称没有校历。
+- **天气/台风/暴雨**：只引用「实时天气」块；缺失时说以 https://www.hko.gov.hk/ 为准，禁止编造度数或警告。
 - 对话历史里若曾有错误回答（例如明明有课表却说没有、时间说错），以本轮 injected 资料为准并纠正。
 - 不编造日期、政策、费用；危机/心理/安全话题立刻严肃，给 counselling 3411 7435。
 - 规划学习时给可执行时间块，结合课表空档；回答尽量短而落地（先结论，再要点）。
+- 需要时在句末用括号点明依据文件名或「香港天文台」。
 """
+
+
+def get_last_retrieval() -> RetrievalBundle | None:
+    return _LAST_RETRIEVAL
 
 
 def get_openai_client() -> OpenAI:
@@ -73,8 +89,10 @@ def build_messages(
     account_username: str = "",
     personality: Personality = "playful",
 ) -> list[dict[str, str]]:
-    chunks = search_knowledge(user_message, top_k=6)
-    kb = format_knowledge_context(chunks)
+    global _LAST_RETRIEVAL
+    bundle = retrieve(user_message, top_k=6, lang=lang)
+    _LAST_RETRIEVAL = bundle
+    rag_block = format_retrieval_block(bundle)
     user_block = mandatory_profile_context(profile, display_name, account_username)
     pulse = pulse_context_for_llm(profile, lang)
     bootstrap = mandatory_bootstrap()
@@ -88,8 +106,7 @@ def build_messages(
 ## 浸大固定资料（每轮必载）
 {bootstrap}
 
-## 检索补充（按问题）
-{kb or "（无额外片段）"}
+{rag_block}
 """
     lang_hint = LLM_LANG_HINT.get(lang, LLM_LANG_HINT["zh-CN"])
     persona = get_persona(lang, personality)

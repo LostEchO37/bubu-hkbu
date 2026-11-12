@@ -35,7 +35,8 @@ def load_server_secrets() -> None:
     if not os.environ.get("LLM_PROVIDER"):
         os.environ["LLM_PROVIDER"] = "hkbu"
 
-from core.agent import chat_completion_stream, suggest_study_plan
+from core.agent import chat_completion_stream, get_last_retrieval, suggest_study_plan
+from core.live_facts import AR_CALENDAR, HKO_HOME, fetch_weather, official_links
 from core.app_settings import AppSettings
 from core.auth import get_user_by_id, load_session, login_user, register_user, save_session
 from core.session_token import make_auth_token, verify_auth_token
@@ -70,7 +71,7 @@ from core.ui import (
 )
 
 # Bump when chat UI flow changes — forces one-time hub reset for logged-in sessions.
-_UI_REVISION = 55
+_UI_REVISION = 56
 
 _FAVICON = Path(__file__).resolve().parent / "assets" / "bu_favicon.png"
 st.set_page_config(
@@ -1258,6 +1259,36 @@ def consume_bubble_pick_query(prompts: list[str], *, plan_index: int | None) -> 
         st.session_state.pending_prompt = prompts[idx]
 
 
+def render_home_facts_strip(lang: Lang) -> None:
+    """Compact live facts under the chat guide (HKO + official links)."""
+    weather = fetch_weather(lang)
+    links = " · ".join(
+        f'<a href="{html.escape(url)}" target="_blank" rel="noopener noreferrer">'
+        f"{html.escape(label)}</a>"
+        for label, url in official_links(lang)[:3]
+    )
+    st.markdown(
+        f'<div class="bu-card" style="margin-top:0.5rem">'
+        f'<p style="margin:0;font-size:12px;color:var(--text-soft)">{html.escape(t("home_facts_title", lang))}</p>'
+        f'<p style="margin:0.35rem 0 0;font-size:14px;color:var(--text)">'
+        f"{html.escape(weather.one_line(lang))}</p>"
+        f'<p style="margin:0.45rem 0 0;font-size:12px">{links}</p>'
+        f"</div>",
+        unsafe_allow_html=True,
+    )
+
+
+def render_rag_citations(lang: Lang) -> None:
+    cites = st.session_state.get("_last_rag_citations") or []
+    if not cites:
+        return
+    with st.expander(t("rag_sources_title", lang), expanded=False):
+        for name in cites[:8]:
+            st.caption(f"· {name}")
+        st.caption(f"{t('link_hko', lang)} — {HKO_HOME}")
+        st.caption(f"{t('link_ar_calendar', lang)} — {AR_CALENDAR}")
+
+
 def main_chat(lang: Lang) -> None:
     """UI-05: stage is conversation + bottom input only."""
     p: StudentProfile = st.session_state.profile
@@ -1291,6 +1322,7 @@ def main_chat(lang: Lang) -> None:
             f"</div>",
             unsafe_allow_html=True,
         )
+        render_home_facts_strip(lang)
     elif pristine and st.session_state.get("agent_burst"):
         render_mini_prompt_bubbles(
             prompts,
@@ -1301,6 +1333,7 @@ def main_chat(lang: Lang) -> None:
         )
     else:
         render_chat_thread(messages)
+        render_rag_citations(lang)
 
     if st.session_state.pop("_scroll_chat", None):
         scroll_latest_assistant_into_view()
@@ -1344,6 +1377,9 @@ def main_chat(lang: Lang) -> None:
             except Exception as e:
                 reply = str(e)
                 st.error(reply)
+        bundle = get_last_retrieval()
+        if bundle is not None:
+            st.session_state._last_rag_citations = list(bundle.citations)
         if not isinstance(reply, str):
             reply = "" if reply is None else str(reply)
         reply = reply.strip() or t("chat_empty_reply", lang)
