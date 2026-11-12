@@ -8,6 +8,20 @@ from core.i18n import Lang
 ENTRIES: list[dict[str, dict[Lang, str] | str]] = [
     {
         "date": "2026-11-12",
+        "tag": "v1.0.6",
+        "title": {
+            "zh-CN": "修复 Cloud 启动 ImportError",
+            "zh-TW": "修復 Cloud 啟動 ImportError",
+            "en": "Fix Cloud boot ImportError",
+        },
+        "body": {
+            "zh-CN": "· 拆开课表识别与 agent 的循环依赖\n· RAG/天气改为懒加载，避免 Streamlit Cloud 导入失败",
+            "zh-TW": "· 拆開課表識別與 agent 的循環依賴\n· RAG/天氣改為懶加載，避免 Streamlit Cloud 匯入失敗",
+            "en": "· Break timetable-vision ↔ agent circular import\n· Lazy-load RAG/weather so Cloud boot no longer ImportErrors",
+        },
+    },
+    {
+        "date": "2026-11-12",
         "tag": "v1.0.5",
         "title": {
             "zh-CN": "RAG 检索加强 + 天文台实时天气",

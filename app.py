@@ -35,8 +35,32 @@ def load_server_secrets() -> None:
     if not os.environ.get("LLM_PROVIDER"):
         os.environ["LLM_PROVIDER"] = "hkbu"
 
-from core.agent import chat_completion_stream, get_last_retrieval, suggest_study_plan
-from core.live_facts import AR_CALENDAR, HKO_HOME, fetch_weather, official_links
+from core.agent import chat_completion_stream, suggest_study_plan
+
+try:
+    from core.agent import get_last_retrieval
+except ImportError:  # pragma: no cover — Cloud partial deploys
+    def get_last_retrieval():  # type: ignore[misc]
+        return None
+
+
+try:
+    from core.live_facts import AR_CALENDAR, HKO_HOME, fetch_weather, official_links
+except ImportError:  # pragma: no cover
+    AR_CALENDAR = "https://calendar.ar.hkbu.edu.hk/"
+    HKO_HOME = "https://www.hko.gov.hk/"
+
+    def fetch_weather(lang="zh-CN", *, force=False):  # type: ignore[misc]
+        class _W:
+            ok = False
+
+            def one_line(self, _lang=None):
+                return ""
+
+        return _W()
+
+    def official_links(lang="zh-CN"):  # type: ignore[misc]
+        return []
 from core.app_settings import AppSettings
 from core.auth import get_user_by_id, load_session, login_user, register_user, save_session
 from core.session_token import make_auth_token, verify_auth_token
@@ -71,7 +95,7 @@ from core.ui import (
 )
 
 # Bump when chat UI flow changes — forces one-time hub reset for logged-in sessions.
-_UI_REVISION = 56
+_UI_REVISION = 57
 
 _FAVICON = Path(__file__).resolve().parent / "assets" / "bu_favicon.png"
 st.set_page_config(

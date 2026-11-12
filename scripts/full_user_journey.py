@@ -205,7 +205,7 @@ def check_chat_and_hub_invariants() -> None:
 
     md = changelog_markdown("en")
     assert "v0.30" in md
-    assert ENTRIES[0]["tag"] == "v1.0.5"
+    assert ENTRIES[0]["tag"] == "v1.0.6"
     app_src = (ROOT / "app.py").read_text(encoding="utf-8")
     assert "render_app_sidebar" in app_src and "nav_page" in app_src
     assert "get_last_retrieval" in app_src and "render_home_facts_strip" in app_src

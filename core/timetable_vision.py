@@ -8,7 +8,7 @@ import json
 import os
 import re
 
-from core.agent import _client
+from core.llm_client import get_openai_client
 from core.profile import CourseSlot
 
 
@@ -275,7 +275,7 @@ def _prepare_image(image_bytes: bytes, mime: str) -> tuple[bytes, str]:
 
 
 def _call_vision(image_data_url: str, prompt: str, *, max_tokens: int) -> str:
-    client = _client()
+    client = get_openai_client()
     model = _vision_model()
     kwargs: dict = {
         "model": model,

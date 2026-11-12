@@ -2,26 +2,18 @@
 
 from __future__ import annotations
 
-import functools
 import os
-
-from openai import OpenAI
+from typing import Any
 
 from core.app_settings import Personality, temperature_for
 from core.i18n import LLM_LANG_HINT, Lang
-from core.knowledge import (
-    RetrievalBundle,
-    format_retrieval_block,
-    mandatory_bootstrap,
-    retrieve,
-)
+from core.llm_client import get_openai_client
 from core.persona import get_persona
 from core.profile import StudentProfile, mandatory_profile_context
 from core.today import pulse_context_for_llm
 
-# Last RAG bundle for the UI (citations expander). Not thread-safe across users
-# on a multi-tenant server, but Streamlit Cloud is one process per session script.
-_LAST_RETRIEVAL: RetrievalBundle | None = None
+# Last RAG bundle for the UI (citations expander).
+_LAST_RETRIEVAL: Any = None
 
 SYSTEM_PROMPT = """你是「阿Bu」（英文可称 BuBu）——浸大同学助手，学长/学姐型 AI 搭档（见下方人设）。
 
@@ -46,38 +38,17 @@ SYSTEM_PROMPT = """你是「阿Bu」（英文可称 BuBu）——浸大同学助
 """
 
 
-def get_last_retrieval() -> RetrievalBundle | None:
+def get_last_retrieval() -> Any:
     return _LAST_RETRIEVAL
 
 
-def get_openai_client() -> OpenAI:
-    return _client()
+def get_openai_client_alias():
+    return get_openai_client()
 
 
-@functools.lru_cache(maxsize=8)
-def _client_cached(api_key: str, base_url: str, provider: str, model_set: str) -> OpenAI:
-    del model_set  # part of cache key so missing-model fails fast when env changes
-    # Hard timeout so a stuck GenAI call cannot freeze the Streamlit session forever.
-    timeout = float(os.environ.get("OPENAI_TIMEOUT", "90"))
-    kwargs = {"api_key": api_key, "timeout": timeout}
-    if provider in {"hkbu", "hkbu_genai", "genai"}:
-        return OpenAI(base_url=base_url or "https://genai.hkbu.edu.hk/api/v1", **kwargs)
-    return OpenAI(base_url=base_url or None, **kwargs)
-
-
-def _client() -> OpenAI:
-    api_key = os.environ.get("OPENAI_API_KEY", "").strip()
-    if not api_key:
-        raise RuntimeError("请设置环境变量 OPENAI_API_KEY。")
-
-    provider = os.environ.get("LLM_PROVIDER", "openai").strip().lower()
-    base_url = os.environ.get("OPENAI_BASE_URL", "").strip()
-    model = os.environ.get("OPENAI_MODEL", "").strip()
-
-    if provider in {"hkbu", "hkbu_genai", "genai"} and not model:
-        raise RuntimeError("缺少 OPENAI_MODEL 环境变量。")
-
-    return _client_cached(api_key, base_url, provider, model)
+# Back-compat for any remaining `from core.agent import _client`
+def _client():
+    return get_openai_client()
 
 
 def build_messages(
@@ -90,6 +61,9 @@ def build_messages(
     personality: Personality = "playful",
 ) -> list[dict[str, str]]:
     global _LAST_RETRIEVAL
+    # Lazy import — keeps `import core.agent` free of knowledge/live_facts cycles on Cloud.
+    from core.knowledge import format_retrieval_block, mandatory_bootstrap, retrieve
+
     bundle = retrieve(user_message, top_k=6, lang=lang)
     _LAST_RETRIEVAL = bundle
     rag_block = format_retrieval_block(bundle)
@@ -114,7 +88,6 @@ def build_messages(
         {"role": "system", "content": f"{SYSTEM_PROMPT}\n\n{persona}\n\n{lang_hint}"}
     ]
     messages.append({"role": "system", "content": context_block})
-    # Keep recent turns; drop oversized blobs so latency stays tight.
     for turn in history[-10:]:
         content = turn["content"]
         if len(content) > 4000:
@@ -134,11 +107,15 @@ def chat_completion(
     account_username: str = "",
     personality: Personality = "playful",
 ) -> str:
-    client = _client()
+    client = get_openai_client()
     model = model or os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
     messages = build_messages(
-        user_message, history, profile, lang=lang,
-        display_name=display_name, account_username=account_username,
+        user_message,
+        history,
+        profile,
+        lang=lang,
+        display_name=display_name,
+        account_username=account_username,
         personality=personality,
     )
     resp = client.chat.completions.create(
@@ -159,11 +136,15 @@ def chat_completion_stream(
     account_username: str = "",
     personality: Personality = "playful",
 ):
-    client = _client()
+    client = get_openai_client()
     model = model or os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
     messages = build_messages(
-        user_message, history, profile, lang=lang,
-        display_name=display_name, account_username=account_username,
+        user_message,
+        history,
+        profile,
+        lang=lang,
+        display_name=display_name,
+        account_username=account_username,
         personality=personality,
     )
     stream = client.chat.completions.create(
@@ -202,7 +183,11 @@ def suggest_study_plan(
     if focus.strip():
         prompt += f"\n{focus.strip()}"
     return chat_completion(
-        prompt, [], profile, lang=lang,
-        display_name=display_name, account_username=account_username,
+        prompt,
+        [],
+        profile,
+        lang=lang,
+        display_name=display_name,
+        account_username=account_username,
         personality=personality,
     )

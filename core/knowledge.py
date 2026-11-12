@@ -218,28 +218,29 @@ def search_knowledge(query: str, top_k: int = 6) -> list[Chunk]:
 
 def retrieve(query: str, *, top_k: int = 6, lang: str = "zh-CN") -> RetrievalBundle:
     """Full RAG step: KB search + live HKO facts when relevant (or lightly always)."""
-    from core.live_facts import live_facts_for_llm
-
     chunks = search_knowledge(query, top_k=top_k)
     want_weather = is_weather_query(query)
-    # Always attach a compact live block so homepage-aligned facts stay fresh;
-    # weather-heavy questions get the full block emphasized via citations.
-    live = live_facts_for_llm(lang)  # type: ignore[arg-type]
+    live = ""
+    try:
+        from core.live_facts import live_facts_for_llm
+
+        live = live_facts_for_llm(lang)  # type: ignore[arg-type]
+    except Exception:
+        live = "## 实时天气\n- （暂不可用）"
     citations = [c.source for c in chunks]
-    # unique preserve order
     seen: set[str] = set()
     uniq: list[str] = []
     for name in citations:
         if name not in seen:
             seen.add(name)
             uniq.append(name)
-    if want_weather or chunks:
+    if want_weather or live:
         uniq.append("Hong Kong Observatory (live)")
     return RetrievalBundle(
         chunks=chunks,
         live_facts=live,
         citations=uniq,
-        include_live_weather=True,
+        include_live_weather=bool(live),
     )
 
 
