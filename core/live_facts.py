@@ -18,15 +18,8 @@ from core.i18n import Lang, t
 HKO_WEATHER_URL = "https://data.weather.gov.hk/weatherAPI/opendata/weather.php"
 HKO_HOME = "https://www.hko.gov.hk/"
 AR_CALENDAR = "https://calendar.ar.hkbu.edu.hk/"
-# Prefer stations near Kowloon Tong / Sha Tin (HKBU campus area).
+# Territory-wide reference only — never advertise a district (e.g. Sha Tin).
 _TEMP_PREF = (
-    "沙田",
-    "Sha Tin",
-    "九龙城",
-    "九龍城",
-    "Kowloon City",
-    "京士柏",
-    "King's Park",
     "香港天文台",
     "Hong Kong Observatory",
 )
@@ -50,18 +43,18 @@ class WeatherSnapshot:
     error: str = ""
 
     def one_line(self, lang: Lang) -> str:
+        """Territory-wide line — no district/city name in the UI."""
         if not self.ok:
             return t("weather_unavailable", lang)
         parts: list[str] = []
         if self.temp_c is not None:
-            place = self.temp_place or t("weather_place_fallback", lang)
-            parts.append(f"{place} {self.temp_c}°C")
+            parts.append(t("weather_temp_hk", lang, n=self.temp_c))
         if self.humidity is not None:
             parts.append(t("weather_humidity", lang, n=self.humidity))
         if self.forecast:
             short = self.forecast.strip().replace("\n", " ")
-            if len(short) > 42:
-                short = short[:40] + "…"
+            if len(short) > 48:
+                short = short[:46] + "…"
             parts.append(short)
         if self.warnings:
             parts.append(t("weather_warning_on", lang))
@@ -71,16 +64,17 @@ class WeatherSnapshot:
         if not self.ok:
             return "## 实时天气\n- （香港天文台暂不可用，勿编造气温）"
         lines = [
-            "## 实时天气（香港天文台开放数据）",
+            "## 实时天气（香港天文台 · 全港概况）",
             f"- 来源: {HKO_HOME}",
             f"- 更新: {self.update_time or '—'}",
+            "- 说明: 只给全港概况，不要点名沙田/九龙塘等具体地区。",
         ]
         if self.temp_c is not None:
-            lines.append(f"- 气温: {self.temp_c}°C @ {self.temp_place or '—'}")
+            lines.append(f"- 香港气温参考: {self.temp_c}°C（天文台总部读数，非分区预报）")
         if self.humidity is not None:
             lines.append(f"- 相对湿度: {self.humidity}%")
         if self.forecast:
-            lines.append(f"- 本港预报: {self.forecast.strip()}")
+            lines.append(f"- 本港天气预报: {self.forecast.strip()}")
         if self.outlook:
             lines.append(f"- 展望: {self.outlook.strip()[:200]}")
         if self.warnings:
@@ -88,7 +82,7 @@ class WeatherSnapshot:
                 lines.append(f"- 警告: {w}")
         else:
             lines.append("- 警告: 暂无生效警告摘要")
-        lines.append("- 硬性: 天气数字只能引用本块；过期或缺失时说明以天文台官网为准。")
+        lines.append("- 硬性: 天气只引用本块；勿捏造分区气温；过期时以天文台官网为准。")
         return "\n".join(lines)
 
 
@@ -127,6 +121,7 @@ def _http_json(url: str, params: dict[str, str], *, timeout: float = 6.0) -> dic
 
 
 def _pick_temp(data: dict[str, Any]) -> tuple[int | None, str]:
+    """Return HKO HQ reading only; blank place so UI stays territory-wide."""
     rows = (data.get("temperature") or {}).get("data") or []
     if not isinstance(rows, list) or not rows:
         return None, ""
@@ -134,14 +129,15 @@ def _pick_temp(data: dict[str, Any]) -> tuple[int | None, str]:
     for pref in _TEMP_PREF:
         if pref in by_place:
             try:
-                return int(by_place[pref]["value"]), pref
+                return int(by_place[pref]["value"]), ""
             except (TypeError, ValueError, KeyError):
                 continue
+    # Fallback: still do not expose a district name in the UI/LLM place field.
     first = rows[0]
     try:
-        return int(first.get("value")), str(first.get("place") or "")
+        return int(first.get("value")), ""
     except (TypeError, ValueError):
-        return None, str(first.get("place") or "")
+        return None, ""
 
 
 def _pick_humidity(data: dict[str, Any]) -> int | None:

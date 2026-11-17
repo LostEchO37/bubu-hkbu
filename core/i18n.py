@@ -406,6 +406,11 @@ MESSAGES: dict[str, dict[Lang, str]] = {
         "zh-TW": "香港",
         "en": "Hong Kong",
     },
+    "weather_temp_hk": {
+        "zh-CN": "香港约 {n}°C",
+        "zh-TW": "香港約 {n}°C",
+        "en": "Hong Kong ~{n}°C",
+    },
     "weather_humidity": {
         "zh-CN": "湿度 {n}%",
         "zh-TW": "濕度 {n}%",

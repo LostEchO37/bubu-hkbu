@@ -24,11 +24,23 @@ QUERY_EXPANSIONS: dict[str, list[str]] = {
     "下雨": ["rain", "rainfall", "暴雨", "weather", "天文台"],
     "台风": ["tropical cyclone", "typhoon", "警告", "天文台", "weather"],
     "放假": ["holiday", "public holiday", "校历", "calendar"],
+    "毕业": ["graduation", "graduate", "GPA", "学分", "handbook", "bulletin"],
+    "学分": ["units", "credits", "graduation", "curriculum", "GE", "major"],
+    "主修": ["major", "programme", "program", "first major", "TSM", "handbook"],
+    "通识": ["general education", "GE", "university core", "university language"],
+    "课程要求": ["programme requirements", "graduation", "handbook", "curriculum"],
+    "graduation": ["毕业", "学分", "GPA", "handbook", "units"],
+    "major": ["主修", "programme", "课程", "handbook"],
 }
 
 PINNED_FOR_CALENDAR = [
     "academic_calendar_2026_27_zh.md",
     "academic_calendar_2026_27.md",
+]
+
+PINNED_FOR_GRADUATION = [
+    "graduation_requirements_zh.md",
+    "programmes_courses_zh.md",
 ]
 
 _WEATHER_KEYS = (
@@ -155,6 +167,29 @@ def _is_calendar_query(query: str) -> bool:
     return any(k in query or k in q for k in keys)
 
 
+def _is_graduation_query(query: str) -> bool:
+    keys = (
+        "毕业",
+        "学分",
+        "主修",
+        "副修",
+        "通识",
+        "课程要求",
+        "graduation",
+        "graduate",
+        "gpa",
+        "units",
+        "curriculum",
+        "handbook",
+        "university core",
+        "free elective",
+        "GE",
+        "TSM",
+    )
+    q = query.lower()
+    return any(k.lower() in q or k in query for k in keys)
+
+
 def is_weather_query(query: str) -> bool:
     q = query.lower()
     return any(k in query or k in q for k in _WEATHER_KEYS)
@@ -213,6 +248,16 @@ def search_knowledge(query: str, top_k: int = 6) -> list[Chunk]:
         chunks = pinned + [c for c in chunks if c.source not in existing]
         chunks = chunks[: max(top_k, len(pinned))]
 
+    if _is_graduation_query(query):
+        pinned_g: list[Chunk] = []
+        for name in PINNED_FOR_GRADUATION:
+            body = _cached_file(name)
+            if body:
+                pinned_g.append(Chunk(source=name, text=body[:4000], score=998.0))
+        existing_g = {c.source for c in pinned_g}
+        chunks = pinned_g + [c for c in chunks if c.source not in existing_g]
+        chunks = chunks[: max(top_k, len(pinned_g))]
+
     return chunks
 
 
@@ -251,6 +296,8 @@ def mandatory_bootstrap() -> str:
     for name in (
         "academic_calendar_2026_27_zh.md",
         "hkbu_campus_faq_zh.md",
+        "graduation_requirements_zh.md",
+        "programmes_courses_zh.md",
         "official_links_zh.md",
     ):
         body = _cached_file(name)

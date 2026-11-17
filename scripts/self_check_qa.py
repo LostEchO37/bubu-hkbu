@@ -170,17 +170,26 @@ def main() -> None:
 
     cal_hits = search_knowledge("第一学期考试周什么时候", top_k=4)
     assert cal_hits, "calendar RAG should return chunks"
+    grad_hits = search_knowledge("本科毕业要多少学分", top_k=4)
+    assert any("graduation_requirements" in c.source for c in grad_hits)
     weather_bundle = retrieve("今天天气怎么样会下雨吗", top_k=4, lang="zh-CN")
     assert weather_bundle.live_facts and "天文台" in weather_bundle.live_facts
+    assert "沙田" not in weather_bundle.live_facts
     assert weather_bundle.include_live_weather
     assert any("Observatory" in c for c in weather_bundle.citations)
     wx = fetch_weather("zh-CN")
     assert isinstance(wx.ok, bool)
+    if wx.ok and wx.temp_c is not None:
+        line = wx.one_line("zh-CN")
+        assert "沙田" not in line and "Sha Tin" not in line
     links = official_links("en")
     assert links and any("buelearning.hkbu.edu.hk" in u for _, u in links)
     assert any("hko.gov.hk" in u for _, u in links)
     assert t("rag_sources_title", "en") and t("link_hko", "zh-TW")
+    assert t("weather_temp_hk", "en", n=26)
     assert (ROOT / "data" / "knowledge" / "official_links_zh.md").is_file()
+    assert (ROOT / "data" / "knowledge" / "graduation_requirements_zh.md").is_file()
+    assert (ROOT / "data" / "knowledge" / "programmes_courses_zh.md").is_file()
 
     from core.moodle_ics import merge_moodle_tasks, parse_ics_tasks
 

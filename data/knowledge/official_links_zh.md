@@ -11,6 +11,12 @@
 - University Calendar：https://calendar.ar.hkbu.edu.hk/
 - 学期起止、考试周、假期以 Academic Registry 公布为准；本地知识库是摘录，冲突时以官网为准。
 
+## 毕业 / 课程结构
+- 本科课程结构：https://ar.hkbu.edu.hk/student-services/learning-and-teaching/undergraduate-curriculum-structure
+- Student Handbook：https://handbook.ar.hkbu.edu.hk/
+- 通识 GE：https://ge.hkbu.edu.hk/en/ge_programme_courses/programme_structure/
+- 详情见本库 `graduation_requirements_zh.md`、`programmes_courses_zh.md`。
+
 ## 浸大主页
 - https://www.hkbu.edu.hk/
 - 校园服务、通告、学院资讯以官网与校内邮件为准。

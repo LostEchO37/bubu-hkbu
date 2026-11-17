@@ -7,6 +7,20 @@ from core.i18n import Lang
 # Newest first. One entry per public push; wording avoids private ops details.
 ENTRIES: list[dict[str, dict[Lang, str] | str]] = [
     {
+        "date": "2026-11-17",
+        "tag": "v1.0.8",
+        "title": {
+            "zh-CN": "全港天气 + 毕业/课程知识库",
+            "zh-TW": "全港天氣 + 畢業/課程知識庫",
+            "en": "HK-wide weather + graduation/curriculum KB",
+        },
+        "body": {
+            "zh-CN": "· 天气改为全港概况，不再显示沙田等分区站名\n· 补充毕业学分结构、主修/Handbook 查询指引\n· 问毕业/学分时优先检索新知识文件",
+            "zh-TW": "· 天氣改為全港概況，不再顯示沙田等分區站名\n· 補充畢業學分結構、主修/Handbook 查詢指引\n· 問畢業/學分時優先檢索新知識檔",
+            "en": "· Weather is Hong Kong–wide only (no Sha Tin / district labels)\n· Added graduation unit structure and programme/Handbook guides\n· Graduation questions pin the new knowledge files first",
+        },
+    },
+    {
         "date": "2026-11-12",
         "tag": "v1.0.7",
         "title": {
